@@ -88,6 +88,20 @@ final class BuddyService {
         return announcement
     }
 
+    func archiveAnnouncement(id: String, ownerUserId: String) async throws -> BuddyAnnouncement {
+        let body = OwnerAnnouncementActionBody(ownerUserId: ownerUserId)
+        let response = try await post("/api/buddy/announcements/\(id)/archive", body: body, as: BuddyAnnouncementResponse.self)
+        guard let announcement = response.announcement else { throw BuddyServiceError.serverError }
+        return announcement
+    }
+
+    func closeAnnouncement(id: String, ownerUserId: String) async throws -> BuddyAnnouncement {
+        let body = OwnerAnnouncementActionBody(ownerUserId: ownerUserId)
+        let response = try await post("/api/buddy/announcements/\(id)/close", body: body, as: BuddyAnnouncementResponse.self)
+        guard let announcement = response.announcement else { throw BuddyServiceError.serverError }
+        return announcement
+    }
+
     // MARK: - Groups
 
     func requestToJoin(body: RequestToJoinBody) async throws -> BuddyGroup {
@@ -106,9 +120,9 @@ final class BuddyService {
         _ = try await post("/api/buddy/groups/\(groupId)/leave", body: LeaveGroupBody(userId: userId), as: BuddySuccessResponse.self)
     }
 
-    func getMyGroup(userId: String) async throws -> BuddyGroup? {
-        let response = try await get("/api/buddy/groups/mine", query: ["userId": userId], as: BuddyGroupResponse.self)
-        return response.group
+    func getMyGroups(userId: String) async throws -> [BuddyGroup] {
+        let response = try await get("/api/buddy/groups/mine", query: ["userId": userId], as: BuddyGroupsResponse.self)
+        return response.groups ?? []
     }
 
     func getGroup(groupId: String, userId: String) async throws -> BuddyGroup {

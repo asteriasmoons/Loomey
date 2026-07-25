@@ -10,6 +10,7 @@ enum LumeyTab: CaseIterable {
     case library
     case stats
     case goals
+    case history
     case sprints
     case buddies
     case profile
@@ -25,6 +26,7 @@ enum LumeyTab: CaseIterable {
     ]
 
     static let overflowTabs: [LumeyTab] = [
+        .history,
         .epubLibrary,
         .sprints,
         .buddies,
@@ -38,13 +40,15 @@ enum LumeyTab: CaseIterable {
         case .home:
             return "houseoutline"
         case .library:
-            return "books"
+            return "searchwavy"
         case .stats:
             return "levelup"
         case .goals:
             return "achievement"
+        case .history:
+            return "clockfill"
         case .epubLibrary:
-            return "bookstack"
+            return "books"
         case .sprints:
             return "sparkbolt"
         case .buddies:
@@ -68,6 +72,8 @@ enum LumeyTab: CaseIterable {
             return "Stats"
         case .goals:
             return "Goals"
+        case .history:
+            return "History"
         case .epubLibrary:
             return "Library"
         case .sprints:
@@ -118,6 +124,8 @@ struct MainTabView: View {
             ReadingStatsView()
         case .goals:
             ReadingGoalsView()
+        case .history:
+            ReadingGoalHistoryView()
         case .sprints:
             SprintRoomView()
         case .buddies:
@@ -161,9 +169,8 @@ struct LumeyTabBar: View {
         ZStack(alignment: .bottom) {
             if showMoreTabs && !overflowTabs.isEmpty {
                 moreTabsMenu
-                    .frame(maxWidth: 280)
-                    .padding(.bottom, 116)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(.bottom, 118)
+                    .transition(.opacity)
                     .zIndex(1)
             }
 
@@ -259,86 +266,131 @@ struct LumeyTabBar: View {
     }
 
     private var moreTabsMenu: some View {
-        VStack(spacing: 6) {
-            ForEach(overflowTabs, id: \.self) { tab in
-                Button {
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
-                        selectedTab = tab
-                        showMoreTabs = false
-                    }
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(tab.icon)
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 18, height: 18)
-                            .foregroundStyle(
-                                selectedTab == tab
-                                ? AnyShapeStyle(LGradients.header)
-                                : AnyShapeStyle(LColors.textSecondary)
-                            )
-                            .frame(width: 34, height: 34)
-                            .background(
-                                selectedTab == tab ? LColors.glassSurface2 : LColors.glassSurface,
-                                in: Circle()
-                            )
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.glassBorder, lineWidth: 1)
-                            )
+        CurvedDock(
+            tabs: overflowTabs,
+            selectedTab: $selectedTab,
+            isExpanded: $showMoreTabs
+        )
+    }
+}
 
-                        Text(tab.title)
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundStyle(LColors.textPrimary)
+// MARK: - Curved Dock
 
-                        Spacer()
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 10)
-                    .background(
-                        selectedTab == tab ? LColors.glassSurface2.opacity(0.75) : Color.clear,
-                        in: RoundedRectangle(cornerRadius: 15, style: .continuous)
+private struct CurvedDock: View {
+
+    let tabs: [LumeyTab]
+    @Binding var selectedTab: LumeyTab
+    @Binding var isExpanded: Bool
+
+    @State private var revealedCount: Int = 0
+
+    private let dockWidth: CGFloat = 344
+    private let dockHeight: CGFloat = 116
+    private let itemSize: CGFloat = 40
+    private let arcHeight: CGFloat = 44
+
+    var body: some View {
+        ZStack {
+            ForEach(Array(tabs.enumerated()), id: \.element) { index, tab in
+                dockButton(tab)
+                    .position(position(for: index))
+                    .opacity(index < revealedCount ? 1 : 0)
+                    .scaleEffect(index < revealedCount ? 1 : 0.5)
+                    .animation(
+                        .spring(response: 0.34, dampingFraction: 0.7),
+                        value: revealedCount
                     )
-                }
-                .buttonStyle(.plain)
             }
         }
-        .padding(10)
-        .background {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(LColors.bg.opacity(0.96))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue.opacity(0.10),
-                                    LColors.gradientPurple.opacity(0.08),
-                                    Color.white.opacity(0.03)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue.opacity(0.75),
-                                    LColors.gradientPurple.opacity(0.55),
-                                    Color.white.opacity(0.25)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.4
-                        )
-                )
+        .frame(width: dockWidth, height: dockHeight)
+        .onAppear { revealSequentially() }
+        .onDisappear { revealedCount = 0 }
+    }
+
+    // MARK: - Reveal Animation
+
+    private func revealSequentially() {
+        revealedCount = 0
+        for index in tabs.indices {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.055) {
+                guard isExpanded else { return }
+                revealedCount = index + 1
+            }
         }
-        .shadow(color: .black.opacity(0.24), radius: 22, x: 0, y: 12)
+    }
+
+    // MARK: - Layout
+
+    /// Horizontal inset shared by the arc path and the icon positions.
+    private var arcInset: CGFloat { itemSize / 2 + 6 }
+
+    /// Y coordinate of the arc's endpoints.
+    private var arcBaseY: CGFloat { (dockHeight / 2) - (arcHeight / 2) }
+
+    /// Point on the arc at normalized position `s` (0...1, left to right).
+    private func pointOnArc(_ s: CGFloat) -> CGPoint {
+        let x = arcInset + (dockWidth - arcInset * 2) * s
+        let y = arcBaseY + 4 * arcHeight * s * (1 - s)
+        return CGPoint(x: x, y: y)
+    }
+
+    /// Distributes the icons evenly along the arc.
+    private func position(for index: Int) -> CGPoint {
+        guard tabs.count > 1 else {
+            return pointOnArc(0.5)
+        }
+        return pointOnArc(CGFloat(index) / CGFloat(tabs.count - 1))
+    }
+
+    // MARK: - Dock Button
+
+    private func dockButton(_ tab: LumeyTab) -> some View {
+        let isSelected = selectedTab == tab
+
+        return Button {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
+                selectedTab = tab
+                isExpanded = false
+            }
+        } label: {
+            Image(tab.icon)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 19, height: 19)
+                .foregroundStyle(
+                    isSelected
+                    ? AnyShapeStyle(LGradients.header)
+                    : AnyShapeStyle(LColors.textSecondary)
+                )
+                .frame(width: itemSize, height: itemSize)
+                .background {
+                    Circle()
+                        .fill(LColors.bg)
+                        .overlay(
+                            Circle()
+                                .fill(isSelected ? LColors.glassSurface2 : LColors.glassSurface)
+                        )
+                }
+                .overlay(
+                    Circle()
+                        .strokeBorder(
+                            isSelected
+                            ? AnyShapeStyle(LGradients.header)
+                            : AnyShapeStyle(LColors.glassBorder),
+                            lineWidth: isSelected ? 1.4 : 1
+                        )
+                )
+                .shadow(
+                    color: isSelected
+                    ? LColors.gradientBlue.opacity(0.4)
+                    : .black.opacity(0.25),
+                    radius: isSelected ? 10 : 6,
+                    y: 4
+                )
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
     }
 }
 

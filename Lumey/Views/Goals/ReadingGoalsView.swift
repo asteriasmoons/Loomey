@@ -78,8 +78,6 @@ struct ReadingGoalsView: View {
                             
                             activeGoalsSection
                             
-                            historySection
-                            
                             completedGoalsSection
                         }
                         .frame(width: geo.size.width - 40, alignment: .leading)
@@ -882,60 +880,6 @@ private extension ReadingGoalsView {
                     }
                 }
             }
-        }
-    }
-}
-
-// MARK: - History
-
-private extension ReadingGoalsView {
-    var historySection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("History")
-            
-            NavigationLink {
-                ReadingGoalHistoryView()
-            } label: {
-                GlassCard {
-                    HStack(alignment: .center, spacing: 12) {
-                        Image("clockfill")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 24, height: 24)
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 42, height: 42)
-                            .background(Circle().fill(Color.white.opacity(0.06)))
-                        
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Reading History")
-                                .font(.system(size: 17, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
-                            
-                            Text("View your reading goal progress, completions, streak changes, and milestones.")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .foregroundStyle(LColors.textSecondary)
-                                .lineLimit(2)
-                        }
-                        
-                        Spacer()
-                        
-                        Image("chevright")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                            .foregroundStyle(.white.opacity(0.85))
-                    }
-                }
-            }
-            .buttonStyle(.plain)
         }
     }
 }

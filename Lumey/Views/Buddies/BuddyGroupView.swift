@@ -129,6 +129,13 @@ struct BuddyGroupView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(LColors.textSecondary)
                     .lineLimit(1)
+
+                if let owner = currentGroup.ownerLabel(currentUserId: userId) {
+                    Text(owner)
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(LGradients.header)
+                        .lineLimit(1)
+                }
             }
             .layoutPriority(1)
 

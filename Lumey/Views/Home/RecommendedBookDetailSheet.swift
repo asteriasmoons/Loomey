@@ -35,6 +35,8 @@ struct RecommendedBookDetailSheet: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
+                        topBar
+
                         hero
 
                         if detail == nil {
@@ -55,9 +57,6 @@ struct RecommendedBookDetailSheet: View {
                 }
             }
             .navigationBarHidden(true)
-            .safeAreaInset(edge: .top) {
-                topBar
-            }
             .task(id: book.id) {
                 await fetchDetail()
             }
@@ -112,10 +111,7 @@ struct RecommendedBookDetailSheet: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Close")
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 10)
         .padding(.bottom, 6)
-        .background(.ultraThinMaterial.opacity(0.18))
     }
 
     private func addToLibraryButton(alreadyAdded: Bool) -> some View {

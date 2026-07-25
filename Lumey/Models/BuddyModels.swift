@@ -21,6 +21,10 @@ struct BuddyAnnouncement: Codable, Identifiable {
     let maxMembers: Int
     let groupId: String?
     let isActive: Bool
+    let status: String?
+    let activeMemberCount: Int?
+    let pendingMemberCount: Int?
+    let spotsLeft: Int?
     let expiresAt: String
     let createdAt: String
 
@@ -30,6 +34,14 @@ struct BuddyAnnouncement: Codable, Identifiable {
         case bookTitle, bookAuthor, bookCoverUrl, bookKey
         case message, currentChapter, currentPage
         case maxMembers, groupId, isActive, expiresAt, createdAt
+        case status, activeMemberCount, pendingMemberCount, spotsLeft
+    }
+
+    var isClosed: Bool { status == "closed" }
+    var isArchived: Bool { status == "archived" }
+    var isDeleted: Bool { status == "deleted" }
+    var availableSpots: Int {
+        spotsLeft ?? max(maxMembers - (activeMemberCount ?? 1), 0)
     }
 }
 
@@ -39,7 +51,6 @@ struct BuddyMember: Codable, Identifiable {
     let userId: String
     let displayName: String
     let status: String      // "pending" | "joined" | "left"
-    let isOwner: Bool
     let joinedAt: String?
     let requestedAt: String
 
@@ -53,6 +64,9 @@ struct BuddyMember: Codable, Identifiable {
 struct BuddyGroup: Codable, Identifiable {
     let id: String
     let announcementId: String
+    /// Who posted the announcement. Display only — grants no permissions.
+    let ownerUserId: String?
+    let ownerDisplayName: String?
     let bookTitle: String
     let bookAuthor: String?
     let bookCoverUrl: String?
@@ -64,7 +78,8 @@ struct BuddyGroup: Codable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
-        case announcementId, bookTitle, bookAuthor, bookCoverUrl, bookKey
+        case announcementId, ownerUserId, ownerDisplayName
+        case bookTitle, bookAuthor, bookCoverUrl, bookKey
         case maxMembers, members, isActive, createdAt
     }
 
@@ -74,6 +89,18 @@ struct BuddyGroup: Codable, Identifiable {
 
     var pendingMembers: [BuddyMember] {
         members.filter { $0.isPending }
+    }
+
+    func isOwnedBy(_ userId: String) -> Bool {
+        ownerUserId == userId
+    }
+
+    /// "Your read" when it's yours, otherwise "<name>'s read".
+    func ownerLabel(currentUserId: String) -> String? {
+        guard let ownerUserId, !ownerUserId.isEmpty else { return nil }
+        if ownerUserId == currentUserId { return "Your read" }
+        guard let name = ownerDisplayName, !name.isEmpty else { return nil }
+        return "\(name)'s read"
     }
 }
 
@@ -115,6 +142,11 @@ struct BuddyAnnouncementResponse: Codable {
 struct BuddyGroupResponse: Codable {
     let success: Bool
     let group: BuddyGroup?
+}
+
+struct BuddyGroupsResponse: Codable {
+    let success: Bool
+    let groups: [BuddyGroup]?
 }
 
 struct BuddyMessagesResponse: Codable {
@@ -177,4 +209,8 @@ struct UpdateAnnouncementBody: Encodable {
     let currentChapter: Int?
     let currentPage: Int?
     let maxMembers: Int?
+}
+
+struct OwnerAnnouncementActionBody: Encodable {
+    let ownerUserId: String
 }

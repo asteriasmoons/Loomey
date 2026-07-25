@@ -18,8 +18,6 @@ struct ReadingGoalHistoryView: View {
         allDreams.filter { $0.isCompleted }
     }
 
-    @Environment(\.dismiss) private var dismiss
-
     @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     @State private var weekOffset: Int = 0
 
@@ -79,48 +77,20 @@ struct ReadingGoalHistoryView: View {
                 .padding(.bottom, 120)
             }
         }
-        .navigationBarBackButtonHidden(true)
-        .navigationBarTitleDisplayMode(.inline)
     }
     
     // MARK: - Top Bar
 
     private var topBar: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Reading History")
-                    .font(.system(size: 32, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                
-                Text("A soft timeline of your reading goal progress, completed goals, streak changes, and milestones.")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.65))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            
-            Spacer()
-            
-            Button {
-                dismiss()
-            } label: {
-                Image("xmarkwavy")
-                    .renderingMode(.template)
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 20, height: 20)
-                                            .foregroundStyle(LGradients.header)
-                                            .frame(width: 42, height: 42)
-                                            .background(
-                                                Circle()
-                                                    .fill(LColors.bg)
-                                                    .overlay(
-                                                        Circle()
-                                                            .strokeBorder(LGradients.header, lineWidth: 1.2)
-                                                    )
-                                                    .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
-                                            )
-                                    }
-                                    .buttonStyle(.plain)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Reading History")
+                .font(.system(size: 32, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+
+            Text("A soft timeline of your reading goal progress, completed goals, streak changes, and milestones.")
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.65))
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
