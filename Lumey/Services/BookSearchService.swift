@@ -80,7 +80,7 @@ final class BookSearchService {
 
     private init() {}
 
-    private let baseURL = "https://vox-api-production-31fd.up.railway.app"
+    private let baseURL = "https://appapi.voxiverse.ink"
 
     func searchBooks(query: String) async throws -> [BookSearchResult] {
 

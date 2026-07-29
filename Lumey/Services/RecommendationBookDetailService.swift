@@ -79,7 +79,7 @@ final class RecommendationBookDetailService {
 
     private init() {}
 
-    private let baseURL = "https://vox-api-production-31fd.up.railway.app"
+    private let baseURL = "https://appapi.voxiverse.ink"
 
     func fetchDetail(for book: LumeyRecommendationCollectionBook) async throws -> RecommendationBookDetail {
         guard let url = URL(string: "\(baseURL)/api/books/recommendation-book-detail") else {

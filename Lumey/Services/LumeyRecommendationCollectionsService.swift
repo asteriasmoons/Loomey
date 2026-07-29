@@ -188,7 +188,7 @@ final class LumeyRecommendationCollectionsService {
 
     private init() {}
 
-    private let baseURL = "https://vox-api-production-31fd.up.railway.app"
+    private let baseURL = "https://appapi.voxiverse.ink"
 
     func fetchRecommendationCollectionSummaries(
         userID: String?,

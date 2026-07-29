@@ -27,6 +27,9 @@ struct BookRecommendationsSheet: View {
     @State private var expandedRecommendationKeys: Set<String> = []
     @State private var bookToEditAfterAdd: Book?
     @State private var showEditBookAfterAdd = false
+    @State private var fetchedSummaries: [String: String] = [:]
+    @State private var loadingSummaryKeys: Set<String> = []
+    @State private var summaryErrorKeys: Set<String> = []
 
     var body: some View {
         NavigationStack {
@@ -376,10 +379,7 @@ struct BookRecommendationsSheet: View {
                 .buttonStyle(.plain)
             }
 
-            Text(book.summary)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(isExpanded ? nil : 5)
+            summaryOrGetDetails(for: book, isExpanded: isExpanded)
 
             if isExpanded, let rationale = book.rationale, !rationale.isEmpty {
                 Text(rationale)
@@ -411,6 +411,71 @@ struct BookRecommendationsSheet: View {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .stroke(.white.opacity(0.16), lineWidth: 1)
         }
+    }
+
+    @ViewBuilder
+    private func summaryOrGetDetails(for book: LumeyBookRecommendation, isExpanded: Bool) -> some View {
+        let key = recommendationKey(book)
+        let trimmed = book.summary.trimmingCharacters(in: .whitespacesAndNewlines)
+        let effective = fetchedSummaries[key] ?? (trimmed.isEmpty ? "" : book.summary)
+
+        if !effective.isEmpty {
+            Text(effective)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .lineLimit(isExpanded ? nil : 5)
+        } else if loadingSummaryKeys.contains(key) {
+            getDetailsLabel("Getting details\u{2026}", loading: true)
+        } else {
+            Button {
+                Task { await getBookSummary(for: book) }
+            } label: {
+                getDetailsLabel(summaryErrorKeys.contains(key) ? "Try Again" : "Get Details", loading: false)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func getDetailsLabel(_ text: String, loading: Bool) -> some View {
+        HStack(spacing: 8) {
+            if loading {
+                ProgressView()
+                    .scaleEffect(0.8)
+                    .tint(.white)
+            }
+            Text(text)
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            Capsule(style: .continuous)
+                .fill(Color.white.opacity(0.07))
+                .overlay(
+                    Capsule(style: .continuous)
+                        .strokeBorder(LGradients.header, lineWidth: 1)
+                )
+        )
+    }
+
+    @MainActor
+    private func getBookSummary(for book: LumeyBookRecommendation) async {
+        let key = recommendationKey(book)
+        guard fetchedSummaries[key] == nil, !loadingSummaryKeys.contains(key) else { return }
+
+        loadingSummaryKeys.insert(key)
+        summaryErrorKeys.remove(key)
+
+        do {
+            let summary = try await RegularRecBookSummaryService.shared.fetchSummary(for: book)
+            fetchedSummaries[key] = summary
+        } catch {
+            summaryErrorKeys.insert(key)
+        }
+
+        loadingSummaryKeys.remove(key)
     }
 
     private func isRecommendationExpanded(_ recommendation: LumeyBookRecommendation) -> Bool {

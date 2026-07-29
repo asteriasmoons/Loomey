@@ -28,6 +28,7 @@ struct ReadingStatsView: View {
     private var allReviews: [BookReview]
 
     @State private var showingBreakSheet = false
+    @State private var visibleRecentSessionCount = 4
 
     private var stats: ReadingStats? {
         ReadingStats.preferredRecord(from: statsRecords)
@@ -89,6 +90,18 @@ struct ReadingStatsView: View {
 
     private var recentSessions: [ReadingSession] {
         Array(sessions.prefix(20))
+    }
+
+    private var visibleRecentSessions: [ReadingSession] {
+        Array(recentSessions.prefix(visibleRecentSessionCount))
+    }
+
+    private var hasMoreRecentSessions: Bool {
+        recentSessions.count > visibleRecentSessionCount
+    }
+
+    private var isShowingExpandedRecentSessions: Bool {
+        visibleRecentSessionCount > 4
     }
 
     private var heatmapDays: [ReadingHeatmapDay] {
@@ -1105,18 +1118,61 @@ private extension ReadingStatsView {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     VStack(alignment: .leading, spacing: 12) {
-                        ForEach(Array(recentSessions.prefix(8).enumerated()), id: \.element.id) { index, session in
+                        ForEach(Array(visibleRecentSessions.enumerated()), id: \.element.id) { index, session in
                             CompactReadingSessionRow(session: session)
 
-                            if index < min(recentSessions.count, 8) - 1 {
+                            if index < visibleRecentSessions.count - 1 {
                                 DottedDivider()
                             }
+                        }
+
+                        if recentSessions.count > 4 {
+                            HStack(spacing: 10) {
+                                if isShowingExpandedRecentSessions {
+                                    Button {
+                                        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+                                            visibleRecentSessionCount = 4
+                                        }
+                                    } label: {
+                                        recentSessionsButtonLabel("Load Less")
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+
+                                if hasMoreRecentSessions {
+                                    Button {
+                                        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+                                            visibleRecentSessionCount += 4
+                                        }
+                                    } label: {
+                                        recentSessionsButtonLabel("Load More")
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.top, 2)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
+    }
+
+    private func recentSessionsButtonLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 12, weight: .black, design: .rounded))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(Color.white.opacity(0.07))
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .strokeBorder(LGradients.header, lineWidth: 1)
+                    )
+            )
     }
 }
 

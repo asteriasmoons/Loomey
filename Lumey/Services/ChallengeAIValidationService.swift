@@ -34,7 +34,7 @@ final class ChallengeAIValidationService {
 
     private let baseURL: String
 
-    init(baseURL: String = "https://vox-api-production-31fd.up.railway.app") {
+    init(baseURL: String = "https://appapi.voxiverse.ink") {
         self.baseURL = baseURL
     }
 
