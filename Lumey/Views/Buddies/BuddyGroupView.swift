@@ -4,11 +4,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct BuddyGroupView: View {
     let group: BuddyGroup
     let userId: String
     let displayName: String
+    @Environment(\.modelContext) private var modelContext
 
     @State private var messages: [BuddyMessage] = []
     @State private var messageText: String = ""
@@ -309,6 +311,7 @@ struct BuddyGroupView: View {
                     onClose: { showProgressSheet = false },
                     onSend: { message in
                         messages.append(message)
+                        ReadingXPService.awardBuddyProgressUpdate(message, modelContext: modelContext)
                         showProgressSheet = false
                     }
                 )
@@ -345,6 +348,7 @@ struct BuddyGroupView: View {
         if let sent = try? await BuddyService.shared.sendMessage(groupId: group.id, body: body) {
             if !messages.contains(where: { $0.id == sent.id }) {
                 messages.append(sent)
+                ReadingXPService.awardBuddyMessage(sent, modelContext: modelContext)
             }
         }
 

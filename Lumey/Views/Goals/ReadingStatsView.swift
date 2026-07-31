@@ -27,11 +27,43 @@ struct ReadingStatsView: View {
     @Query
     private var allReviews: [BookReview]
 
+    @Query(sort: \ReadingXPProfile.updatedAt, order: .reverse)
+    private var xpProfiles: [ReadingXPProfile]
+
+    @Query(sort: \ReadingStreakPreferences.updatedAt, order: .reverse)
+    private var streakPreferenceRecords: [ReadingStreakPreferences]
+
     @State private var showingBreakSheet = false
     @State private var visibleRecentSessionCount = 4
 
     private var stats: ReadingStats? {
         ReadingStats.preferredRecord(from: statsRecords)
+    }
+
+    private var xpProfile: ReadingXPProfile? {
+        ReadingXPService.preferredProfile(from: xpProfiles)
+    }
+
+    private var xpSummary: ReadingXPLevelSummary {
+        ReadingXPService.levelSummary(totalXP: xpProfile?.totalXP ?? 0)
+    }
+
+    private var streakPreferences: ReadingStreakPreferences? {
+        ReadingStreakPreferences.preferredRecord(from: streakPreferenceRecords)
+    }
+
+    private var streakSummaries: [ReadingStreakSummary] {
+        ReadingStreakEngine.summaries(
+            sessions: sessions,
+            preferences: streakPreferences,
+            breakPeriods: stats?.breakPeriods ?? [],
+            preservedDailyLongest: stats?.bestReadingStreak ?? 0
+        )
+    }
+
+    private var dailyStreakSummary: ReadingStreakSummary {
+        streakSummaries.first { $0.kind == .daily }
+        ?? ReadingStreakSummary(kind: .daily, current: 0, longest: 0, detail: "")
     }
 
     // MARK: - Derived aggregates
@@ -127,7 +159,6 @@ struct ReadingStatsView: View {
     }
 
     private var currentStreak: Int {
-        // If on an active reading break, return the frozen streak value
         if let s = stats, s.isOnReadingBreak {
             if s.currentBreakDays > ReadingStats.maxBreakDays {
                 return 0
@@ -135,93 +166,11 @@ struct ReadingStatsView: View {
             return s.readingBreakStreakValue
         }
 
-        let calendar = Calendar.current
-        let readingDays = Set(sessions.map { calendar.startOfDay(for: $0.date) })
-        guard !readingDays.isEmpty else { return 0 }
-
-        let today = calendar.startOfDay(for: Date())
-        let allBreakPeriods = stats?.breakPeriods ?? []
-
-        // Find anchor day – walk back from today, skipping break days,
-        // allowing at most one non-break non-reading grace day (same as original yesterday logic).
-        var anchorDay: Date?
-        var checkDay = today
-        var graceDaysUsed = 0
-
-        while graceDaysUsed <= 1 {
-            if readingDays.contains(checkDay) {
-                anchorDay = checkDay
-                break
-            }
-            if ReadingStats.isDateInBreakPeriod(checkDay, periods: allBreakPeriods) {
-                guard let prev = calendar.date(byAdding: .day, value: -1, to: checkDay) else { break }
-                checkDay = prev
-                continue
-            }
-            graceDaysUsed += 1
-            guard let prev = calendar.date(byAdding: .day, value: -1, to: checkDay) else { break }
-            checkDay = prev
-        }
-
-        guard let anchor = anchorDay else { return 0 }
-
-        // Count streak backward from anchor, bridging break periods
-        var streak = 0
-        var day = anchor
-
-        for _ in 0..<3650 {
-            if readingDays.contains(day) {
-                streak += 1
-                guard let prev = calendar.date(byAdding: .day, value: -1, to: day) else { break }
-                day = prev
-            } else if ReadingStats.isDateInBreakPeriod(day, periods: allBreakPeriods) {
-                guard let prev = calendar.date(byAdding: .day, value: -1, to: day) else { break }
-                day = prev
-            } else {
-                break
-            }
-        }
-
-        return streak
+        return dailyStreakSummary.current
     }
 
     private var bestStreak: Int {
-        let calendar = Calendar.current
-        let sortedDays = Array(Set(sessions.map { calendar.startOfDay(for: $0.date) })).sorted()
-        guard !sortedDays.isEmpty else { return 0 }
-
-        let allBreakPeriods = stats?.breakPeriods ?? []
-        var best = 1
-        var current = 1
-
-        for index in 1..<sortedDays.count {
-            let previous = sortedDays[index - 1]
-            let currentDay = sortedDays[index]
-            let dayAfterPrevious = calendar.date(byAdding: .day, value: 1, to: previous) ?? previous
-
-            if calendar.isDate(currentDay, inSameDayAs: dayAfterPrevious) {
-                current += 1
-            } else {
-                // Check if the entire gap is covered by break periods
-                var gapDay = dayAfterPrevious
-                var gapBridged = true
-                while gapDay < currentDay {
-                    if !ReadingStats.isDateInBreakPeriod(gapDay, periods: allBreakPeriods) {
-                        gapBridged = false
-                        break
-                    }
-                    guard let next = calendar.date(byAdding: .day, value: 1, to: gapDay) else {
-                        gapBridged = false
-                        break
-                    }
-                    gapDay = next
-                }
-                current = gapBridged ? current + 1 : 1
-            }
-            best = max(best, current)
-        }
-
-        return best
+        dailyStreakSummary.longest
     }
 
     private var readingMilestones: [ReadingMilestone] {
@@ -580,7 +529,10 @@ private extension ReadingStatsView {
 
 private extension ReadingStatsView {
     var pointsHeroCard: some View {
-        GlassCard {
+        let summary = xpSummary
+        let title = xpProfile?.selectedTitle.isEmpty == false ? xpProfile?.selectedTitle ?? summary.title : summary.title
+
+        return GlassCard {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 14) {
                     Image("levelup")
@@ -600,29 +552,40 @@ private extension ReadingStatsView {
                         )
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Reading Points")
+                        Text("Reading Level")
                             .font(.system(size: 18, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
 
-                        Text("Your reading momentum, collected.")
+                        Text(title)
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundStyle(LColors.textSecondary)
                     }
                 }
 
-                Text("\(totalPoints)")
-                    .font(.system(size: 52, weight: .black, design: .rounded))
-                    .foregroundStyle(LGradients.header)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Level \(summary.level)")
+                        .font(.system(size: 52, weight: .black, design: .rounded))
+                        .foregroundStyle(LGradients.header)
 
-                Text("total points")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    VStack(alignment: .leading, spacing: 7) {
+                        GradientProgressBar(value: summary.progress)
+                            .frame(height: 10)
+
+                        HStack {
+                            Text("\(summary.totalXP) XP")
+                            Spacer()
+                            Text("\(summary.xpNeededForNextLevel) XP to Level \(summary.level + 1)")
+                        }
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(LColors.textSecondary)
+                    }
+                }
 
                 DottedDivider()
 
                 HStack(spacing: 10) {
+                    statCapsule(title: "Points", value: "\(totalPoints)")
                     statCapsule(title: "Sessions", value: "\(totalSessions)")
-                    statCapsule(title: "Minutes", value: "\(totalMinutes)")
                     statCapsule(title: "Pages", value: "\(totalPages)")
                 }
             }
@@ -976,63 +939,38 @@ struct DottedDivider: View {
 
 private extension ReadingStatsView {
     var streakSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("Streaks")
+            VStack(alignment: .leading, spacing: 14) {
+                sectionTitle("Streaks")
 
-            HStack(spacing: 12) {
                 GlassCard {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 6) {
-                            Text("Current")
-                                .font(.system(size: 12, weight: .bold, design: .rounded))
-                                .foregroundStyle(LColors.textSecondary)
+                    VStack(alignment: .leading, spacing: 13) {
+                        ForEach(Array(streakSummaries.enumerated()), id: \.element.id) { index, summary in
+                            ReadingStreakSummaryRow(
+                                summary: adjustedSummary(summary),
+                                isPaused: summary.kind == .daily && stats?.isOnReadingBreak == true
+                            )
 
-                            if stats?.isOnReadingBreak == true {
-                                Text("Paused")
-                                    .font(.system(size: 9, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 7)
-                                    .padding(.vertical, 3)
-                                    .background(
-                                        Capsule(style: .continuous)
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [LColors.gradientPurple.opacity(0.40), LColors.gradientBlue.opacity(0.28)],
-                                                    startPoint: .leading,
-                                                    endPoint: .trailing
-                                                )
-                                            )
-                                    )
+                            if index < streakSummaries.count - 1 {
+                                DottedDivider()
                             }
                         }
-                        Text("\(currentStreak)")
-                            .font(.system(size: 28, weight: .black, design: .rounded))
-                            .foregroundStyle(LGradients.header)
-                        Text("day streak")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                GlassCard {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Best")
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
-                        Text("\(bestStreak)")
-                            .font(.system(size: 28, weight: .black, design: .rounded))
-                            .foregroundStyle(LGradients.header)
-                        Text("day streak")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                readingBreakInfoCard
             }
-
-            readingBreakInfoCard
         }
+
+    func adjustedSummary(_ summary: ReadingStreakSummary) -> ReadingStreakSummary {
+        guard summary.kind == .daily else { return summary }
+
+        return ReadingStreakSummary(
+            kind: summary.kind,
+            current: currentStreak,
+            longest: bestStreak,
+            detail: summary.detail
+        )
     }
 
     var readingBreakInfoCard: some View {
@@ -1086,6 +1024,94 @@ private extension ReadingStatsView {
                 }
             }
         }
+    }
+}
+
+struct ReadingStreakSummaryRow: View {
+    let summary: ReadingStreakSummary
+    let isPaused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(summary.kind.iconName)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+                    .foregroundStyle(LGradients.header)
+                    .frame(width: 38, height: 38)
+                    .background(Circle().fill(Color.white.opacity(0.06)))
+                    .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 7) {
+                        Text(summary.kind.title)
+                            .font(.system(size: 14, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+
+                        if isPaused {
+                            Text("Paused")
+                                .font(.system(size: 9, weight: .black, design: .rounded))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(
+                                    Capsule(style: .continuous)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    LColors.gradientPurple.opacity(0.40),
+                                                    LColors.gradientBlue.opacity(0.28)
+                                                ],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                )
+                        }
+                    }
+
+                    Text(summary.detail)
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(LColors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            HStack(spacing: 10) {
+                streakValueCard(title: "Current", value: summary.current, unit: summary.kind.unitName)
+                streakValueCard(title: "Longest", value: summary.longest, unit: summary.kind.unitName)
+            }
+        }
+    }
+
+    private func streakValueCard(title: String, value: Int, unit: String) -> some View {
+        VStack(spacing: 4) {
+            Text("\(value)")
+                .font(.system(size: 20, weight: .black, design: .rounded))
+                .foregroundStyle(LGradients.header)
+
+            Text(title)
+                .font(.system(size: 10, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+
+            Text(unit)
+                .font(.system(size: 9, weight: .bold, design: .rounded))
+                .foregroundStyle(LColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.white.opacity(0.05))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+        )
     }
 }
 

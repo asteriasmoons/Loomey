@@ -774,6 +774,8 @@ struct SaveSessionSheet: View {
         stats.lastReadingDate = sessionDate
         stats.updatedAt = Date()
 
+        ReadingXPService.awardReadingSession(session, stats: stats, modelContext: modelContext)
+
         dismiss()
     }
 
@@ -830,6 +832,9 @@ struct SaveSessionSheet: View {
         )
         
         modelContext.insert(history)
+        if eventType == .completed {
+            ReadingXPService.awardGoalCompletion(goal: goal, modelContext: modelContext)
+        }
         try? modelContext.save()
     }
 }

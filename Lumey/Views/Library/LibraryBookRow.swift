@@ -121,7 +121,14 @@ struct LibraryBookRow: View {
     }
 
     private func setStatus(_ status: BookStatus) {
+        let previousStatus = book.status
         book.updateStatus(to: status)
+        ReadingXPService.awardBookStatusChange(
+            book: book,
+            previousStatus: previousStatus,
+            newStatus: book.status,
+            modelContext: modelContext
+        )
 
         try? modelContext.save()
     }

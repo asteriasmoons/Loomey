@@ -648,6 +648,7 @@ struct ChallengesFeedView: View {
             )
 
             appendComment(comment, feedItemID: feedItemID)
+            ReadingXPService.awardChallengeFeedComment(comment, modelContext: modelContext)
         } catch {
             feedErrorMessage = error.localizedDescription
         }
@@ -682,6 +683,7 @@ struct ChallengesFeedView: View {
                 parentCommentID: parentCommentID
             )
             appendComment(comment, feedItemID: feedItemID)
+            ReadingXPService.awardChallengeFeedComment(comment, modelContext: modelContext)
         } catch {
             feedErrorMessage = error.localizedDescription
         }
@@ -979,6 +981,8 @@ private struct InlineChallengeFeedPostComposer: View {
     let currentUsername: String
     let onPostCreated: ((ChallengeFeedItemDTO) -> Void)?
 
+    @Environment(\.modelContext) private var modelContext
+
     @Query(sort: \Book.title)
     private var books: [Book]
 
@@ -1268,6 +1272,7 @@ private struct InlineChallengeFeedPostComposer: View {
             )
 
             onPostCreated?(created)
+            ReadingXPService.awardChallengeFeedPost(created, modelContext: modelContext)
 
             postText = ""
             photoCaption = ""

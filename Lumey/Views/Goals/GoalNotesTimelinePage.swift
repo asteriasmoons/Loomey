@@ -89,6 +89,7 @@ struct GoalNotesTimelinePage: View {
                     completionCountSnapshot: goal.mode == .recurring ? Int(goal.currentValue) : 0
                 )
                 modelContext.insert(note)
+                ReadingXPService.awardGoalNote(note, modelContext: modelContext)
                 try? modelContext.save()
             })
             .presentationDetents([.medium])

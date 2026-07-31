@@ -1998,6 +1998,8 @@ struct LogSessionSheet: View {
         stats.lastReadingDate = sessionDate
         stats.updatedAt = Date()
 
+        ReadingXPService.awardReadingSession(session, stats: stats, modelContext: modelContext)
+
         dismiss()
     }
 
@@ -2056,6 +2058,9 @@ struct LogSessionSheet: View {
         )
         
         modelContext.insert(history)
+        if eventType == .completed {
+            ReadingXPService.awardGoalCompletion(goal: goal, modelContext: modelContext)
+        }
         try? modelContext.save()
     }
 }
@@ -2360,6 +2365,7 @@ struct GoalCheckInSheet: View {
         if goal.isRecurringGoal {
             goal.resetProgressIfNeededForCurrentPeriod()
         }
+        let sessionProgressBaseline = goal.currentValue
 
         // Fetch stats early for break-bridge logic
         let stats = ReadingStats.fetchOrCreate(in: modelContext)
@@ -2375,7 +2381,7 @@ struct GoalCheckInSheet: View {
             goal.updateProgress(to: newValue)
         }
 
-        let progressIncrease = max(goal.currentValue - previousValue, 0)
+        let progressIncrease = max(goal.currentValue - sessionProgressBaseline, 0)
 
         let minutes: Int
         let pages: Int
@@ -2422,9 +2428,16 @@ struct GoalCheckInSheet: View {
         )
 
         modelContext.insert(history)
+        if eventType == .completed {
+            ReadingXPService.awardGoalCompletion(goal: goal, occurredAt: eventDate, modelContext: modelContext)
+        }
 
-        if minutes > 0 || pages > 0 || goal.type == .streak {
-            let checkInSession = ReadingSession(
+        let didUpdateStreak = goal.type == .streak && (
+            previousStreak != goal.currentStreak || previousBestStreak != goal.bestStreak
+        )
+        var checkInSession: ReadingSession?
+        if minutes > 0 || pages > 0 || didUpdateStreak {
+            let session = ReadingSession(
                 linkedBookID: selectedBook?.id,
                 linkedBookTitle: selectedBook?.title ?? "",
                 linkedGoalID: goal.id,
@@ -2434,11 +2447,15 @@ struct GoalCheckInSheet: View {
                 notes: "Goal Check-In",
                 date: eventDate
             )
+            if didUpdateStreak && session.pointsEarned == 0 {
+                session.pointsEarned = 5
+            }
 
-            modelContext.insert(checkInSession)
+            checkInSession = session
+            modelContext.insert(session)
         }
 
-        if minutes > 0 || pages > 0 || goal.type == .streak {
+        if minutes > 0 || pages > 0 || didUpdateStreak {
             stats.totalMinutesRead += minutes
             stats.totalPagesRead += pages
             stats.totalReadingSessions += 1
@@ -2472,6 +2489,14 @@ struct GoalCheckInSheet: View {
             stats.bestReadingStreak = max(stats.bestReadingStreak, stats.currentReadingStreak)
             stats.lastReadingDate = eventDate
             stats.updatedAt = Date()
+
+            if let checkInSession {
+                if minutes > 0 || pages > 0 {
+                    ReadingXPService.awardReadingSession(checkInSession, stats: stats, modelContext: modelContext)
+                } else {
+                    ReadingXPService.awardStreakCheckIn(checkInSession, stats: stats, modelContext: modelContext)
+                }
+            }
         }
 
         try? modelContext.save()

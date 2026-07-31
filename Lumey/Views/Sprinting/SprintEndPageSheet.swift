@@ -4,12 +4,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SprintEndPageSheet: View {
     let sprint: Sprint
     let userId: String
     var onClose: (() -> Void)?
     var onSubmitted: ((Sprint) -> Void)?
+    @Environment(\.modelContext) private var modelContext
 
     @State private var endPageText: String = ""
     @State private var isSubmitting = false
@@ -208,6 +210,12 @@ struct SprintEndPageSheet: View {
 
         do {
             let updated = try await SprintService.shared.submitEndPage(sprintId: sprint.id, body: body)
+            ReadingXPService.awardSprintSubmission(
+                sprint: updated,
+                userID: userId,
+                endPage: page,
+                modelContext: modelContext
+            )
             onSubmitted?(updated)
         } catch {
             errorMessage = "Failed to submit. Please try again."

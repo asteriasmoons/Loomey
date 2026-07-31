@@ -592,6 +592,7 @@ final class ReadiumReaderChromeViewController: UIViewController {
 
         do {
             try modelContext.save()
+            ReadingXPService.awardEPUBBookmark(bookmark, modelContext: modelContext)
             showToast("Bookmark saved")
             updateBookmarkIndicator()
         } catch {
@@ -890,6 +891,7 @@ final class ReadiumReaderChromeViewController: UIViewController {
 
         do {
             try modelContext.save()
+            ReadingXPService.awardEPUBBookmark(bookmark, modelContext: modelContext)
             showToast("Bookmark saved")
             updateBookmarkIndicator()
         } catch {
@@ -1249,6 +1251,7 @@ final class ReadiumReaderChromeViewController: UIViewController {
 
         do {
             try modelContext.save()
+            ReadingXPService.awardEPUBHighlight(highlight, modelContext: modelContext)
             print("[Reader] Highlight saved successfully — id: \(highlight.id)")
 
             applyAllHighlightDecorations()

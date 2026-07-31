@@ -565,6 +565,9 @@ struct AddEditReadingGoalSheet: View {
         )
         
         modelContext.insert(history)
+        if eventType == .completed {
+            ReadingXPService.awardGoalCompletion(goal: goal, modelContext: modelContext)
+        }
     }
 }
 

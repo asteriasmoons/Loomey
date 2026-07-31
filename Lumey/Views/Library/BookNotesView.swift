@@ -499,6 +499,7 @@ struct BookNoteEditorSheet: View {
         } else {
             let newNote = BookNote(content: trimmed, book: book)
             modelContext.insert(newNote)
+            ReadingXPService.awardBookNote(newNote, modelContext: modelContext)
         }
 
         dismiss()

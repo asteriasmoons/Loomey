@@ -12,6 +12,7 @@ struct IconPickerView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var searchText = ""
+    @State private var selectedCategory = ""
     
     private var filteredIcons: [LumeyIconItem] {
         LumeyIconLibrary.search(searchText)
@@ -29,6 +30,18 @@ struct IconPickerView: View {
             }
             .sorted { $0.category < $1.category }
     }
+
+    private var selectedCategoryName: String {
+        if groupedIcons.contains(where: { $0.category == selectedCategory }) {
+            return selectedCategory
+        }
+
+        return groupedIcons.first?.category ?? ""
+    }
+
+    private var selectedIcons: [LumeyIconItem] {
+        groupedIcons.first { $0.category == selectedCategoryName }?.icons ?? []
+    }
     
     var body: some View {
         NavigationStack {
@@ -38,30 +51,13 @@ struct IconPickerView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 18) {
                         searchField
-                        
-                        ForEach(groupedIcons, id: \.category) { group in
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(group.category)
-                                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                                    .foregroundStyle(LColors.textSecondary)
-                                
-                                LazyVGrid(
-                                    columns: Array(
-                                        repeating: GridItem(.flexible(), spacing: 10),
-                                        count: 6
-                                    ),
-                                    spacing: 10
-                                ) {
-                                    ForEach(group.icons) { icon in
-                                        Button {
-                                            selectedIcon = icon.name
-                                        } label: {
-                                            iconCell(icon)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                            }
+
+                        categoryTabs
+
+                        if selectedIcons.isEmpty {
+                            emptyState
+                        } else {
+                            selectedCategoryGrid
                         }
                     }
                     .padding(.horizontal)
@@ -80,6 +76,127 @@ struct IconPickerView: View {
                     .foregroundStyle(LColors.textPrimary)
                 }
             }
+            .onAppear {
+                ensureSelectedCategory(preferSelectedIcon: true)
+            }
+            .onChange(of: searchText) { _ in
+                ensureSelectedCategory()
+            }
+        }
+    }
+
+    private var categoryTabs: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(groupedIcons, id: \.category) { group in
+                    Button {
+                        selectedCategory = group.category
+                    } label: {
+                        categoryTab(
+                            title: group.category,
+                            count: group.icons.count,
+                            isSelected: selectedCategoryName == group.category
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 1)
+        }
+    }
+
+    private var selectedCategoryGrid: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text(selectedCategoryName)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
+
+                Text("\(selectedIcons.count)")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary.opacity(0.75))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(LColors.glassSurface)
+                    )
+
+                Spacer(minLength: 0)
+            }
+
+            LazyVGrid(
+                columns: Array(
+                    repeating: GridItem(.flexible(), spacing: 10),
+                    count: 6
+                ),
+                spacing: 10
+            ) {
+                ForEach(selectedIcons) { icon in
+                    Button {
+                        selectedIcon = icon.name
+                    } label: {
+                        iconCell(icon)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(LColors.textSecondary.opacity(0.75))
+
+            Text("No icons found")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(LColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 34)
+    }
+
+    private func categoryTab(title: String, count: Int, isSelected: Bool) -> some View {
+        HStack(spacing: 6) {
+            Text(title)
+                .font(.system(size: 11, weight: .black, design: .rounded))
+                .lineLimit(1)
+
+            Text("\(count)")
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .foregroundStyle(isSelected ? LColors.bg.opacity(0.72) : LColors.textSecondary.opacity(0.8))
+        }
+        .foregroundStyle(isSelected ? LColors.bg : LColors.textPrimary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            Capsule(style: .continuous)
+                .fill(isSelected ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassSurface))
+        )
+        .overlay {
+            Capsule(style: .continuous)
+                .strokeBorder(isSelected ? Color.white.opacity(0.18) : LColors.glassBorder, lineWidth: 1)
+        }
+    }
+
+    private func ensureSelectedCategory(preferSelectedIcon: Bool = false) {
+        guard !groupedIcons.isEmpty else {
+            selectedCategory = ""
+            return
+        }
+
+        if preferSelectedIcon,
+           let selectedIconCategory = groupedIcons.first(where: { group in
+               group.icons.contains { $0.name == selectedIcon }
+           })?.category {
+            selectedCategory = selectedIconCategory
+            return
+        }
+
+        if !groupedIcons.contains(where: { $0.category == selectedCategory }) {
+            selectedCategory = groupedIcons.first?.category ?? ""
         }
     }
     

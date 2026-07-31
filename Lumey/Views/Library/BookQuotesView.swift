@@ -395,6 +395,7 @@ struct BookQuoteEditorSheet: View {
                 book: book
             )
             modelContext.insert(newQuote)
+            ReadingXPService.awardBookQuote(newQuote, modelContext: modelContext)
         }
 
         dismiss()

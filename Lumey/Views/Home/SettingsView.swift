@@ -44,11 +44,22 @@ private struct LegacyGoodreadsCleanupPreview: Identifiable {
     let books: [Book]
 }
 
+private struct PendingReadingStreakSettingsChange {
+    let configuration: ReadingStreakConfiguration
+    let affectedKinds: Set<ReadingStreakKind>
+}
+
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
     private var books: [Book]
+
+    @Query(sort: \ReadingSession.date, order: .reverse)
+    private var sessions: [ReadingSession]
+
+    @Query(sort: \ReadingStreakPreferences.updatedAt, order: .reverse)
+    private var streakPreferenceRecords: [ReadingStreakPreferences]
 
     @State private var showGoodreadsImporter = false
     @State private var showLumeyExporter = false
@@ -59,6 +70,8 @@ struct SettingsView: View {
     @State private var selectedGoodreadsCandidateIDs: Set<UUID> = []
     @State private var legacyCleanupPreview: LegacyGoodreadsCleanupPreview?
     @State private var selectedLegacyCleanupBookIDs: Set<UUID> = []
+    @State private var pendingStreakChange: PendingReadingStreakSettingsChange?
+    @State private var showStreakResetConfirm = false
 
     private var syncedBooks: [Book] {
         books.filter { $0.deletedAt == nil }
@@ -96,6 +109,21 @@ struct SettingsView: View {
             .first
     }
 
+    private var streakPreferences: ReadingStreakPreferences? {
+        ReadingStreakPreferences.preferredRecord(from: streakPreferenceRecords)
+    }
+
+    private var streakConfiguration: ReadingStreakConfiguration {
+        streakPreferences?.configuration ?? .default
+    }
+
+    private var streakSummaries: [ReadingStreakSummary] {
+        ReadingStreakEngine.summaries(
+            sessions: sessions,
+            preferences: streakPreferences
+        )
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -107,6 +135,7 @@ struct SettingsView: View {
                         header
                         commandCenter
                         libraryPulse
+                        readingStreaksSettings
                         dataVault
                         cloudKitCard
                     }
@@ -171,6 +200,17 @@ struct SettingsView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("This deletes only books tagged with the most recent Goodreads import batch.")
+            }
+            .alert("Reset Reading Streak?", isPresented: $showStreakResetConfirm) {
+                Button("Cancel", role: .cancel) {
+                    pendingStreakChange = nil
+                }
+
+                Button("Reset & Save", role: .destructive) {
+                    savePendingStreakChange()
+                }
+            } message: {
+                Text("Changing this setting will start a new streak because your consistency schedule is changing. Your longest streak will be preserved, but your current streak will reset. This cannot be undone.")
             }
             .alert(item: $notice) { notice in
                 Alert(
@@ -248,6 +288,14 @@ private extension SettingsView {
                 iconName: "folderfill"
             )
         }
+    }
+
+    var readingStreaksSettings: some View {
+        ReadingStreakSettingsSection(
+            configuration: streakConfiguration,
+            summaries: streakSummaries,
+            onChange: requestStreakConfigurationChange
+        )
     }
 
     var dataVault: some View {
@@ -433,6 +481,62 @@ private extension SettingsView {
                 message: error.localizedDescription
             )
         }
+    }
+
+    func requestStreakConfigurationChange(
+        _ configuration: ReadingStreakConfiguration,
+        affectedKinds: Set<ReadingStreakKind>
+    ) {
+        let normalized = configuration.normalized()
+        guard normalized != streakConfiguration.normalized(), !affectedKinds.isEmpty else { return }
+
+        pendingStreakChange = PendingReadingStreakSettingsChange(
+            configuration: normalized,
+            affectedKinds: affectedKinds
+        )
+        showStreakResetConfirm = true
+    }
+
+    func savePendingStreakChange() {
+        guard let pendingStreakChange else { return }
+
+        let preferences = ReadingStreakPreferences.fetchOrCreate(in: modelContext)
+        let currentSummaries = ReadingStreakEngine.summaries(
+            sessions: sessions,
+            preferences: preferences
+        )
+        let now = Date()
+
+        for kind in pendingStreakChange.affectedKinds {
+            let currentLongest = currentSummaries.first { $0.kind == kind }?.longest ?? 0
+
+            switch kind {
+            case .daily:
+                break
+            case .weekend:
+                preferences.preservedLongestWeekendStreak = max(
+                    preferences.preservedLongestWeekendStreak,
+                    currentLongest
+                )
+                preferences.weekendCurrentResetAt = now
+            case .weekly:
+                preferences.preservedLongestWeeklyStreak = max(
+                    preferences.preservedLongestWeeklyStreak,
+                    currentLongest
+                )
+                preferences.weeklyCurrentResetAt = now
+            case .monthly:
+                preferences.preservedLongestMonthlyStreak = max(
+                    preferences.preservedLongestMonthlyStreak,
+                    currentLongest
+                )
+                preferences.monthlyCurrentResetAt = now
+            }
+        }
+
+        preferences.applyConfiguration(pendingStreakChange.configuration)
+        self.pendingStreakChange = nil
+        try? modelContext.save()
     }
 
     func deleteGoodreadsBatch(_ batchID: String) {
@@ -851,6 +955,260 @@ private struct LegacyCleanupBookRow: View {
 }
 
 // MARK: - Components
+
+private struct ReadingStreakSettingsSection: View {
+    let configuration: ReadingStreakConfiguration
+    let summaries: [ReadingStreakSummary]
+    let onChange: (ReadingStreakConfiguration, Set<ReadingStreakKind>) -> Void
+
+    private var normalizedConfiguration: ReadingStreakConfiguration {
+        configuration.normalized()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Reading Streaks")
+                .font(.system(size: 20, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+
+            dailyCard
+            weekendCard
+            weeklyCard
+            monthlyCard
+        }
+    }
+
+    private var dailyCard: some View {
+        StreakSettingsCard(
+            title: "Daily Reading Streak",
+            subtitle: "Counts any day with a timed session, manual session, or goal check-in.",
+            iconName: ReadingStreakKind.daily.iconName,
+            summary: summary(for: .daily)
+        )
+    }
+
+    private var weekendCard: some View {
+        StreakSettingsCard(
+            title: "Weekend Reading Streak",
+            subtitle: "Your weekend is complete when both selected consecutive days have reading activity.",
+            iconName: ReadingStreakKind.weekend.iconName,
+            summary: summary(for: .weekend)
+        ) {
+            VStack(alignment: .leading, spacing: 13) {
+                Text("Current Weekend: \(normalizedConfiguration.weekendDay1.fullName) + \(normalizedConfiguration.weekendDay2.fullName)")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundStyle(LGradients.header)
+
+                weekdaySelector(
+                    title: "Weekend Day 1",
+                    selectedDay: normalizedConfiguration.weekendDay1,
+                    enabledDay: nil
+                ) { day in
+                    var next = normalizedConfiguration
+                    next.weekendDay1 = day
+                    next.weekendDay2 = day.nextDay
+                    onChange(next, [.weekend])
+                }
+
+                weekdaySelector(
+                    title: "Weekend Day 2",
+                    selectedDay: normalizedConfiguration.weekendDay2,
+                    enabledDay: normalizedConfiguration.weekendDay1.nextDay
+                ) { day in
+                    guard ReadingStreakConfiguration.areConsecutive(
+                        day1: normalizedConfiguration.weekendDay1,
+                        day2: day
+                    ) else { return }
+                    var next = normalizedConfiguration
+                    next.weekendDay2 = day
+                    onChange(next, [.weekend])
+                }
+            }
+        }
+    }
+
+    private var weeklyCard: some View {
+        StreakSettingsCard(
+            title: "Weekly Reading Streak",
+            subtitle: "Each calendar week counts when you read on your chosen weekday.",
+            iconName: ReadingStreakKind.weekly.iconName,
+            summary: summary(for: .weekly)
+        ) {
+            weekdaySelector(
+                title: "Reading Day",
+                selectedDay: normalizedConfiguration.weeklyReadingDay,
+                enabledDay: nil
+            ) { day in
+                var next = normalizedConfiguration
+                next.weeklyReadingDay = day
+                onChange(next, [.weekly])
+            }
+        }
+    }
+
+    private var monthlyCard: some View {
+        StreakSettingsCard(
+            title: "Monthly Reading Streak",
+            subtitle: "Read on your chosen day each month. Shorter months automatically use their final day.",
+            iconName: ReadingStreakKind.monthly.iconName,
+            summary: summary(for: .monthly)
+        ) {
+            VStack(alignment: .leading, spacing: 9) {
+                Text("Reading Day of Month")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
+
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 7),
+                    spacing: 7
+                ) {
+                    ForEach(1...31, id: \.self) { day in
+                        numberOption(
+                            value: day,
+                            isSelected: normalizedConfiguration.monthlyReadingDay == day
+                        ) {
+                            var next = normalizedConfiguration
+                            next.monthlyReadingDay = day
+                            onChange(next, [.monthly])
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func summary(for kind: ReadingStreakKind) -> ReadingStreakSummary {
+        summaries.first { $0.kind == kind }
+        ?? ReadingStreakSummary(kind: kind, current: 0, longest: 0, detail: "")
+    }
+
+    private func weekdaySelector(
+        title: String,
+        selectedDay: ReadingWeekday,
+        enabledDay: ReadingWeekday?,
+        action: @escaping (ReadingWeekday) -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text(title)
+                .font(.system(size: 11, weight: .black, design: .rounded))
+                .foregroundStyle(LColors.textSecondary)
+
+            HStack(spacing: 6) {
+                ForEach(ReadingWeekday.allCases) { day in
+                    let isEnabled = enabledDay == nil || enabledDay == day
+
+                    Button {
+                        guard isEnabled else { return }
+                        action(day)
+                    } label: {
+                        Text(day.shortName)
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .foregroundStyle(selectedDay == day ? LColors.bg : LColors.textPrimary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(
+                                        selectedDay == day
+                                        ? AnyShapeStyle(LGradients.header)
+                                        : AnyShapeStyle(LColors.glassSurface)
+                                    )
+                            )
+                            .overlay(
+                                Capsule(style: .continuous)
+                                    .strokeBorder(
+                                        isEnabled ? LColors.glassBorder : Color.white.opacity(0.06),
+                                        lineWidth: 1
+                                    )
+                            )
+                            .opacity(isEnabled ? 1 : 0.32)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!isEnabled)
+                }
+            }
+        }
+    }
+
+    private func numberOption(value: Int, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text("\(value)")
+                .font(.system(size: 11, weight: .black, design: .rounded))
+                .foregroundStyle(isSelected ? LColors.bg : LColors.textPrimary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 32)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(isSelected ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassSurface))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(isSelected ? Color.white.opacity(0.16) : LColors.glassBorder, lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct StreakSettingsCard<Content: View>: View {
+    let title: String
+    let subtitle: String
+    let iconName: String
+    let summary: ReadingStreakSummary
+    let content: Content
+
+    init(
+        title: String,
+        subtitle: String,
+        iconName: String,
+        summary: ReadingStreakSummary,
+        @ViewBuilder content: () -> Content = { EmptyView() }
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.iconName = iconName
+        self.summary = summary
+        self.content = content()
+    }
+
+    var body: some View {
+        GlassCard(cornerRadius: 20, padding: 16) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(iconName)
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 18, height: 18)
+                        .foregroundStyle(LGradients.header)
+                        .frame(width: 38, height: 38)
+                        .background(Circle().fill(Color.white.opacity(0.06)))
+                        .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1))
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title)
+                            .font(.system(size: 16, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+
+                        Text(subtitle)
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(LColors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+
+                HStack(spacing: 10) {
+                    SettingsSignalPill(title: "Current", value: "\(summary.current)")
+                    SettingsSignalPill(title: "Longest", value: "\(summary.longest)")
+                }
+
+                content
+            }
+        }
+    }
+}
 
 private struct SettingsSignalPill: View {
     let title: String

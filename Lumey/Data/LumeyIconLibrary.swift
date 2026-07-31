@@ -97,12 +97,29 @@ enum LumeyIconLibrary {
 
     static let assetIcons: [LumeyIconItem] = [
 
+        // Numbers
+        .init(name: "0wavy",            source: .asset, category: "Numbers"),
+        .init(name: "1wavy",            source: .asset, category: "Numbers"),
+        .init(name: "2wavy",            source: .asset, category: "Numbers"),
+        .init(name: "3wavy",            source: .asset, category: "Numbers"),
+        .init(name: "4wavy",            source: .asset, category: "Numbers"),
+        .init(name: "5wavy",            source: .asset, category: "Numbers"),
+        .init(name: "6wavy",            source: .asset, category: "Numbers"),
+        .init(name: "7wavy",            source: .asset, category: "Numbers"),
+        .init(name: "8wavy",            source: .asset, category: "Numbers"),
+        .init(name: "9wavy",            source: .asset, category: "Numbers"),
+
         // Actions
         .init(name: "addwavy",          source: .asset, category: "Actions"),
+        .init(name: "arrowdownwavy",    source: .asset, category: "Actions"),
+        .init(name: "arrowleftwavy",    source: .asset, category: "Actions"),
+        .init(name: "arrowrightwavy",   source: .asset, category: "Actions"),
+        .init(name: "arrowupwavy",      source: .asset, category: "Actions"),
         .init(name: "copy",             source: .asset, category: "Actions"),
         .init(name: "downloadfill",      source: .asset, category: "Actions"),
         .init(name: "exit",             source: .asset, category: "Actions"),
         .init(name: "exportfill",       source: .asset, category: "Actions"),
+        .init(name: "minuswavy",        source: .asset, category: "Actions"),
         .init(name: "pausewavy",        source: .asset, category: "Actions"),
         .init(name: "play",             source: .asset, category: "Actions"),
         .init(name: "playwavy",         source: .asset, category: "Actions"),
@@ -116,13 +133,21 @@ enum LumeyIconLibrary {
         .init(name: "tap",              source: .asset, category: "Actions"),
         .init(name: "togglesettings",   source: .asset, category: "Actions"),
         .init(name: "trash",            source: .asset, category: "Actions"),
+        .init(name: "upload",           source: .asset, category: "Actions"),
         .init(name: "xmarkwavy",        source: .asset, category: "Actions"),
 
         // Astrology & Spirituality
+        .init(name: "3candles",         source: .asset, category: "Spirituality"),
+        .init(name: "cauldron",         source: .asset, category: "Spirituality"),
         .init(name: "crystalball",      source: .asset, category: "Spirituality"),
         .init(name: "grimoire",         source: .asset, category: "Spirituality"),
+        .init(name: "lovelixir",        source: .asset, category: "Spirituality"),
+        .init(name: "moonstar",         source: .asset, category: "Spirituality"),
         .init(name: "moonzs",           source: .asset, category: "Spirituality"),
         .init(name: "planet",           source: .asset, category: "Spirituality"),
+        .init(name: "potionbottle",     source: .asset, category: "Spirituality"),
+        .init(name: "seefuture",        source: .asset, category: "Spirituality"),
+        .init(name: "sparklespotion",   source: .asset, category: "Spirituality"),
         .init(name: "tarot",            source: .asset, category: "Spirituality"),
         .init(name: "tarotcards",       source: .asset, category: "Spirituality"),
         .init(name: "wand",             source: .asset, category: "Spirituality"),
@@ -154,6 +179,7 @@ enum LumeyIconLibrary {
         .init(name: "heartblockscal",   source: .asset, category: "Care"),
         .init(name: "heartbox",         source: .asset, category: "Care"),
         .init(name: "heartcircle",      source: .asset, category: "Care"),
+        .init(name: "hearteye",         source: .asset, category: "Care"),
         .init(name: "heartfill",        source: .asset, category: "Care"),
         .init(name: "hearthand",        source: .asset, category: "Care"),
         .init(name: "heartlinescal",    source: .asset, category: "Care"),
@@ -163,7 +189,10 @@ enum LumeyIconLibrary {
         .init(name: "heartsum",         source: .asset, category: "Care"),
         .init(name: "hearttag",         source: .asset, category: "Care"),
         .init(name: "heartwavy",        source: .asset, category: "Care"),
+        .init(name: "lovebandaid",      source: .asset, category: "Care"),
         .init(name: "lovecards",        source: .asset, category: "Care"),
+        .init(name: "lovepills",        source: .asset, category: "Care"),
+        .init(name: "lovetarget",       source: .asset, category: "Care"),
         .init(name: "paperhearts",      source: .asset, category: "Care"),
         .init(name: "plusheart",        source: .asset, category: "Care"),
         .init(name: "starshand",        source: .asset, category: "Care"),
@@ -172,17 +201,21 @@ enum LumeyIconLibrary {
         .init(name: "lovegoal",         source: .asset, category: "Care"),
 
         // Celebration
+        .init(name: "batcake",          source: .asset, category: "Celebration"),
         .init(name: "bdaycake",         source: .asset, category: "Celebration"),
         .init(name: "cake",             source: .asset, category: "Celebration"),
         .init(name: "dotcake",          source: .asset, category: "Celebration"),
+        .init(name: "goodiebag",        source: .asset, category: "Celebration"),
         .init(name: "heartcal",         source: .asset, category: "Celebration"),
         .init(name: "loveairballoon",   source: .asset, category: "Celebration"),
         .init(name: "partyinvitation",  source: .asset, category: "Celebration"),
         .init(name: "starballoons",     source: .asset, category: "Celebration"),
+        .init(name: "starryballoons",   source: .asset, category: "Celebration"),
 
         // Communication & Social
         .init(name: "bellfill",         source: .asset, category: "Reminders"),
         .init(name: "bells",            source: .asset, category: "Reminders"),
+        .init(name: "batmail",          source: .asset, category: "Communication"),
         .init(name: "chatbubble",       source: .asset, category: "Communication"),
         .init(name: "bookchat",         source: .asset, category: "Communication"),
         .init(name: "lovechat",         source: .asset, category: "Communication"),
@@ -216,29 +249,36 @@ enum LumeyIconLibrary {
         .init(name: "mailbox",          source: .asset, category: "Communication"),
         .init(name: "micfill",          source: .asset, category: "Communication"),
         .init(name: "profilewavy",      source: .asset, category: "Profile"),
+        .init(name: "sendbutton",       source: .asset, category: "Communication"),
         .init(name: "socialeye",        source: .asset, category: "Social"),
         .init(name: "socialicon",       source: .asset, category: "Social"),
         .init(name: "starphone",        source: .asset, category: "Communication"),
         .init(name: "threads",          source: .asset, category: "Social"),
 
         // Developer & Tech
+        .init(name: "bugpillar",        source: .asset, category: "Developer"),
         .init(name: "buggy",            source: .asset, category: "Developer"),
         .init(name: "cellphone",        source: .asset, category: "Tech"),
+        .init(name: "cloudsync",        source: .asset, category: "Tech"),
         .init(name: "codewindow",       source: .asset, category: "Developer"),
         .init(name: "device",           source: .asset, category: "Tech"),
         .init(name: "devwavy",          source: .asset, category: "Developer"),
         .init(name: "lovelaptop",       source: .asset, category: "Tech"),
+        .init(name: "tools",            source: .asset, category: "Developer"),
+        .init(name: "toolsfilled",      source: .asset, category: "Developer"),
 
         // Documents & Writing
         .init(name: "archivefill",      source: .asset, category: "Documents"),
         .init(name: "blankpages",       source: .asset, category: "Documents"),
         .init(name: "bulletlovenote",   source: .asset, category: "Documents"),
         .init(name: "cardlines",        source: .asset, category: "Documents"),
+        .init(name: "decksparkle",      source: .asset, category: "Documents"),
         .init(name: "document",         source: .asset, category: "Documents"),
         .init(name: "filebin",          source: .asset, category: "Documents"),
         .init(name: "files",            source: .asset, category: "Documents"),
         .init(name: "folderfill",       source: .asset, category: "Documents"),
         .init(name: "foldertreefill",   source: .asset, category: "Documents"),
+        .init(name: "image",            source: .asset, category: "Documents"),
         .init(name: "imagefill",        source: .asset, category: "Documents"),
         .init(name: "imagesign",        source: .asset, category: "Documents"),
         .init(name: "linedpages",       source: .asset, category: "Documents"),
@@ -246,7 +286,6 @@ enum LumeyIconLibrary {
         .init(name: "linenotepage",     source: .asset, category: "Notes"),
         .init(name: "linescard",        source: .asset, category: "Documents"),
         .init(name: "linespencil",      source: .asset, category: "Writing"),
-        .init(name: "linespencilfill",  source: .asset, category: "Writing"),
         .init(name: "lovedocs",         source: .asset, category: "Documents"),
         .init(name: "lovedocslines",    source: .asset, category: "Documents"),
         .init(name: "lovedocument",     source: .asset, category: "Documents"),
@@ -283,7 +322,13 @@ enum LumeyIconLibrary {
         .init(name: "loveflame",        source: .asset, category: "Energy"),
         .init(name: "sparkbolt",        source: .asset, category: "Energy"),
 
+        // Entertainment
+        .init(name: "movietix",         source: .asset, category: "Entertainment"),
+
         // Favorites & Stars
+        .init(name: "galaxy",           source: .asset, category: "Favorites"),
+        .init(name: "galaxysparkle",    source: .asset, category: "Favorites"),
+        .init(name: "loveflag",         source: .asset, category: "Favorites"),
         .init(name: "starcal",          source: .asset, category: "Favorites"),
         .init(name: "starcard",         source: .asset, category: "Favorites"),
         .init(name: "starchart",        source: .asset, category: "Favorites"),
@@ -308,6 +353,7 @@ enum LumeyIconLibrary {
         .init(name: "starstack",        source: .asset, category: "Favorites"),
         .init(name: "circlestarwavy",   source: .asset, category: "Favorites"),
         .init(name: "achievement",      source: .asset, category: "Favorites"),
+        .init(name: "sparklesstarflag", source: .asset, category: "Favorites"),
 
         // Food & Drink
         .init(name: "bottle",           source: .asset, category: "Hydration"),
@@ -342,6 +388,8 @@ enum LumeyIconLibrary {
         .init(name: "rxbottle",         source: .asset, category: "Health"),
         .init(name: "stethoscope",      source: .asset, category: "Health"),
         .init(name: "tooth",            source: .asset, category: "Health"),
+        .init(name: "toothhand",        source: .asset, category: "Health"),
+        .init(name: "toothsparklehands", source: .asset, category: "Health"),
         .init(name: "vet",              source: .asset, category: "Pets"),
         .init(name: "zenrocks",         source: .asset, category: "Wellness"),
 
@@ -373,6 +421,11 @@ enum LumeyIconLibrary {
 
         // Journal & Reading
         .init(name: "blankpages",       source: .asset, category: "Reading"),
+        .init(name: "bcoll1",           source: .asset, category: "Reading"),
+        .init(name: "bcoll2",           source: .asset, category: "Reading"),
+        .init(name: "bcoll3",           source: .asset, category: "Reading"),
+        .init(name: "bcoll4",           source: .asset, category: "Reading"),
+        .init(name: "bcoll5",           source: .asset, category: "Reading"),
         .init(name: "books",            source: .asset, category: "Reading"),
         .init(name: "bookstack",        source: .asset, category: "Reading"),
         .init(name: "bookstand",        source: .asset, category: "Reading"),
@@ -394,6 +447,7 @@ enum LumeyIconLibrary {
 
         // Mind & Wellness
         .init(name: "balancewavy",      source: .asset, category: "Wellness"),
+        .init(name: "beardoll",         source: .asset, category: "Mood"),
         .init(name: "cloudmind",        source: .asset, category: "Mind"),
         .init(name: "spiralmind",       source: .asset, category: "Mind"),
         .init(name: "xsmile",           source: .asset, category: "Mood"),
@@ -418,11 +472,15 @@ enum LumeyIconLibrary {
         .init(name: "eye",              source: .asset, category: "Navigation"),
         .init(name: "eyeslash",         source: .asset, category: "Navigation"),
         .init(name: "incomingurl",      source: .asset, category: "Navigation"),
+        .init(name: "indicator",        source: .asset, category: "Navigation"),
         .init(name: "leftbutton",       source: .asset, category: "Navigation"),
+        .init(name: "questionwavy",     source: .asset, category: "Navigation"),
         .init(name: "rightbutton",      source: .asset, category: "Navigation"),
+        .init(name: "settingswavy",     source: .asset, category: "Settings"),
         .init(name: "slider",           source: .asset, category: "Settings"),
 
         // Pets
+        .init(name: "bat",              source: .asset, category: "Pets"),
         .init(name: "catbowl",          source: .asset, category: "Pets"),
         .init(name: "catface",          source: .asset, category: "Pets"),
         .init(name: "catsleep",         source: .asset, category: "Pets"),
@@ -430,6 +488,7 @@ enum LumeyIconLibrary {
         .init(name: "deadcat",          source: .asset, category: "Pets"),
         .init(name: "dogface",          source: .asset, category: "Pets"),
         .init(name: "dogstore",         source: .asset, category: "Pets"),
+        .init(name: "ghostie",          source: .asset, category: "Pets"),
         .init(name: "handbuggy",        source: .asset, category: "Pets"),
         .init(name: "kennel",           source: .asset, category: "Pets"),
         .init(name: "paw",              source: .asset, category: "Pets"),
@@ -441,6 +500,7 @@ enum LumeyIconLibrary {
 
         // Rewards & Goals
         .init(name: "goalsparkle",      source: .asset, category: "Goals"),
+        .init(name: "goaltarget",       source: .asset, category: "Goals"),
         .init(name: "award",            source: .asset, category: "Rewards"),
         .init(name: "baraward",         source: .asset, category: "Rewards"),
         .init(name: "levelup",          source: .asset, category: "Rewards"),
@@ -452,9 +512,13 @@ enum LumeyIconLibrary {
         .init(name: "startrophy",       source: .asset, category: "Rewards"),
         .init(name: "trophycircle",     source: .asset, category: "Rewards"),
         .init(name: "trophystar",       source: .asset, category: "Rewards"),
+        .init(name: "puzzlehand",       source: .asset, category: "Goals"),
+        .init(name: "puzzlepiece",      source: .asset, category: "Goals"),
 
         // Schedule & Calendar
+        .init(name: "batcal",           source: .asset, category: "Schedule"),
         .init(name: "blackcal",         source: .asset, category: "Schedule"),
+        .init(name: "boocal",           source: .asset, category: "Schedule"),
         .init(name: "calheart",         source: .asset, category: "Schedule"),
         .init(name: "calhearts",        source: .asset, category: "Schedule"),
         .init(name: "circlescal",       source: .asset, category: "Schedule"),
@@ -463,6 +527,7 @@ enum LumeyIconLibrary {
         .init(name: "lovecalendar",     source: .asset, category: "Schedule"),
         .init(name: "lovedate",         source: .asset, category: "Schedule"),
         .init(name: "numcal",           source: .asset, category: "Schedule"),
+        .init(name: "ringstarcal",      source: .asset, category: "Schedule"),
         .init(name: "starcalrings",     source: .asset, category: "Schedule"),
         .init(name: "xoxocal",          source: .asset, category: "Schedule"),
 
@@ -494,17 +559,22 @@ enum LumeyIconLibrary {
         .init(name: "walletfill",       source: .asset, category: "Money"),
 
         // Sparkles & Whimsy
+        .init(name: "cuteslippers",      source: .asset, category: "Whimsy"),
+        .init(name: "seedling",         source: .asset, category: "Nature"),
         .init(name: "sparkle",          source: .asset, category: "Whimsy"),
         .init(name: "sparklebrush",     source: .asset, category: "Whimsy"),
         .init(name: "sparklecircle",    source: .asset, category: "Whimsy"),
+        .init(name: "sparkletimeglass", source: .asset, category: "Whimsy"),
         .init(name: "starshield",       source: .asset, category: "Whimsy"),
         .init(name: "starry",           source: .asset, category: "Whimsy"),
 
         // Stats & Charts
+        .init(name: "chartboard",       source: .asset, category: "Stats"),
         .init(name: "chartcircle",      source: .asset, category: "Stats"),
         .init(name: "infinity",         source: .asset, category: "Stats"),
 
         // Tags & Labels
+        .init(name: "circledothashtag", source: .asset, category: "Tags"),
         .init(name: "tagsparkle",       source: .asset, category: "Tags"),
         .init(name: "tagstar",          source: .asset, category: "Tags"),
         .init(name: "lovetag",          source: .asset, category: "Tags"),
@@ -543,7 +613,7 @@ enum LumeyIconLibrary {
         .init(name: "infowavy",         source: .asset, category: "Misc"),
         .init(name: "listcircle",       source: .asset, category: "Tasks"),
         .init(name: "objects",          source: .asset, category: "Misc"),
-        .init(name: "profilewavy",      source: .asset, category: "Profile"),
+        .init(name: "tombstone",        source: .asset, category: "Misc"),
     ]
 
     // MARK: - Accessors

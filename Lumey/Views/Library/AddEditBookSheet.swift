@@ -9,6 +9,7 @@ import PhotosUI
 
 struct AddEditBookSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
 
     @Query(sort: \ReadingLibraryCustomFilter.sortIndex)
     private var customFilters: [ReadingLibraryCustomFilter]
@@ -394,6 +395,12 @@ struct AddEditBookSheet: View {
         }
         
         onSave(targetBook)
+        ReadingXPService.awardBookStatusChange(
+            book: targetBook,
+            previousStatus: previousStatus,
+            newStatus: targetBook.status,
+            modelContext: modelContext
+        )
         dismiss()
     }
 }

@@ -242,6 +242,7 @@ final class ChallengeManager: ObservableObject {
 
         // Award points to user profile if it exists
         awardPoints(points: challenge.points, userID: entry.userID)
+        ReadingXPService.awardChallengeApproval(entry: entry, challenge: challenge, modelContext: modelContext)
 
         try? modelContext.save()
 

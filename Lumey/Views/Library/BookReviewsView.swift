@@ -536,6 +536,7 @@ struct BookReviewEditorSheet: View {
                 book: book
             )
             modelContext.insert(newReview)
+            ReadingXPService.awardBookReview(newReview, modelContext: modelContext)
         }
 
         dismiss()

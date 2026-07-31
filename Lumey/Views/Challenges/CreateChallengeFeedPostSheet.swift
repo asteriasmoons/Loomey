@@ -9,6 +9,7 @@ import PhotosUI
 
 struct CreateChallengeFeedPostSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
 
     let currentUserID: String
     let currentUsername: String
@@ -646,6 +647,7 @@ struct CreateChallengeFeedPostSheet: View {
             )
 
             onPostCreated?(created)
+            ReadingXPService.awardChallengeFeedPost(created, modelContext: modelContext)
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
