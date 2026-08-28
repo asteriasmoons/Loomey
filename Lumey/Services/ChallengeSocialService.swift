@@ -212,6 +212,44 @@ final class ChallengeSocialService {
         return decoded.photoURL
     }
 
+    func uploadSubmissionPhoto(imageData: Data) async throws -> String {
+        let url = try makeURL("/api/lumey/challenges/submissions/upload-photo")
+
+        guard let uiImage = UIImage(data: imageData),
+              let compressed = uiImage.jpegData(compressionQuality: 0.72) else {
+            throw ChallengeSocialServiceError.invalidResponse
+        }
+
+        let boundary = UUID().uuidString
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 120
+        request.setValue(
+            "multipart/form-data; boundary=\(boundary)",
+            forHTTPHeaderField: "Content-Type"
+        )
+
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"photo\"; filename=\"challenge-proof.jpg\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        body.append(compressed)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+        request.httpBody = body
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response: response, data: data)
+
+        let decoded = try JSONDecoder.challengeDecoder.decode(
+            ChallengeUploadFeedPhotoResponseDTO.self,
+            from: data
+        )
+
+        return decoded.photoURL
+    }
+
     // MARK: - Feed Item Likes
 
     func toggleFeedItemLike(
@@ -651,9 +689,14 @@ struct ChallengeSubmissionDTO: Codable, Identifiable {
 
     let submissionNote: String
     let proofSummary: String
+    var photoURL: String? = nil
 
     let validationStatus: String
     let validationMessage: String?
+    var photoValidationStatus: String? = nil
+    var photoValidationMessage: String? = nil
+    var photoValidationConfidence: Double? = nil
+    var photoValidationJSON: String? = nil
 
     let submittedDate: Date?
     let approvedDate: Date?
@@ -679,8 +722,13 @@ struct ChallengeSubmissionDTO: Codable, Identifiable {
         case linkedReadingListIDs
         case submissionNote
         case proofSummary
+        case photoURL
         case validationStatus
         case validationMessage
+        case photoValidationStatus
+        case photoValidationMessage
+        case photoValidationConfidence
+        case photoValidationJSON
         case submittedDate
         case approvedDate
         case cycleID

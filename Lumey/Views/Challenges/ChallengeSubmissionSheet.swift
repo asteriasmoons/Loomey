@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct ChallengeSubmissionSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -40,6 +41,10 @@ struct ChallengeSubmissionSheet: View {
     @State private var resultSubmission: ChallengeSubmission?
     @State private var bookPageIndex = 0
     @State private var visibleSessionCount = 6
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var selectedPhotoData: Data?
+    @State private var photoErrorMessage: String?
+    @State private var showPhotoError = false
 
     private let bookPageSize = 8
 
@@ -48,7 +53,7 @@ struct ChallengeSubmissionSheet: View {
     }
 
     private var needsBooks: Bool {
-        [.bookCompletion, .genre, .series, .author, .seasonalTheme, .bookLength].contains(challenge.validationType)
+        [.bookCompletion, .genre, .rating, .series, .author, .seasonalTheme, .bookLength].contains(challenge.validationType)
     }
 
     private var needsSessions: Bool {
@@ -110,6 +115,8 @@ struct ChallengeSubmissionSheet: View {
                         }
 
                         if !isSubmissionLocked {
+                            photoProofSection
+
                             proofSummarySection
                         }
 
@@ -130,9 +137,19 @@ struct ChallengeSubmissionSheet: View {
                         .scaleEffect(1.4)
                     Text("Validating...")
                         .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
+        }
+        .onChange(of: selectedPhotoItem) { _, newItem in
+            Task {
+                await loadPhoto(from: newItem)
+            }
+        }
+        .alert("Photo Proof", isPresented: $showPhotoError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(photoErrorMessage ?? "Lumey could not use this photo.")
         }
         .adaptivePresentation(isPresented: $showResult, useFullScreenCover: horizontalSizeClass == .regular) {
             if let submission = resultSubmission {
@@ -150,7 +167,7 @@ struct ChallengeSubmissionSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Submit Entry")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text(challenge.title)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -167,14 +184,14 @@ struct ChallengeSubmissionSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -187,7 +204,7 @@ struct ChallengeSubmissionSheet: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
@@ -196,19 +213,19 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Challenge Info
 
     private var challengeInfoCard: some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .tertiary) {
             HStack(spacing: 12) {
                 Image(challenge.iconName)
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 24, height: 24)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(challenge.requirementText)
                         .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text(entry.displayDaysRemaining)
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -221,7 +238,7 @@ struct ChallengeSubmissionSheet: View {
     }
 
     private var approvedLockCard: some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .elevated) {
             HStack(alignment: .top, spacing: 10) {
                 Image("checkwavy")
                     .renderingMode(.template)
@@ -233,7 +250,7 @@ struct ChallengeSubmissionSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Submission Approved")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text(challenge.isRecurring ? "This cycle is locked to prevent accidental resubmission. You can join again when the next cycle begins." : "This challenge is locked to prevent accidental resubmission.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -250,21 +267,21 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Book Picker
 
     private var bookPickerSection: some View {
-        pickerSection(title: "Link Books", icon: "flatbook") {
-            let eligible = allBooks.filter { !$0.isArchived }
+        pickerSection(title: bookPickerTitle, icon: "flatbook") {
+            let eligible = eligibleBookProofs
             let pageCount = max(1, (eligible.count + bookPageSize - 1) / bookPageSize)
             let clampedPageIndex = min(bookPageIndex, pageCount - 1)
             let startIndex = clampedPageIndex * bookPageSize
             let visibleBooks = Array(eligible.dropFirst(startIndex).prefix(bookPageSize))
 
             if selectedBookIDs.isEmpty && !eligible.isEmpty {
-                Text("Tap to select books")
+                Text(bookPickerPrompt)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
             }
 
             if eligible.isEmpty {
-                Text("No books found")
+                Text(emptyBookPickerMessage)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
             }
@@ -272,7 +289,7 @@ struct ChallengeSubmissionSheet: View {
             ForEach(visibleBooks) { book in
                 let isSelected = selectedBookIDs.contains(book.id)
                 Button {
-                    toggleSelection(id: book.id, in: &selectedBookIDs)
+                    toggleBookSelection(book.id)
                 } label: {
                     HStack(spacing: 10) {
                         Image(isSelected ? "checkwavy" : "flatbook")
@@ -285,9 +302,9 @@ struct ChallengeSubmissionSheet: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(book.displayTitle)
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                                 .lineLimit(1)
-                            Text("\(book.author) · \(book.totalPages)p · \(book.status.rawValue)")
+                            Text(bookProofDetail(for: book))
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
                                 .foregroundStyle(LColors.textSecondary)
                                 .lineLimit(1)
@@ -307,6 +324,51 @@ struct ChallengeSubmissionSheet: View {
                 )
             }
         }
+    }
+
+    private var eligibleBookProofs: [Book] {
+        let activeBooks = allBooks.filter { !$0.isArchived }
+
+        guard challenge.validationType == .rating else {
+            return activeBooks
+        }
+
+        if let requiredRating = challenge.requiredRating {
+            return activeBooks.filter { $0.rating >= Double(requiredRating) }
+        }
+
+        return activeBooks.filter { $0.rating > 0 }
+    }
+
+    private var bookPickerTitle: String {
+        challenge.validationType == .rating ? "Pick Rated Book" : "Link Books"
+    }
+
+    private var bookPickerPrompt: String {
+        if challenge.validationType == .rating, let requiredRating = challenge.requiredRating {
+            return "Pick a book rated \(requiredRating) stars"
+        }
+
+        return challenge.validationType == .rating ? "Pick rated books" : "Tap to select books"
+    }
+
+    private var emptyBookPickerMessage: String {
+        if challenge.validationType == .rating, let requiredRating = challenge.requiredRating {
+            return "No books rated \(requiredRating) stars found"
+        }
+
+        return challenge.validationType == .rating ? "No rated books found" : "No books found"
+    }
+
+    private func bookProofDetail(for book: Book) -> String {
+        let author = book.author.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayAuthor = author.isEmpty ? "Unknown Author" : author
+
+        guard challenge.validationType == .rating else {
+            return "\(displayAuthor) · \(book.totalPages)p · \(book.status.rawValue)"
+        }
+
+        return "\(displayAuthor) · \(formattedRating(book.rating)) stars · \(book.status.rawValue)"
     }
 
     private func bookPaginationControls(pageIndex: Int, pageCount: Int) -> some View {
@@ -352,7 +414,7 @@ struct ChallengeSubmissionSheet: View {
                     .overlay(
                         Circle()
                             .strokeBorder(
-                                isEnabled ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassBorder),
+                                isEnabled ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.glassBorder),
                                 lineWidth: 1
                             )
                     )
@@ -385,7 +447,7 @@ struct ChallengeSubmissionSheet: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(session.linkedBookTitle.isEmpty ? "Reading Session" : session.linkedBookTitle)
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                                 .lineLimit(1)
                             Text("\(session.durationMinutes) min · \(session.pagesRead)p · \(session.date.formatted(date: .abbreviated, time: .omitted))")
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -405,7 +467,7 @@ struct ChallengeSubmissionSheet: View {
                 } label: {
                     Text("Load More Sessions")
                         .font(.system(size: 12, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(
@@ -414,7 +476,7 @@ struct ChallengeSubmissionSheet: View {
                         )
                         .overlay(
                             Capsule(style: .continuous)
-                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                         )
                 }
                 .buttonStyle(.plain)
@@ -449,7 +511,7 @@ struct ChallengeSubmissionSheet: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(review.title.isEmpty ? "Untitled Review" : review.title)
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                                 .lineLimit(1)
                             let wordCount = review.content.split(separator: " ").count
                             Text("\(wordCount) words · \(review.dateCreated.formatted(date: .abbreviated, time: .omitted))")
@@ -486,7 +548,7 @@ struct ChallengeSubmissionSheet: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(list.displayTitle)
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                                 .lineLimit(1)
                             Text("\(list.bookCount) books")
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -505,11 +567,11 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Submission Note
 
     private var submissionNoteSection: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Submission Note")
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 if challenge.requiresAIValidation {
                     Text("Describe your experience — this helps us validate your submission.")
@@ -533,6 +595,145 @@ struct ChallengeSubmissionSheet: View {
                     )
             }
         }
+    }
+
+    // MARK: - Photo Proof
+
+    private var photoProofSection: some View {
+        GlassCard(variant: .primary) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image("image")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 14, height: 14)
+                        .foregroundStyle(LColors.accents.secondary)
+
+                    Text("Photo Proof")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundStyle(LColors.cardTitle)
+
+                    Spacer()
+
+                    Text("OPTIONAL")
+                        .font(.system(size: 8, weight: .black, design: .rounded))
+                        .foregroundStyle(LColors.cardTitle)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(LColors.glassSurface)
+                                .overlay(
+                                    Capsule(style: .continuous)
+                                        .strokeBorder(LColors.accents.secondary, lineWidth: 1)
+                                )
+                        )
+                }
+
+                Text("Attach a photo when you want Lumey to validate real-world proof for this challenge.")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let previewPhotoData = selectedPhotoData,
+                   let uiImage = UIImage(data: previewPhotoData) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 190)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
+                            )
+
+                        HStack(spacing: 10) {
+                            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                                proofPhotoActionButton(icon: "image", title: "Change Photo")
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                selectedPhotoItem = nil
+                                selectedPhotoData = nil
+                            } label: {
+                                proofPhotoActionButton(icon: "trash", title: "Remove")
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                } else {
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                        VStack(spacing: 12) {
+                            Image("upload")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 28, height: 28)
+                                .foregroundStyle(LColors.accents.special)
+                                .frame(width: 66, height: 66)
+                                .background(
+                                    Circle()
+                                        .fill(LColors.glassSurface)
+                                        .overlay(
+                                            Circle()
+                                                .strokeBorder(LColors.accents.special, lineWidth: 1)
+                                        )
+                                )
+
+                            VStack(spacing: 4) {
+                                Text("Add Photo Proof")
+                                    .font(.system(size: 15, weight: .black, design: .rounded))
+                                    .foregroundStyle(LColors.cardTitle)
+
+                                Text("Use this when a photo should prove your challenge entry.")
+                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(LColors.textSecondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 22)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .fill(LColors.surface.nested)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                        .strokeBorder(LColors.border.nested, lineWidth: 1)
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func proofPhotoActionButton(icon: String, title: String) -> some View {
+        HStack(spacing: 7) {
+            Image(icon)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 13, height: 13)
+
+            Text(title)
+                .font(.system(size: 11, weight: .black, design: .rounded))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 13)
+        .padding(.vertical, 9)
+        .background(
+            Capsule(style: .continuous)
+                .fill(LColors.glassSurface)
+                .overlay(
+                    Capsule(style: .continuous)
+                        .strokeBorder(LColors.accents.primary, lineWidth: 1)
+                )
+        )
     }
 
     // MARK: - Proof Summary
@@ -576,7 +777,7 @@ struct ChallengeSubmissionSheet: View {
             .padding(.vertical, 14)
             .background(
                 Capsule(style: .continuous)
-                    .fill(LGradients.header)
+                    .fill(LGradients.blue)
             )
             .shadow(color: LColors.gradientPurple.opacity(0.3), radius: 12, y: 6)
         }
@@ -592,7 +793,7 @@ struct ChallengeSubmissionSheet: View {
         icon: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        GlassCard {
+        GlassCard(variant: .secondary) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
                     Image(icon)
@@ -600,11 +801,11 @@ struct ChallengeSubmissionSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
 
                     Text(title)
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
 
                 content()
@@ -615,6 +816,15 @@ struct ChallengeSubmissionSheet: View {
 
     // MARK: - Toggle Selection
 
+    private func toggleBookSelection(_ id: UUID) {
+        if challenge.validationType == .rating, challenge.requiredBookCount == 1 {
+            selectedBookIDs = selectedBookIDs.contains(id) ? [] : [id]
+            return
+        }
+
+        toggleSelection(id: id, in: &selectedBookIDs)
+    }
+
     private func toggleSelection(id: UUID, in array: inout [UUID]) {
         if let index = array.firstIndex(of: id) {
             array.remove(at: index)
@@ -623,7 +833,29 @@ struct ChallengeSubmissionSheet: View {
         }
     }
 
+    private func formattedRating(_ rating: Double) -> String {
+        if rating.rounded(.down) == rating {
+            return "\(Int(rating))"
+        }
+
+        return String(format: "%.1f", rating)
+    }
+
     // MARK: - Submit
+
+    @MainActor
+    private func loadPhoto(from item: PhotosPickerItem?) async {
+        guard let item else { return }
+
+        do {
+            if let data = try await item.loadTransferable(type: Data.self) {
+                selectedPhotoData = data
+            }
+        } catch {
+            photoErrorMessage = "Lumey could not load this photo."
+            showPhotoError = true
+        }
+    }
 
     private func submitEntry() {
         guard !isSubmissionLocked else { return }
@@ -640,8 +872,13 @@ struct ChallengeSubmissionSheet: View {
         let selectedBooks = allBooks.filter { selectedBookIDs.contains($0.id) }
         let selectedSessions = allSessions.filter { selectedSessionIDs.contains($0.id) }
 
-        let bookProofParts = selectedBooks.map {
-            "\($0.title) by \($0.author)"
+        let bookProofParts = selectedBooks.map { book in
+            let base = "\(book.title) by \(book.author)"
+            guard challenge.validationType == .rating, book.rating > 0 else {
+                return base
+            }
+
+            return "\(base) • \(formattedRating(book.rating)) stars"
         }
 
         let sessionProofParts = selectedSessions.map { session in
@@ -666,47 +903,73 @@ struct ChallengeSubmissionSheet: View {
 
         print("Proof Summary Being Saved:", proofSummary)
 
-        let submission = ChallengeSubmission(
-            challengeID: challenge.id,
-            entryID: entry.id,
-            userID: currentUserID,
-            username: appState.currentUser?.displayName ?? "Reader",
-            challengeTitle: challenge.title,
-            linkedBookIDs: selectedBookIDs,
-            linkedSessionIDs: selectedSessionIDs,
-            linkedReviewIDs: selectedReviewIDs,
-            linkedReadingListIDs: selectedReadingListIDs,
-            submissionNote: submissionNote,
-            proofSummary: proofSummary,
-            cycleID: entry.cycleID,
-            cycleStartDate: entry.startDate,
-            cycleEndDate: entry.endDate
-        )
+        let photoData = selectedPhotoData
 
-        print("SUBMISSION CREATED:")
-        print("Submission Linked Session IDs:", submission.linkedSessionIDs)
-        print("Submission Proof Summary:", submission.proofSummary)
-        print("===== SUBMIT ENTRY BEFORE SAVE =====")
+        Task { @MainActor in
+            let uploadedPhotoURL: String
 
-        modelContext.insert(submission)
-        print("===== SUBMISSION SAVED =====")
-        try? modelContext.save()
+            do {
+                if let photoData {
+                    uploadedPhotoURL = try await ChallengeSocialService.shared.uploadSubmissionPhoto(imageData: photoData)
+                } else {
+                    uploadedPhotoURL = ""
+                }
+            } catch {
+                isSubmitting = false
+                photoErrorMessage = "Lumey could not upload this proof photo. Please try again."
+                showPhotoError = true
+                return
+            }
 
-        let manager = ChallengeManager(modelContext: modelContext)
+            let submission = ChallengeSubmission(
+                challengeID: challenge.id,
+                entryID: entry.id,
+                userID: currentUserID,
+                username: appState.currentUser?.displayName ?? "Reader",
+                challengeTitle: challenge.title,
+                linkedBookIDs: selectedBookIDs,
+                linkedSessionIDs: selectedSessionIDs,
+                linkedReviewIDs: selectedReviewIDs,
+                linkedReadingListIDs: selectedReadingListIDs,
+                submissionNote: submissionNote,
+                proofSummary: uploadedPhotoURL.isEmpty ? proofSummary : proofSummaryWithPhoto(proofSummary),
+                photoURL: uploadedPhotoURL,
+                cycleID: entry.cycleID,
+                cycleStartDate: entry.startDate,
+                cycleEndDate: entry.endDate
+            )
 
-        Task {
+            print("SUBMISSION CREATED:")
+            print("Submission Linked Session IDs:", submission.linkedSessionIDs)
+            print("Submission Proof Summary:", submission.proofSummary)
+            print("Submission Photo URL:", submission.photoURL)
+            print("===== SUBMIT ENTRY BEFORE SAVE =====")
+
+            modelContext.insert(submission)
+            print("===== SUBMISSION SAVED =====")
+            try? modelContext.save()
+
+            let manager = ChallengeManager(modelContext: modelContext)
+
             await manager.submitChallenge(
                 challenge: challenge,
                 entry: entry,
                 submission: submission
             )
 
-            await MainActor.run {
-                isSubmitting = false
-                resultSubmission = submission
-                showResult = true
-            }
+            isSubmitting = false
+            resultSubmission = submission
+            showResult = true
         }
+    }
+
+    private func proofSummaryWithPhoto(_ proofSummary: String) -> String {
+        let trimmed = proofSummary.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            return "Photo proof attached."
+        }
+
+        return "\(trimmed)\nPhoto proof attached."
     }
 }
 

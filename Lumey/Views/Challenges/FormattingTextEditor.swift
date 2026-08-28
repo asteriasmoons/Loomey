@@ -405,21 +405,21 @@ struct FormattingTextEditor: UIViewRepresentable {
                 case .asset:
                     view = AnyView(
                         Image(icon.name).renderingMode(.template).resizable().scaledToFit()
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.primary)
                             .frame(width: size, height: size)
                     )
                 case .sfSymbol:
                     view = AnyView(
                         Image(systemName: icon.name)
                             .font(.system(size: size * 0.75, weight: .semibold))
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.contrast)
                             .frame(width: size, height: size)
                     )
                 }
             } else if UIImage(named: iconName) != nil {
                 view = AnyView(
                     Image(iconName).renderingMode(.template).resizable().scaledToFit()
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.secondary)
                         .frame(width: size, height: size)
                 )
             } else {

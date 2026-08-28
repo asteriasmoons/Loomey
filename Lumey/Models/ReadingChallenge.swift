@@ -148,6 +148,18 @@ extension ReadingChallenge {
         recurrence != .oneTime
     }
 
+    var isPhotoProofChallenge: Bool {
+        guard validationType == .experience,
+              requiresAIValidation,
+              durationDays == 1
+        else { return false }
+
+        let normalizedRequirement = requirementText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return normalizedRequirement.contains("submit a photo") ||
+            normalizedRequirement.contains("submit photo proof") ||
+            normalizedRequirement.contains("photo proof")
+    }
+
     var requiredTags: [String] {
         get { Self.decodeStringArray(from: requiredTagsStorage) }
         set { requiredTagsStorage = Self.encodeStringArray(newValue) }
@@ -212,25 +224,20 @@ extension ReadingChallenge {
         date: Date = Date(),
         calendar: Calendar = .current
     ) -> ReadingChallenge? {
-        let pool = challenges.sorted { lhs, rhs in
-            if lhs.category != rhs.category {
-                return lhs.category.rawValue.localizedCaseInsensitiveCompare(rhs.category.rawValue) == .orderedAscending
-            }
+        let pool = challenges
+            .filter { $0.durationDays == 1 && $0.isRecurring }
+            .sorted { lhs, rhs in
+                if lhs.category != rhs.category {
+                    return lhs.category.rawValue.localizedCaseInsensitiveCompare(rhs.category.rawValue) == .orderedAscending
+                }
 
-            return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
-        }
+                return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+            }
 
         guard !pool.isEmpty else { return nil }
 
         let day = calendar.ordinality(of: .day, in: .era, for: date) ?? 0
         let startIndex = day % pool.count
-
-        for offset in 0..<pool.count {
-            let candidate = pool[(startIndex + offset) % pool.count]
-            if !candidate.isFeatured {
-                return candidate
-            }
-        }
 
         return pool[startIndex]
     }

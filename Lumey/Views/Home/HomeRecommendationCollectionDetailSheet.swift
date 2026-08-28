@@ -88,7 +88,7 @@ struct HomeRecommendationCollectionDetailSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(collection.title)
                     .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
                     .lineLimit(2)
 
                 Text("\(collection.bookCount ?? 30) books")
@@ -113,11 +113,11 @@ struct HomeRecommendationCollectionDetailSheet: View {
     }
 
     private var shelfIntro: some View {
-        GlassCard(cornerRadius: 16, padding: 12) {
+        GlassCard(cornerRadius: 16, padding: 12, variant: .tertiary) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(displayedCollection.description)
                     .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(displayedCollection.reason)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -129,14 +129,14 @@ struct HomeRecommendationCollectionDetailSheet: View {
     }
 
     private var loadingCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             HStack(spacing: 14) {
                 LumeyDottedGradientSpinner(size: 42)
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Finding this shelf")
                         .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("Lumey is running recommendations for this shelf now.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -149,12 +149,12 @@ struct HomeRecommendationCollectionDetailSheet: View {
     }
 
     private func retryCard(message: String) -> some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Shelf unavailable")
                         .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text(message)
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -168,10 +168,10 @@ struct HomeRecommendationCollectionDetailSheet: View {
                 } label: {
                     Text("Try again")
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(LColors.appBackground)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
-                        .background(LGradients.header, in: Capsule())
+                        .background(LGradients.blue, in: Capsule())
                 }
                 .buttonStyle(.plain)
             }
@@ -179,11 +179,11 @@ struct HomeRecommendationCollectionDetailSheet: View {
     }
 
     private func emptyCard(title: String, message: String) -> some View {
-        GlassCard {
+        GlassCard(variant: .secondary) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(message)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -196,7 +196,7 @@ struct HomeRecommendationCollectionDetailSheet: View {
         Button {
             selectedRecommendedBook = book
         } label: {
-            GlassCard(cornerRadius: 16, padding: 10) {
+            GlassCard(cornerRadius: 16, padding: 10, variant: .elevated) {
                 HStack(alignment: .top, spacing: 12) {
                     bookCover(book.coverUrl)
 
@@ -204,7 +204,7 @@ struct HomeRecommendationCollectionDetailSheet: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(book.title)
                                 .font(.system(size: 16, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                                 .lineLimit(2)
 
                             Text(book.author)
@@ -215,7 +215,7 @@ struct HomeRecommendationCollectionDetailSheet: View {
 
                         Text(book.summary)
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.78))
+                            .foregroundStyle(LColors.text.secondary)
                             .lineLimit(3)
 
                         labels(for: book)
@@ -245,31 +245,24 @@ struct HomeRecommendationCollectionDetailSheet: View {
             }
         }
         .frame(width: 52, height: 78)
-        .background(Color.white.opacity(0.10))
+        .background(LColors.border.nestedStrong)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.20), lineWidth: 1)
+                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
         )
     }
 
     private var fallbackCover: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    LColors.gradientBlue.opacity(0.45),
-                    LColors.gradientPurple.opacity(0.58)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            LColors.gradientBlue.opacity(0.45)
 
             Image("bookstand")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 20, height: 20)
-                .foregroundStyle(.white.opacity(0.82))
+                .foregroundStyle(LColors.text.primary)
         }
     }
 
@@ -279,14 +272,14 @@ struct HomeRecommendationCollectionDetailSheet: View {
             .resizable()
             .scaledToFit()
             .frame(width: 20, height: 20)
-            .foregroundStyle(LGradients.header)
+            .foregroundStyle(LColors.accents.primary)
             .frame(width: 42, height: 42)
             .background(
                 Circle()
                     .fill(LColors.bg)
                     .overlay(
                         Circle()
-                            .strokeBorder(LGradients.header, lineWidth: 1.2)
+                            .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                     )
                     .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
             )
@@ -308,10 +301,10 @@ struct HomeRecommendationCollectionDetailSheet: View {
                 ForEach(Array(values.prefix(4)), id: \.self) { value in
                     Text(value)
                         .font(.system(size: 10, weight: .black, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.88))
+                        .foregroundStyle(LColors.text.primary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
-                        .background(Color.white.opacity(0.10), in: Capsule())
+                        .background(LColors.border.nestedStrong, in: Capsule())
                 }
             }
         }

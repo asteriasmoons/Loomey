@@ -58,11 +58,29 @@ final class RegularRecBookSummaryService {
 
     private let baseURL = "https://appapi.voxiverse.ink"
 
-    func fetchSummary(for book: LumeyBookRecommendation) async throws -> String {
-        guard let url = URL(string: "\(baseURL)/api/books/recs-book-summary") else {
-            throw RegularRecBookSummaryServiceError.badURL
-        }
+    func fetchSummary(title: String, author: String, summary: String? = nil) async throws -> String {
+        let trimmedSummary = summary?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let body = RegularRecBookSummaryRequest(
+            title: title,
+            author: author,
+            summary: trimmedSummary.isEmpty ? nil : summary,
+            rationale: nil,
+            strategyLabel: nil,
+            genres: nil,
+            moods: nil,
+            tropes: nil,
+            themes: nil,
+            tags: nil,
+            pages: nil,
+            releaseYear: nil,
+            rating: nil,
+            source: nil
+        )
 
+        return try await performSummaryRequest(body)
+    }
+
+    func fetchSummary(for book: LumeyBookRecommendation) async throws -> String {
         let trimmedSummary = book.summary.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let body = RegularRecBookSummaryRequest(
@@ -82,6 +100,14 @@ final class RegularRecBookSummaryService {
             source: book.source
         )
 
+        return try await performSummaryRequest(body)
+    }
+
+    private func performSummaryRequest(_ body: RegularRecBookSummaryRequest) async throws -> String {
+        guard let url = URL(string: "\(baseURL)/api/books/recs-book-summary") else {
+            throw RegularRecBookSummaryServiceError.badURL
+        }
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.timeoutInterval = 45
@@ -97,11 +123,7 @@ final class RegularRecBookSummaryService {
         guard (200...299).contains(httpResponse.statusCode) else {
             let backendError = try? JSONDecoder().decode(RegularRecBookSummaryErrorResponse.self, from: data)
             let message = backendError?.detail ?? backendError?.error ?? "Server returned status code \(httpResponse.statusCode)"
-
-            throw RegularRecBookSummaryServiceError.serverError(
-                statusCode: httpResponse.statusCode,
-                message: message
-            )
+            throw RegularRecBookSummaryServiceError.serverError(statusCode: httpResponse.statusCode, message: message)
         }
 
         return try JSONDecoder().decode(RegularRecBookSummaryResponse.self, from: data).summary

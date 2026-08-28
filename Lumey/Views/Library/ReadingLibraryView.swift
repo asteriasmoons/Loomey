@@ -34,6 +34,7 @@ struct ReadingLibraryView: View {
     @State private var activeBookSheet: BookSheetMode? = nil
     @State private var showRecommendationsSheet = false
     @State private var showBookSearchSheet = false
+    @State private var showReadingMissionSheet = false
     @State private var showAddCustomFilterDialog = false
     @State private var customFilterName = ""
     @State private var hasAppeared = false
@@ -141,6 +142,9 @@ struct ReadingLibraryView: View {
             .adaptivePresentation(isPresented: $showBookSearchSheet, useFullScreenCover: horizontalSizeClass == .regular) {
                 BookSearchSheet()
             }
+            .adaptivePresentation(isPresented: $showReadingMissionSheet, useFullScreenCover: horizontalSizeClass == .regular) {
+                ReadingMissionSheet()
+            }
             .alert("New Filter", isPresented: $showAddCustomFilterDialog) {
                 TextField("Two words max", text: $customFilterName)
 
@@ -172,7 +176,7 @@ private extension ReadingLibraryView {
             HStack {
                 Text("Library")
                     .font(.system(size: 38, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Spacer()
 
@@ -196,11 +200,7 @@ private extension ReadingLibraryView {
                 .scaledToFit()
                 .frame(width: 24, height: 24)
                 .foregroundStyle(
-                    LinearGradient(
-                        colors: [LColors.gradientBlue, LColors.gradientPurple],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    LColors.accents.primary
                 )
                 .frame(width: 46, height: 46)
                 .background(
@@ -209,11 +209,7 @@ private extension ReadingLibraryView {
                         .overlay(
                             Circle()
                                 .strokeBorder(
-                                    LinearGradient(
-                                        colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
+                                    LColors.accents.primary,
                                     lineWidth: 1.35
                                 )
                         )
@@ -262,27 +258,13 @@ private extension ReadingLibraryView {
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(
-                    LinearGradient(
-                        colors: [
-                            LColors.gradientBlue.opacity(0.08),
-                            LColors.gradientPurple.opacity(0.10)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    LColors.gradientBlue.opacity(0.08)
                 )
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(
-                    LinearGradient(
-                        colors: [
-                            LColors.gradientBlue.opacity(0.65),
-                            LColors.gradientPurple.opacity(0.65)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
+                    LColors.gradientBlue.opacity(0.65),
                     lineWidth: 1
                 )
         )
@@ -302,12 +284,12 @@ private extension ReadingLibraryView {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(LColors.appBackground)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Reading Lists")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(LColors.appBackground)
 
                     Text("Curated collections and TBR plans")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -332,19 +314,28 @@ private extension ReadingLibraryView {
 
 private extension ReadingLibraryView {
     var recommendationButtonSection: some View {
-        HStack(spacing: 12) {
-            libraryActionButton(
-                title: "Recommend",
-                iconName: "sparkle"
-            ) {
-                showRecommendationsSheet = true
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                libraryActionButton(
+                    title: "Recommend",
+                    iconName: "sparkle"
+                ) {
+                    showRecommendationsSheet = true
+                }
+
+                libraryActionButton(
+                    title: "Look Up",
+                    iconName: "searchwavy"
+                ) {
+                    showBookSearchSheet = true
+                }
             }
 
             libraryActionButton(
-                title: "Look Up",
-                iconName: "searchwavy"
+                title: "Reading Mission",
+                iconName: "wand"
             ) {
-                showBookSearchSheet = true
+                showReadingMissionSheet = true
             }
         }
     }
@@ -366,17 +357,13 @@ private extension ReadingLibraryView {
                     .font(.system(size: 14, weight: .black, design: .rounded))
                     .lineLimit(1)
             }
-            .foregroundStyle(.black)
+            .foregroundStyle(LColors.appBackground)
             .frame(maxWidth: .infinity, minHeight: 46, alignment: .center)
             .contentShape(Rectangle())
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(
-                        LinearGradient(
-                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        LColors.accents.primary
                     )
             )
         }
@@ -458,7 +445,7 @@ private extension ReadingLibraryView {
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
-                        .fill(Color.white.opacity(0.06))
+                        .fill(LColors.iconContainer.primary)
                 )
                 .overlay(
                     Circle()
@@ -536,22 +523,8 @@ private extension ReadingLibraryView {
                 Capsule(style: .continuous)
                     .fill(
                         isSelected
-                        ? LinearGradient(
-                            colors: [
-                                LColors.gradientBlue.opacity(0.36),
-                                LColors.gradientPurple.opacity(0.36)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        : LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.06),
-                                Color.white.opacity(0.04)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        ? LColors.gradientBlue.opacity(0.36)
+                        : LColors.surface.subtle.opacity(0.6)
                     )
             )
             .overlay(
@@ -559,8 +532,8 @@ private extension ReadingLibraryView {
                     .strokeBorder(
                         LinearGradient(
                             colors: isSelected
-                            ? [LColors.gradientBlue, LColors.gradientPurple]
-                            : [Color.white.opacity(0.14), Color.white.opacity(0.08)],
+                            ? [LColors.accents.primary, LColors.accents.secondary]
+                            : [LColors.border.subtle, LColors.border.nested],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -601,12 +574,12 @@ private extension ReadingLibraryView {
                 .padding(.vertical, 9)
                 .background(
                     Capsule(style: .continuous)
-                        .fill(isSelected ? LColors.gradientPurple : Color.white.opacity(0.055))
+                        .fill(isSelected ? LColors.gradientPurple : LColors.surface.nestedSoft)
                 )
                 .overlay(
                     Capsule(style: .continuous)
                         .strokeBorder(
-                            isSelected ? LColors.gradientPurple : Color.white.opacity(0.12),
+                            isSelected ? LColors.gradientPurple : LColors.border.subtle,
                             lineWidth: 1
                         )
                 )
@@ -694,13 +667,13 @@ private extension ReadingLibraryView {
             HStack {
                 Text("Books")
                     .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Spacer()
 
                 Text("\(visibleBooks.count)")
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(
@@ -713,8 +686,8 @@ private extension ReadingLibraryView {
                 emptyLibraryCard
             } else {
                 LazyVStack(spacing: 12) {
-                    ForEach(visibleBooks) { book in
-                        LibraryBookRow(book: book) {
+                    ForEach(Array(visibleBooks.enumerated()), id: \.element.id) { index, book in
+                        LibraryBookRow(book: book, variant: GlassCardRotation.variant(for: index), accentIndex: index) {
                             activeBookSheet = BookSheetMode(book: book)
                         }
                         .contextMenu {
@@ -761,14 +734,7 @@ private extension ReadingLibraryView {
                 ZStack {
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .fill(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientPurple.opacity(0.9),
-                                    LColors.gradientCyan.opacity(0.7)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.gradientPurple.opacity(0.9)
                         )
                         .frame(width: 56, height: 56)
 
@@ -782,7 +748,7 @@ private extension ReadingLibraryView {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Reading Challenges")
                         .font(.system(size: 18, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("Build quests for your TBR, series, authors, and formats.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -811,15 +777,15 @@ private extension ReadingLibraryView {
     }
 
     var emptyLibraryCard: some View {
-        GlassCard {
+        GlassCard(variant: .subtle) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("No books found")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.text.primary)
 
                 Text(searchText.isEmpty ? "Your saved books will appear here." : "Try a different search or filter.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(LColors.text.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -902,15 +868,15 @@ struct LibrarySeriesFilterDropdown: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                         .frame(width: 34, height: 34)
                         .background(
                             Circle()
-                                .fill(Color.white.opacity(0.06))
+                                .fill(LColors.iconContainer.primary)
                         )
                         .overlay(
                             Circle()
-                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                .strokeBorder(LColors.accents.primary, lineWidth: 1)
                         )
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -920,7 +886,7 @@ struct LibrarySeriesFilterDropdown: View {
                         
                         Text(selectedTitle)
                             .font(.system(size: 14, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .lineLimit(1)
                     }
                     
@@ -928,12 +894,12 @@ struct LibrarySeriesFilterDropdown: View {
                     
                     Text("\(availableSeries.count)")
                         .font(.system(size: 10, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(Color.white.opacity(0.06))
+                                .fill(LColors.iconContainer.primary)
                         )
                     
                     Image(isExpanded ? "chevup" : "chevdown")
@@ -941,7 +907,7 @@ struct LibrarySeriesFilterDropdown: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12, height: 12)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
@@ -964,29 +930,13 @@ struct LibrarySeriesFilterDropdown: View {
                 .background(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .fill(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue.opacity(0.08),
-                                    LColors.gradientPurple.opacity(0.08),
-                                    Color.white.opacity(0.035)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.gradientBlue.opacity(0.08)
                         )
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue.opacity(0.55),
-                                    LColors.gradientPurple.opacity(0.55),
-                                    Color.white.opacity(0.16)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
+                            LColors.gradientBlue.opacity(0.55),
                             lineWidth: 1
                         )
                 )
@@ -998,30 +948,14 @@ struct LibrarySeriesFilterDropdown: View {
     private var dropdownBackground: some View {
         RoundedRectangle(cornerRadius: 18, style: .continuous)
             .fill(
-                LinearGradient(
-                    colors: [
-                        LColors.gradientBlue.opacity(0.10),
-                        LColors.gradientPurple.opacity(0.13),
-                        Color.white.opacity(0.035)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                LColors.gradientBlue.opacity(0.10)
             )
     }
     
     private var dropdownBorder: some View {
         RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(
-                LinearGradient(
-                    colors: [
-                        LColors.gradientBlue.opacity(0.72),
-                        LColors.gradientPurple.opacity(0.72),
-                        Color.white.opacity(0.22)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
+                LColors.gradientBlue.opacity(0.72),
                 lineWidth: 1
             )
     }
@@ -1037,11 +971,11 @@ struct LibrarySeriesFilterDropdown: View {
         } label: {
             HStack(spacing: 10) {
                 Circle()
-                    .fill(isSelected ? LGradients.header : LinearGradient(colors: [Color.white.opacity(0.14), Color.white.opacity(0.07)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(isSelected ? LColors.accents.primary : LColors.border.subtle)
                     .frame(width: 12, height: 12)
                     .overlay(
                         Circle()
-                            .fill(isSelected ? Color.white.opacity(0.22) : Color.clear)
+                            .fill(isSelected ? LColors.border.primary.opacity(0.75) : Color.clear)
                             .frame(width: 4, height: 4)
                     )
                 
@@ -1059,14 +993,14 @@ struct LibrarySeriesFilterDropdown: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.secondary)
                 }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 9)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(isSelected ? Color.white.opacity(0.065) : Color.clear)
+                    .fill(isSelected ? LColors.iconContainer.primary : Color.clear)
             )
         }
         .buttonStyle(.plain)

@@ -36,7 +36,7 @@ struct SprintEndPageSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
 
                         if let startPage {
-                            GlassCard {
+                            GlassCard(variant: .featured) {
                                 Text("You started on page \(startPage). How far did you get?")
                                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                                     .foregroundStyle(LColors.textSecondary)
@@ -44,7 +44,7 @@ struct SprintEndPageSheet: View {
                             }
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .primary) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("End Page")
 
@@ -59,12 +59,12 @@ struct SprintEndPageSheet: View {
                                 .padding(.vertical, 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .fill(Color.white.opacity(0.055))
+                                        .fill(LColors.surface.nestedSoft)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                                         .strokeBorder(
-                                            Color.white.opacity(0.08),
+                                            LColors.border.nested,
                                             lineWidth: 1
                                         )
                                 )
@@ -75,18 +75,18 @@ struct SprintEndPageSheet: View {
                            let end = Int(endPageText),
                            end > start {
 
-                            GlassCard {
+                            GlassCard(variant: .secondary) {
                                 HStack(spacing: 8) {
                                     Image("books")
                                         .renderingMode(.template)
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 14, height: 14)
-                                        .foregroundStyle(LGradients.header)
+                                        .foregroundStyle(LColors.accents.primary)
 
                                     Text("\(end - start) pages read • \(end - start) points")
                                         .font(.system(size: 14, weight: .black, design: .rounded))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(LColors.cardTitle)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             }
@@ -113,7 +113,7 @@ struct SprintEndPageSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Enter End Page")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Tell Lumey where you finished the sprint.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -130,7 +130,7 @@ struct SprintEndPageSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 17, height: 17)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 38, height: 38)
                     .background(
                         Circle()
@@ -145,7 +145,7 @@ struct SprintEndPageSheet: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
@@ -162,7 +162,7 @@ struct SprintEndPageSheet: View {
                 } else {
                     Text("Submit")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -171,7 +171,7 @@ struct SprintEndPageSheet: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(
                         canSubmit
-                        ? LGradients.header
+                        ? LGradients.completion
                         : LinearGradient(
                             colors: [
                                 Color.gray.opacity(0.3),

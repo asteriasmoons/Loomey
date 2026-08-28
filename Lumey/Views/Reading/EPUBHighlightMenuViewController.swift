@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import SwiftUI
 import ReadiumNavigator
 
 enum AnnotationSheetMode {
@@ -384,7 +385,7 @@ final class EPUBHighlightMenuViewController: UIViewController {
         saveButton.setTitle("Save Note", for: .normal)
         saveButton.titleLabel?.font = UIFont.rounded(size: 15, weight: .black)
         saveButton.setTitleColor(.white, for: .normal)
-        saveButton.backgroundColor = UIColor(red: 0.0118, green: 0.8588, blue: 0.9882, alpha: 1.0)
+        saveButton.backgroundColor = UIColor(LColors.accents.primary)
         saveButton.layer.cornerRadius = 14
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         saveButton.addTarget(self, action: #selector(saveNoteTapped), for: .touchUpInside)

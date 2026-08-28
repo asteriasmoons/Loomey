@@ -83,7 +83,7 @@ struct BookNotesView: View {
         HStack {
             Text("Notes")
                 .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Spacer()
 
@@ -95,14 +95,14 @@ struct BookNotesView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -117,14 +117,14 @@ struct BookNotesView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -154,7 +154,7 @@ struct BookNotesView: View {
     }
 
     private var emptyState: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(spacing: 12) {
                 Image("lovedocument")
                     .renderingMode(.template)
@@ -186,12 +186,12 @@ struct BookNotesView: View {
                 } label: {
                     Text("See Less")
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.88))
+                        .foregroundStyle(LColors.text.primary)
                         .padding(.horizontal, 18)
                         .padding(.vertical, 11)
                         .background(
                             Capsule()
-                                .fill(Color.white.opacity(0.06))
+                                .fill(LColors.iconContainer.primary)
                                 .overlay(
                                     Capsule()
                                         .strokeBorder(LColors.glassBorder, lineWidth: 1)
@@ -209,7 +209,7 @@ struct BookNotesView: View {
                 } label: {
                     Text("Load More")
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .padding(.horizontal, 18)
                         .padding(.vertical, 11)
                         .background(
@@ -226,11 +226,11 @@ struct BookNotesView: View {
     }
 
     private func noteCard(_ note: BookNote) -> some View {
-        GlassCard(cornerRadius: 18, padding: 14) {
+        GlassCard(cornerRadius: 18, padding: 14, variant: .tertiary) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(note.content)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.84))
+                    .foregroundStyle(LColors.text.primary)
                     .lineLimit(5)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(height: 82, alignment: .topLeading)
@@ -256,7 +256,7 @@ struct BookNotesView: View {
                             .frame(width: 30, height: 30)
                             .background(
                                 Circle()
-                                    .fill(Color.white.opacity(0.06))
+                                    .fill(LColors.iconContainer.primary)
                                     .overlay(
                                         Circle()
                                             .strokeBorder(LGradients.blue, lineWidth: 1)
@@ -278,7 +278,7 @@ struct BookNotesView: View {
                             .frame(width: 30, height: 30)
                             .background(
                                 Circle()
-                                    .fill(Color.white.opacity(0.06))
+                                    .fill(LColors.iconContainer.primary)
                                     .overlay(
                                         Circle()
                                             .strokeBorder(LGradients.blue, lineWidth: 1)
@@ -341,7 +341,7 @@ struct BookNoteDetailSheet: View {
                     HStack {
                         Text("Note")
                             .font(.system(size: 28, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.headingPrimary)
 
                         Spacer()
 
@@ -353,14 +353,14 @@ struct BookNoteDetailSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.secondary)
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
                                         .fill(LColors.bg)
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                                .strokeBorder(LColors.accents.secondary, lineWidth: 1.2)
                                         )
                                         .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                                 )
@@ -368,11 +368,11 @@ struct BookNoteDetailSheet: View {
                         .buttonStyle(.plain)
                     }
 
-                    GlassCard {
+                    GlassCard(variant: .primary) {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(note.content)
                                 .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.white.opacity(0.90))
+                                .foregroundStyle(LColors.text.primary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
                             Text(note.dateCreated.formatted(date: .long, time: .shortened))
@@ -413,7 +413,7 @@ struct BookNoteEditorSheet: View {
                     HStack {
                         Text(isEditing ? "Edit Note" : "New Note")
                             .font(.system(size: 22, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.headingPrimary)
 
                         Spacer()
 
@@ -429,13 +429,13 @@ struct BookNoteEditorSheet: View {
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.06))
+                                        .fill(LColors.iconContainer.primary)
                                 )
                         }
                         .buttonStyle(.plain)
                     }
 
-                    GlassCard {
+                    GlassCard(variant: .secondary) {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Note")
                                 .font(.system(size: 11, weight: .black, design: .rounded))
@@ -449,7 +449,7 @@ struct BookNoteEditorSheet: View {
                                 .padding(12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(Color.white.opacity(0.04))
+                                        .fill(LColors.surface.nested)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                                 .strokeBorder(LColors.glassBorder, lineWidth: 1)
@@ -463,7 +463,7 @@ struct BookNoteEditorSheet: View {
                     } label: {
                         Text(isEditing ? "Save Changes" : "Add Note")
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(

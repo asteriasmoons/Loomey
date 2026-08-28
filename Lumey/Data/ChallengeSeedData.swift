@@ -9,11 +9,11 @@ import Foundation
 
 enum ChallengeSeedData {
 
-    /// Returns all seeded Lumey challenges.
-    /// Call once at first launch to populate the database.
+    /// Returns all seeded Lumey challenge definitions.
     static func allChallenges() -> [ReadingChallenge] {
         var all: [ReadingChallenge] = []
         all.append(contentsOf: readingHabitChallenges)
+        all.append(contentsOf: oneDaySpotlightChallenges)
         all.append(contentsOf: pagesChallenges)
         all.append(contentsOf: bookCompletionChallenges)
         all.append(contentsOf: genreChallenges)
@@ -24,6 +24,7 @@ enum ChallengeSeedData {
         all.append(contentsOf: seasonalChallenges)
         all.append(contentsOf: bookLengthChallenges)
         all.append(contentsOf: collectionChallenges)
+        all.append(contentsOf: photoProofChallenges)
         all.append(contentsOf: funChallenges)
         return all
     }
@@ -207,6 +208,390 @@ enum ChallengeSeedData {
             requirementText: "Complete reading sessions on 5 separate days.",
             validationType: .readingSession,
             requiredSessionCount: 5
+        ),
+    ]
+
+    // MARK: - One Day Spotlight Challenges
+
+    static let oneDaySpotlightChallenges: [ReadingChallenge] = [
+        ReadingChallenge(
+            title: "Velvet Bookmark Hour",
+            challengeDescription: "Give one book a full, uninterrupted hour of attention. No sampling, no drifting between titles - just one clean block of story momentum.",
+            iconName: "clockfill",
+            category: .readingHabit,
+            points: 110,
+            durationDays: 1,
+            requirementText: "Complete one reading session lasting at least 60 minutes.",
+            validationType: .readingSession,
+            requiredSessionCount: 1,
+            requiredSessionMinutes: 60,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Deep Focus Doorway",
+            challengeDescription: "Step fully into a book and stay there long enough for the world to take over. This is a focused, sit-down-and-vanish kind of session.",
+            iconName: "sparkbolt",
+            category: .readingHabit,
+            points: 135,
+            durationDays: 1,
+            requirementText: "Complete one reading session lasting at least 75 minutes.",
+            validationType: .readingSession,
+            requiredSessionCount: 1,
+            requiredSessionMinutes: 75,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "One-Sitting Spell",
+            challengeDescription: "Pick a book that can hold you still and let it work on you. A single ninety-minute session proves you really sank into the pages.",
+            iconName: "wand",
+            category: .readingHabit,
+            points: 160,
+            durationDays: 1,
+            requirementText: "Complete one reading session lasting at least 90 minutes.",
+            validationType: .readingSession,
+            requiredSessionCount: 1,
+            requiredSessionMinutes: 90,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Double Session Switch",
+            challengeDescription: "Read once, leave the book alone, then come back for a second intentional pass. Two separate sessions in one day makes the habit feel lived-in.",
+            iconName: "openbook",
+            category: .readingHabit,
+            points: 85,
+            durationDays: 1,
+            requirementText: "Complete 2 reading sessions in one day.",
+            validationType: .readingSession,
+            requiredSessionCount: 2,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Triple Bookmark Relay",
+            challengeDescription: "Thread reading through your day in three distinct bursts. It is a challenge for readers who can keep returning to the story instead of letting the day swallow it.",
+            iconName: "bookstack",
+            category: .readingHabit,
+            points: 135,
+            durationDays: 1,
+            requirementText: "Complete 3 reading sessions in one day.",
+            validationType: .readingSession,
+            requiredSessionCount: 3,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Chapter Heat Check",
+            challengeDescription: "Give your current read enough pages to prove whether it has a pulse. Thirty-five pages is enough to move past setup and into actual momentum.",
+            iconName: "linedpages",
+            category: .pages,
+            points: 45,
+            durationDays: 1,
+            requirementText: "Read 35 pages in one day.",
+            validationType: .pageCount,
+            requiredPageCount: 35,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Secret Passage Sprint",
+            challengeDescription: "Push through a solid fifty-page stretch and see what hidden turn opens up next. This is short enough to chase, but real enough to matter.",
+            iconName: "linedpages",
+            category: .pages,
+            points: 60,
+            durationDays: 1,
+            requirementText: "Read 50 pages in one day.",
+            validationType: .pageCount,
+            requiredPageCount: 50,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Plot Twist Pursuit",
+            challengeDescription: "Read far enough that the book has to show you something. Sixty-five pages gives the story room to surprise you.",
+            iconName: "linedpages",
+            category: .pages,
+            points: 85,
+            durationDays: 1,
+            requirementText: "Read 65 pages in one day.",
+            validationType: .pageCount,
+            requiredPageCount: 65,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Cliffhanger Chase",
+            challengeDescription: "Follow the tension past the easy stopping points. Ninety pages in a day means the book had you moving.",
+            iconName: "linedpages",
+            category: .pages,
+            points: 125,
+            durationDays: 1,
+            requirementText: "Read 90 pages in one day.",
+            validationType: .pageCount,
+            requiredPageCount: 90,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Hundred Page Holiday",
+            challengeDescription: "Clear space for a real reading holiday, even if the rest of the day is normal. One hundred pages makes the book feel like the main event.",
+            iconName: "linedpages",
+            category: .pages,
+            points: 145,
+            durationDays: 1,
+            requirementText: "Read 100 pages in one day.",
+            validationType: .pageCount,
+            requiredPageCount: 100,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Doorstop Dent",
+            challengeDescription: "Take a visible bite out of a heavier read. One hundred twenty-five pages is not casual browsing - it leaves a mark.",
+            iconName: "linedpages",
+            category: .pages,
+            points: 180,
+            durationDays: 1,
+            requirementText: "Read 125 pages in one day.",
+            validationType: .pageCount,
+            requiredPageCount: 125,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Last Page Ceremony",
+            challengeDescription: "Finish the book and give the final page its moment. This is for the satisfying click of moving a story from active read to completed memory.",
+            iconName: "bookstack",
+            category: .bookCompletion,
+            points: 180,
+            durationDays: 1,
+            requirementText: "Finish 1 book in one day.",
+            validationType: .bookCompletion,
+            requiredBookCount: 1,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Tiny Tome Takedown",
+            challengeDescription: "Choose a compact book and make today the day it gets crossed off. Short does not mean disposable - it means sharp, fast, and complete.",
+            iconName: "flatbook",
+            category: .bookLength,
+            points: 130,
+            durationDays: 1,
+            requirementText: "Finish a book under 180 pages.",
+            validationType: .bookLength,
+            requiredBookCount: 1,
+            requiredMaxPages: 180,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Slim Spine Sweep",
+            challengeDescription: "Go after a quick but meaningful finish from the slimmer side of your shelf. The win is in choosing something finishable and actually finishing it.",
+            iconName: "flatbook",
+            category: .bookLength,
+            points: 150,
+            durationDays: 1,
+            requirementText: "Finish a book under 250 pages.",
+            validationType: .bookLength,
+            requiredBookCount: 1,
+            requiredMaxPages: 250,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Big Book Bite",
+            challengeDescription: "Finish a book with real heft and let the page count speak for itself. This one is for a serious close-out, not a quick tap-through.",
+            iconName: "flatbook",
+            category: .bookLength,
+            points: 260,
+            durationDays: 1,
+            requirementText: "Finish a book with 400 or more pages.",
+            validationType: .bookLength,
+            requiredBookCount: 1,
+            requiredMinPages: 400,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Series Signal Flare",
+            challengeDescription: "Keep a larger story alive by finishing one installment from a series. It is a clean daily win that still feeds a bigger reading arc.",
+            iconName: "books",
+            category: .series,
+            points: 190,
+            durationDays: 1,
+            requirementText: "Finish 1 book that belongs to a series.",
+            validationType: .series,
+            requiredBookCount: 1,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Fantasy Doorway",
+            challengeDescription: "Finish a fantasy book and walk out with proof that you spent the day somewhere impossible. Magic, quests, courts, curses - bring back a completed title.",
+            iconName: "sparklybook",
+            category: .genre,
+            points: 180,
+            durationDays: 1,
+            requirementText: "Finish 1 Fantasy book.",
+            validationType: .genre,
+            requiredBookCount: 1,
+            requiredGenre: "Fantasy",
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Romance Spark",
+            challengeDescription: "Close out a love story today, whether it is sweet, aching, chaotic, or all of the above. The finished book and its genre are the proof.",
+            iconName: "heartfill",
+            category: .genre,
+            points: 175,
+            durationDays: 1,
+            requirementText: "Finish 1 Romance book.",
+            validationType: .genre,
+            requiredBookCount: 1,
+            requiredGenre: "Romance",
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Mystery Receipts",
+            challengeDescription: "Finish the case and bring the receipts. A mystery or thriller only counts when the last clue has been read and the book is marked finished.",
+            iconName: "searchsparkle",
+            category: .genre,
+            points: 185,
+            durationDays: 1,
+            requirementText: "Finish 1 Mystery or Thriller book.",
+            validationType: .genre,
+            requiredBookCount: 1,
+            requiredGenre: "Thriller & Mystery",
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Horror Lights-On",
+            challengeDescription: "Finish a horror book and make it back from the unsettling part of the shelf. The challenge is complete when the book is finished and the genre matches.",
+            iconName: "moonzs",
+            category: .genre,
+            points: 185,
+            durationDays: 1,
+            requirementText: "Finish 1 Horror book.",
+            validationType: .genre,
+            requiredBookCount: 1,
+            requiredGenre: "Horror",
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Sci-Fi Signal",
+            challengeDescription: "Close the loop on a science fiction read and send the signal home. Future tech, distant worlds, strange systems - finish one today.",
+            iconName: "planet",
+            category: .genre,
+            points: 185,
+            durationDays: 1,
+            requirementText: "Finish 1 Science Fiction book.",
+            validationType: .genre,
+            requiredBookCount: 1,
+            requiredGenre: "Science Fiction",
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Nonfiction Spark",
+            challengeDescription: "Finish something that leaves you knowing more than you did this morning. Memoir, science, history, craft, essays - bring back one completed nonfiction read.",
+            iconName: "handbook",
+            category: .genre,
+            points: 190,
+            durationDays: 1,
+            requirementText: "Finish 1 Nonfiction book.",
+            validationType: .genre,
+            requiredBookCount: 1,
+            requiredGenre: "Nonfiction",
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "History Window",
+            challengeDescription: "Spend the day peering into another era and finish the book that opened the window. Historical fiction and history reads both fit the spirit.",
+            iconName: "timebook",
+            category: .genre,
+            points: 185,
+            durationDays: 1,
+            requirementText: "Finish 1 Historical Fiction book.",
+            validationType: .genre,
+            requiredBookCount: 1,
+            requiredGenre: "Historical Fiction",
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "No-Spoiler Dispatch",
+            challengeDescription: "Write a tight dispatch that captures the vibe without giving the game away. Enough detail to be useful, restrained enough to stay spoiler-clean.",
+            iconName: "writenote",
+            category: .review,
+            points: 75,
+            durationDays: 1,
+            requirementText: "Write 1 review with at least 80 words.",
+            validationType: .review,
+            requiredReviewCount: 1,
+            requiredWordCount: 80,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Character Witness Statement",
+            challengeDescription: "Put one character on the stand and explain what made them work, fail, shine, or haunt the book. The review needs enough room to say something real.",
+            iconName: "pagepencil",
+            category: .review,
+            points: 110,
+            durationDays: 1,
+            requirementText: "Write 1 review with at least 120 words.",
+            validationType: .review,
+            requiredReviewCount: 1,
+            requiredWordCount: 120,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Theme Trace",
+            challengeDescription: "Follow one idea through the book and write down what it changed. This is a review challenge for readers who like finding the thread beneath the plot.",
+            iconName: "pagepencil",
+            category: .review,
+            points: 135,
+            durationDays: 1,
+            requirementText: "Write 1 review with at least 150 words.",
+            validationType: .review,
+            requiredReviewCount: 1,
+            requiredWordCount: 150,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Final Page Debrief",
+            challengeDescription: "After the ending lands, write the kind of review future-you will actually understand. Capture what worked, what stayed with you, and whether it earned the time.",
+            iconName: "writenote",
+            category: .review,
+            points: 175,
+            durationDays: 1,
+            requirementText: "Write 1 review with at least 200 words.",
+            validationType: .review,
+            requiredReviewCount: 1,
+            requiredWordCount: 200,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Five-Star Lightning",
+            challengeDescription: "When a book hits hard, mark it before the glow fades. Finish your verdict by linking a book you rated five stars.",
+            iconName: "starfill",
+            category: .rating,
+            points: 150,
+            durationDays: 1,
+            requirementText: "Rate 1 book 5 stars.",
+            validationType: .rating,
+            requiredBookCount: 1,
+            requiredRating: 5,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Four-Star Seal",
+            challengeDescription: "Not every favorite needs to be perfect. Give a strong read its official seal by rating one book four stars or higher.",
+            iconName: "starfill",
+            category: .rating,
+            points: 95,
+            durationDays: 1,
+            requirementText: "Rate 1 book 4 stars or higher.",
+            validationType: .rating,
+            requiredBookCount: 1,
+            requiredRating: 4,
+            recurrence: .daily
+        ),
+        ReadingChallenge(
+            title: "Fresh Verdict",
+            challengeDescription: "Do not leave the book floating in rating limbo. Pick a finished read, make the call, and record the score while the reaction is still fresh.",
+            iconName: "starfill",
+            category: .rating,
+            points: 65,
+            durationDays: 1,
+            requirementText: "Rate 1 book.",
+            validationType: .rating,
+            requiredBookCount: 1,
+            recurrence: .daily
         ),
     ]
 
@@ -1182,20 +1567,760 @@ enum ChallengeSeedData {
         ),
     ]
 
+    // MARK: - Photo Proof Challenges
+
+    static let photoProofChallenges: [ReadingChallenge] = [
+        photoProofChallenge(
+            title: "Cozy Corner",
+            challengeDescription: "Capture a cozy reading nook or reading space that looks ready for a quiet chapter.",
+            iconName: "openlovebook",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo of a cozy reading nook or reading space.",
+            requiredThemes: ["cozy reading nook", "reading space", "comfortable spot", "cozy corner"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Reading Sanctuary",
+            challengeDescription: "Show the place that feels like your personal reading sanctuary.",
+            iconName: "heartfill",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo of your favorite place to read.",
+            requiredThemes: ["favorite reading place", "reading sanctuary", "reading spot"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Window Seat Escape",
+            challengeDescription: "Place a book beside a window and capture that page-and-daylight feeling.",
+            iconName: "starwindow",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of a book beside a window.",
+            requiredThemes: ["book", "window", "window seat", "daylight"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Blanket Burrito",
+            challengeDescription: "Pair a book with a blanket and make the reading setup visibly cozy.",
+            iconName: "openbook",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of a book with a blanket.",
+            requiredThemes: ["book", "blanket", "cozy blanket", "soft textile"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Pillow Fortress",
+            challengeDescription: "Build a soft little reading base with pillows or cushions and a book.",
+            iconName: "pillows",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of a book with pillows or cushions.",
+            requiredThemes: ["book", "pillows", "cushions", "reading comfort"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Outdoor Escape",
+            challengeDescription: "Take a book outside and show it in open air, sun, shade, or scenery.",
+            iconName: "sun",
+            category: .seasonal,
+            points: 65,
+            requirementText: "Submit a photo of a book outdoors.",
+            requiredThemes: ["book", "outdoors", "outside", "natural light"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Garden Chapters",
+            challengeDescription: "Show a book surrounded by plants, greenery, or garden life.",
+            iconName: "flower",
+            category: .seasonal,
+            points: 70,
+            requirementText: "Submit a photo of a book surrounded by plants or in a garden.",
+            requiredThemes: ["book", "plants", "garden", "greenery"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Park Bench Pages",
+            challengeDescription: "Bring a book to a bench and capture a simple public reading moment.",
+            iconName: "lovelocation",
+            category: .seasonal,
+            points: 70,
+            requirementText: "Submit a photo of a book on a park bench.",
+            requiredThemes: ["book", "park bench", "bench", "park"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Beach Book Day",
+            challengeDescription: "Take a book to the beach and show sand, shoreline, waves, or a clear beach setting.",
+            iconName: "sun",
+            category: .seasonal,
+            points: 85,
+            requirementText: "Submit a photo of a book at the beach.",
+            requiredThemes: ["book", "beach", "sand", "shoreline", "water"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Lake Day Reader",
+            challengeDescription: "Show a book beside calm water, whether it is a lake, river, pond, or similar spot.",
+            iconName: "lovelocation",
+            category: .seasonal,
+            points: 85,
+            requirementText: "Submit a photo of a book beside a lake, river, or pond.",
+            requiredThemes: ["book", "lake", "river", "pond", "water"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Hammock Hideaway",
+            challengeDescription: "Capture a book resting in or near a hammock-ready reading hideaway.",
+            iconName: "openbook",
+            category: .fun,
+            points: 85,
+            requirementText: "Submit a photo of a book in a hammock.",
+            requiredThemes: ["book", "hammock", "outdoor reading", "resting spot"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Campfire Chapters",
+            challengeDescription: "Show a book near a campfire, firepit, or safely visible firelight setup.",
+            iconName: "3candles",
+            category: .seasonal,
+            points: 90,
+            requirementText: "Submit a photo of a book near a campfire.",
+            requiredThemes: ["book", "campfire", "firepit", "firelight"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Tea & Tales",
+            challengeDescription: "Pair a book with tea and capture the calm little ritual.",
+            iconName: "lovecup",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of a book with a cup of tea.",
+            requiredThemes: ["book", "tea", "cup", "mug"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Snack Break Stories",
+            challengeDescription: "Show a book with a snack close enough to prove the page break.",
+            iconName: "lovecup",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of a book with a snack.",
+            requiredThemes: ["book", "snack", "food", "treat"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Sweet Chapters",
+            challengeDescription: "Put dessert and a book in the same frame for a sweeter reading break.",
+            iconName: "heartfill",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of a book with a dessert.",
+            requiredThemes: ["book", "dessert", "sweet", "treat"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Breakfast Book Club",
+            challengeDescription: "Show your book sharing space with breakfast, from coffee and toast to a full plate.",
+            iconName: "sun",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of a book with breakfast.",
+            requiredThemes: ["book", "breakfast", "morning meal", "food"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Book Picnic",
+            challengeDescription: "Capture a book on a picnic blanket or clearly picnic-style setup.",
+            iconName: "flower",
+            category: .fun,
+            points: 75,
+            requirementText: "Submit a photo of a book on a picnic blanket.",
+            requiredThemes: ["book", "picnic blanket", "picnic", "outdoor blanket"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Hydrated Reader",
+            challengeDescription: "Show a book with a water bottle, tumbler, or reusable drink container.",
+            iconName: "lovecup",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo of a book with a water bottle or reusable drink container.",
+            requiredThemes: ["book", "water bottle", "reusable bottle", "drink container", "tumbler"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Café Chapters",
+            challengeDescription: "Capture a book on a cafe table or in a clearly cafe-like setting.",
+            iconName: "coffeemaker",
+            category: .fun,
+            points: 70,
+            requirementText: "Submit a photo of a book on a cafe table.",
+            requiredThemes: ["book", "cafe table", "coffee shop", "cafe"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Beautiful Cover",
+            challengeDescription: "Let a book cover take center stage in a clear, readable photo.",
+            iconName: "starbook",
+            category: .fun,
+            points: 55,
+            requirementText: "Submit a photo clearly showing a book cover.",
+            requiredThemes: ["book cover", "cover", "front cover"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Color Splash",
+            challengeDescription: "Find a bright, bold, or colorful cover and make the color impossible to miss.",
+            iconName: "sparklybook",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo of a brightly colored book cover.",
+            requiredThemes: ["book cover", "bright color", "colorful cover", "bold cover"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Minimalist Cover",
+            challengeDescription: "Show a cover with clean, simple, or intentionally minimal design.",
+            iconName: "flatbook",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo of a minimalist book cover.",
+            requiredThemes: ["book cover", "minimalist cover", "simple design", "clean cover"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Gorgeous Spine",
+            challengeDescription: "Highlight the spine of a book as the main visible detail.",
+            iconName: "books",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo highlighting a book's spine.",
+            requiredThemes: ["book spine", "spine", "side of book"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Open Book Beauty",
+            challengeDescription: "Open a book and photograph the visible pages as the subject.",
+            iconName: "openbook",
+            category: .fun,
+            points: 55,
+            requirementText: "Submit a photo of an open book.",
+            requiredThemes: ["open book", "pages", "book spread"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Favorite Quote",
+            challengeDescription: "Capture a page that contains a quote or passage you want to remember.",
+            iconName: "quote",
+            category: .review,
+            points: 65,
+            requirementText: "Submit a photo of a page containing a favorite quote.",
+            requiredThemes: ["book page", "quote", "passage", "text"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Chapter Snapshot",
+            challengeDescription: "Show an open chapter page or chapter opening inside a book.",
+            iconName: "linedpages",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo of an open chapter in a book.",
+            requiredThemes: ["open chapter", "chapter page", "book pages"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Tiny Details",
+            challengeDescription: "Zoom in on a small but interesting visual detail from a book.",
+            iconName: "searchsparkle",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a close-up photo of an interesting detail on a book.",
+            requiredThemes: ["book detail", "close-up", "cover detail", "page detail"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Pretty Endpapers",
+            challengeDescription: "Open a book to decorative endpapers and show the design clearly.",
+            iconName: "sparklybook",
+            category: .collection,
+            points: 85,
+            requirementText: "Submit a photo of decorative book endpapers.",
+            requiredThemes: ["decorative endpapers", "endpapers", "inside cover", "book design"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Edge Art",
+            challengeDescription: "Show painted, sprayed, stenciled, or otherwise decorated page edges.",
+            iconName: "starbook",
+            category: .collection,
+            points: 90,
+            requirementText: "Submit a photo of painted or decorated page edges.",
+            requiredThemes: ["painted edges", "decorated edges", "sprayed edges", "page edges"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Shelf Refresh",
+            challengeDescription: "Show an organized bookshelf that looks intentionally arranged.",
+            iconName: "bookstand",
+            category: .collection,
+            points: 70,
+            requirementText: "Submit a photo of an organized bookshelf.",
+            requiredThemes: ["organized bookshelf", "bookshelf", "arranged books"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Rainbow Shelf",
+            challengeDescription: "Arrange books by color and capture the rainbow shelf effect.",
+            iconName: "sparklybook",
+            category: .collection,
+            points: 80,
+            requirementText: "Submit a photo of books arranged by color.",
+            requiredThemes: ["books arranged by color", "rainbow shelf", "color order", "bookshelf"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Favorite Shelf",
+            challengeDescription: "Show one shelf you especially like, whether it is neat, themed, or full of favorites.",
+            iconName: "bookstand",
+            category: .collection,
+            points: 65,
+            requirementText: "Submit a photo of one bookshelf.",
+            requiredThemes: ["bookshelf", "shelf", "books"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Current Reads Shelf",
+            challengeDescription: "Show a shelf or display area holding books you want visible right now.",
+            iconName: "books",
+            category: .collection,
+            points: 70,
+            requirementText: "Submit a photo of a shelf displaying books.",
+            requiredThemes: ["shelf", "displayed books", "bookshelf"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Mini Library",
+            challengeDescription: "Capture a home book collection, small or large, in one clear photo.",
+            iconName: "bookstack",
+            category: .collection,
+            points: 75,
+            requirementText: "Submit a photo of a home book collection.",
+            requiredThemes: ["home book collection", "mini library", "multiple books", "bookshelf"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Overflowing Shelf",
+            challengeDescription: "Show a bookshelf that is visibly full, stacked, packed, or overflowing.",
+            iconName: "bookstack",
+            category: .collection,
+            points: 75,
+            requirementText: "Submit a photo of a full bookshelf.",
+            requiredThemes: ["full bookshelf", "packed shelf", "many books"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Shelf Styling",
+            challengeDescription: "Capture a decorated bookshelf with books plus visual styling or objects.",
+            iconName: "starmark",
+            category: .collection,
+            points: 75,
+            requirementText: "Submit a photo of a decorated bookshelf.",
+            requiredThemes: ["decorated bookshelf", "styled shelf", "books and decor"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Floating Books",
+            challengeDescription: "Show a creative book display that is not just a plain stack.",
+            iconName: "sparklesstarflag",
+            category: .collection,
+            points: 80,
+            requirementText: "Submit a photo of a creative book display.",
+            requiredThemes: ["creative book display", "displayed books", "floating shelf", "book arrangement"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Fantasy Collection",
+            challengeDescription: "Gather several fantasy books and show them together.",
+            iconName: "sparklybook",
+            category: .genre,
+            points: 90,
+            requirementText: "Submit a photo of multiple fantasy books.",
+            requiredThemes: ["multiple books", "fantasy books", "fantasy covers", "fantasy titles"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Romance Collection",
+            challengeDescription: "Gather several romance books and show them together.",
+            iconName: "heartfill",
+            category: .genre,
+            points: 90,
+            requirementText: "Submit a photo of multiple romance books.",
+            requiredThemes: ["multiple books", "romance books", "romance covers", "romance titles"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Horror Collection",
+            challengeDescription: "Gather several horror books and show them together.",
+            iconName: "moonzs",
+            category: .genre,
+            points: 90,
+            requirementText: "Submit a photo of multiple horror books.",
+            requiredThemes: ["multiple books", "horror books", "horror covers", "horror titles"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Mystery Collection",
+            challengeDescription: "Gather several mystery or thriller books and show them together.",
+            iconName: "searchsparkle",
+            category: .genre,
+            points: 90,
+            requirementText: "Submit a photo of multiple mystery or thriller books.",
+            requiredThemes: ["multiple books", "mystery books", "thriller books", "mystery titles"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Sci-Fi Collection",
+            challengeDescription: "Gather several science fiction books and show them together.",
+            iconName: "galaxysparkle",
+            category: .genre,
+            points: 90,
+            requirementText: "Submit a photo of multiple science fiction books.",
+            requiredThemes: ["multiple books", "science fiction books", "sci-fi books", "space books"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Classic Collection",
+            challengeDescription: "Gather several classics and show the collection together.",
+            iconName: "starbook",
+            category: .genre,
+            points: 90,
+            requirementText: "Submit a photo of multiple classic books.",
+            requiredThemes: ["multiple books", "classic books", "classics", "literary classics"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Special Edition Shelf",
+            challengeDescription: "Show one or more special edition books, deluxe editions, collector editions, or visually premium copies.",
+            iconName: "startrophy",
+            category: .collection,
+            points: 95,
+            requirementText: "Submit a photo of one or more special edition books.",
+            requiredThemes: ["special edition book", "collector edition", "deluxe edition", "premium book"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Signed Treasure",
+            challengeDescription: "Show a signed book, signature page, bookplate, or visible author signature.",
+            iconName: "pencilfill",
+            category: .collection,
+            points: 100,
+            requirementText: "Submit a photo of a signed book.",
+            requiredThemes: ["signed book", "signature", "author signature", "bookplate"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Illustrated Beauty",
+            challengeDescription: "Show a book with illustrations, art, panels, plates, or visibly illustrated pages.",
+            iconName: "image",
+            category: .collection,
+            points: 90,
+            requirementText: "Submit a photo of an illustrated book.",
+            requiredThemes: ["illustrated book", "illustration", "book art", "illustrated pages"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Tiny Book Haul",
+            challengeDescription: "Show a small haul of two or three newly acquired books.",
+            iconName: "bookstack",
+            category: .collection,
+            points: 75,
+            requirementText: "Submit a photo of 2-3 recently acquired books.",
+            requiredThemes: ["2-3 books", "book haul", "recently acquired books", "new books"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Weekend Book Haul",
+            challengeDescription: "Show multiple recently acquired books together as a book haul.",
+            iconName: "stargift",
+            category: .collection,
+            points: 80,
+            requirementText: "Submit a photo of multiple recently acquired books.",
+            requiredThemes: ["multiple books", "book haul", "recently acquired books", "new books"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Book Receipt",
+            challengeDescription: "Show a book alongside its purchase receipt without needing private details to be readable.",
+            iconName: "lovereceipt",
+            category: .collection,
+            points: 80,
+            requirementText: "Submit a photo of a book alongside its purchase receipt.",
+            requiredThemes: ["book", "receipt", "purchase receipt", "new book"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Single Treasure",
+            challengeDescription: "Show one newly acquired book as the star of the photo.",
+            iconName: "starbook",
+            category: .collection,
+            points: 70,
+            requirementText: "Submit a photo of one newly acquired book.",
+            requiredThemes: ["one book", "newly acquired book", "new book", "book haul"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Lunch Companion",
+            challengeDescription: "Show a book keeping your lunch company.",
+            iconName: "lovecup",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of a book with your lunch.",
+            requiredThemes: ["book", "lunch", "meal", "food"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Reading Buddy",
+            challengeDescription: "Capture a pet sharing space with a book.",
+            iconName: "petpaw",
+            category: .fun,
+            points: 75,
+            requirementText: "Submit a photo of a pet beside a book.",
+            requiredThemes: ["pet", "book", "animal", "reading buddy"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Cat Approved",
+            challengeDescription: "Show a cat with a book, even if the cat is clearly in charge of the scene.",
+            iconName: "catface",
+            category: .fun,
+            points: 75,
+            requirementText: "Submit a photo of a cat with a book.",
+            requiredThemes: ["cat", "book", "pet"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Dog Approved",
+            challengeDescription: "Show a dog with a book in the same photo.",
+            iconName: "dogface",
+            category: .fun,
+            points: 75,
+            requirementText: "Submit a photo of a dog with a book.",
+            requiredThemes: ["dog", "book", "pet"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Under A Tree",
+            challengeDescription: "Show a book beneath or directly beside a tree.",
+            iconName: "foldertreefill",
+            category: .seasonal,
+            points: 70,
+            requirementText: "Submit a photo of a book beneath a tree.",
+            requiredThemes: ["book", "tree", "beneath a tree", "outdoors"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Flower Chapters",
+            challengeDescription: "Show a book beside flowers, plants, or blooming greenery.",
+            iconName: "flower",
+            category: .seasonal,
+            points: 70,
+            requirementText: "Submit a photo of a book beside flowers or plants.",
+            requiredThemes: ["book", "flowers", "plants", "blooming greenery"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Mountain Reader",
+            challengeDescription: "Capture a book with mountains, hills, cliffs, or a clear mountain view behind it.",
+            iconName: "lovelocation",
+            category: .seasonal,
+            points: 95,
+            requirementText: "Submit a photo of a book with mountains visible in the background.",
+            requiredThemes: ["book", "mountains", "mountain background", "scenic view"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Autumn Leaves",
+            challengeDescription: "Show a book surrounded by fall leaves or clear autumn foliage.",
+            iconName: "flower",
+            category: .seasonal,
+            points: 90,
+            requirementText: "Submit a photo of a book surrounded by autumn leaves.",
+            requiredThemes: ["book", "autumn leaves", "fall leaves", "foliage"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Snowy Chapters",
+            challengeDescription: "Show a book in a snowy scene, near snow, or against a clearly wintery setting.",
+            iconName: "sparkletimeglass",
+            category: .seasonal,
+            points: 90,
+            requirementText: "Submit a photo of a book in a snowy setting.",
+            requiredThemes: ["book", "snow", "snowy setting", "winter"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Spring Bloom Reader",
+            challengeDescription: "Show a book among blooming flowers or visible spring blooms.",
+            iconName: "sunflower",
+            category: .seasonal,
+            points: 90,
+            requirementText: "Submit a photo of a book among blooming flowers.",
+            requiredThemes: ["book", "blooming flowers", "spring blooms", "flowers"],
+            recurring: false
+        ),
+        photoProofChallenge(
+            title: "Bookmark Beauty",
+            challengeDescription: "Show a bookmark placed inside a book.",
+            iconName: "bookmark",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo of a bookmark inside a book.",
+            requiredThemes: ["bookmark", "inside a book", "book pages"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Reading Accessories",
+            challengeDescription: "Show reading accessories such as bookmarks, tabs, book lights, annotation tools, sleeves, stands, or similar items.",
+            iconName: "starmark",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of one or more reading accessories.",
+            requiredThemes: ["reading accessories", "bookmark", "tabs", "book light", "annotation tools"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Annotation Station",
+            challengeDescription: "Show book pages with visible annotations, marks, underlines, notes, or highlights.",
+            iconName: "pagepencil",
+            category: .review,
+            points: 70,
+            requirementText: "Submit a photo of annotated pages.",
+            requiredThemes: ["annotated pages", "annotations", "highlights", "notes", "underlines"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Sticky Note Forest",
+            challengeDescription: "Show pages marked with sticky notes, tabs, flags, or visible note markers.",
+            iconName: "starnote",
+            category: .review,
+            points: 70,
+            requirementText: "Submit a photo of pages covered with sticky notes.",
+            requiredThemes: ["sticky notes", "book pages", "tabs", "flags", "annotations"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Reading Journal",
+            challengeDescription: "Show a reading journal, notebook, spread, tracker, or handwritten book notes.",
+            iconName: "lovejournal",
+            category: .review,
+            points: 70,
+            requirementText: "Submit a photo of a reading journal.",
+            requiredThemes: ["reading journal", "book journal", "notebook", "reading tracker"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Book & Candle Flatlay",
+            challengeDescription: "Create a flat-lay photo that clearly includes both a book and a candle.",
+            iconName: "3candles",
+            category: .fun,
+            points: 75,
+            requirementText: "Submit a flat-lay photo featuring a book and a candle.",
+            requiredThemes: ["book", "candle", "flat lay", "styled photo"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Bookstagram Shot",
+            challengeDescription: "Style a book photo with intentional composition, props, background, or visual setup.",
+            iconName: "instagram",
+            category: .fun,
+            points: 75,
+            requirementText: "Submit a styled photo of a book.",
+            requiredThemes: ["styled book photo", "book", "props", "composition", "bookstagram"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Share Your Current Read",
+            challengeDescription: "Show the book you are currently reading in a clear photo.",
+            iconName: "openbook",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo of the book you're currently reading.",
+            requiredThemes: ["current read", "book", "currently reading"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Recommend A Book",
+            challengeDescription: "Show a book you would recommend to someone else.",
+            iconName: "starbook",
+            category: .fun,
+            points: 60,
+            requirementText: "Submit a photo of a book you'd recommend.",
+            requiredThemes: ["recommended book", "book", "recommendation"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Lend A Book",
+            challengeDescription: "Show a book ready to lend, gift, hand off, or set aside for someone else.",
+            iconName: "handbook",
+            category: .fun,
+            points: 65,
+            requirementText: "Submit a photo of a book ready to lend.",
+            requiredThemes: ["book", "ready to lend", "gift", "hand off"],
+            recurring: true
+        ),
+        photoProofChallenge(
+            title: "Book Club Night",
+            challengeDescription: "Show a book club meeting, table, stack, notes, snacks, chairs, or another clear book club setup.",
+            iconName: "groupfill",
+            category: .fun,
+            points: 80,
+            requirementText: "Submit a photo of a book club meeting or setup.",
+            requiredThemes: ["book club", "meeting setup", "books", "group reading", "discussion setup"],
+            recurring: true
+        ),
+    ]
+
+    private static func photoProofChallenge(
+        title: String,
+        challengeDescription: String,
+        iconName: String,
+        category: ChallengeCategory,
+        points: Int,
+        requirementText: String,
+        requiredThemes: [String],
+        recurring: Bool
+    ) -> ReadingChallenge {
+        ReadingChallenge(
+            title: title,
+            challengeDescription: challengeDescription,
+            iconName: iconName,
+            category: category,
+            points: points,
+            durationDays: 1,
+            requirementText: requirementText,
+            validationType: .experience,
+            requiredThemes: requiredThemes,
+            requiresAIValidation: true,
+            recurrence: recurring ? .daily : .oneTime
+        )
+    }
+
     // MARK: - Fun Challenges
 
     static let funChallenges: [ReadingChallenge] = [
         ReadingChallenge(
             title: "Coffee & Chapters",
-            challengeDescription: "Brew your favorite drink, find a comfortable place to settle in, and let a good book keep you company. Sometimes the perfect reading session starts with a warm mug and an open chapter.",
+            challengeDescription: "Brew your favorite drink or fill a bottle. A visible cup, mug, tumbler, bottle, thermos, or beverage container counts as proof.",
             iconName: "lovecup",
             category: .fun,
             points: 100,
-            durationDays: 7,
-            requirementText: "Complete 5 reading sessions while enjoying your favorite beverage.",
+            durationDays: 1,
+            requirementText: "Submit photo proof of a cup, mug, tumbler, bottle, thermos, or beverage container.",
             validationType: .experience,
             requiredSessionCount: 5,
-            requiredThemes: ["coffee", "tea", "beverage", "cozy reading"],
+            requiredThemes: ["coffee", "tea", "beverage", "cup", "mug", "bottle", "tumbler", "thermos", "beverage container"],
             requiresAIValidation: true,
             isWeekly: true
         ),

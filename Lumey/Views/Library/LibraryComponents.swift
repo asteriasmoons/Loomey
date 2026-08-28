@@ -10,11 +10,11 @@ struct LibraryMiniStatCard: View {
     let value: String
     
     var body: some View {
-        GlassCard(cornerRadius: 18, padding: 12) {
+        GlassCard(cornerRadius: 18, padding: 12, variant: .featured) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                 
                 Text(title)
                     .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -39,7 +39,7 @@ struct LibraryDetailLine: View {
             
             Text(value)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.82))
+                .foregroundStyle(LColors.text.primary)
                 .lineLimit(2)
         }
     }
@@ -57,7 +57,7 @@ struct LibraryDetailBlock: View {
             
             Text(value)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.84))
+                .foregroundStyle(LColors.text.primary)
                 .lineLimit(5)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -85,16 +85,8 @@ struct LibraryRatingRow: View {
                         .frame(width: 18, height: 18)
                         .foregroundStyle(
                             number <= Int(book.rating)
-                            ? LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            : LinearGradient(
-                                colors: [Color.white.opacity(0.18), Color.white.opacity(0.18)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            ? LColors.accents.primary
+                            : LColors.border.nestedStrong
                         )
                         .frame(width: 22, height: 22)
                         .contentShape(Rectangle())

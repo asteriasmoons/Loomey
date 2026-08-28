@@ -166,7 +166,7 @@ struct ChallengeCommentsSheet: View {
                 } label: {
                     Text("Done")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                 }
             }
         }
@@ -191,7 +191,7 @@ struct ChallengeCommentsSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Comments")
                     .font(.system(size: 24, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("\(comments.count) \(comments.count == 1 ? "comment" : "comments")")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -208,14 +208,14 @@ struct ChallengeCommentsSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                     )
             }
@@ -232,7 +232,7 @@ struct ChallengeCommentsSheet: View {
 
     private var threadLine: some View {
         RoundedRectangle(cornerRadius: 2, style: .continuous)
-            .fill(LGradients.header)
+            .fill(LGradients.blue)
             .frame(width: 2)
             .frame(maxHeight: .infinity)
     }
@@ -240,28 +240,28 @@ struct ChallengeCommentsSheet: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(spacing: 14) {
                 Image("chatfolder")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 34, height: 34)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.secondary)
                     .frame(width: 72, height: 72)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                             )
                     )
 
                 VStack(spacing: 6) {
                     Text("No Comments Yet")
                         .font(.system(size: 18, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("Start the conversation on this post.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -283,12 +283,12 @@ struct ChallengeCommentsSheet: View {
         } label: {
             Text("Load More")
                 .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 13)
                 .background(
                     Capsule(style: .continuous)
-                        .fill(LGradients.header)
+                        .fill(LGradients.blue)
                 )
         }
         .buttonStyle(.plain)
@@ -300,7 +300,7 @@ struct ChallengeCommentsSheet: View {
     private func commentCard(_ comment: ChallengeCommentDTO, isReply: Bool) -> some View {
         let liked = isCommentLiked?(comment) ?? false
 
-        return GlassCard(padding: 14) {
+        return GlassCard(padding: 14, variant: .primary) {
             VStack(alignment: .leading, spacing: 13) {
                 HStack(alignment: .top, spacing: 11) {
                     commentAvatar(for: comment, size: isReply ? 34 : 40)
@@ -308,7 +308,7 @@ struct ChallengeCommentsSheet: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(displayName(for: comment))
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .lineLimit(1)
 
                         Text((comment.createdDate ?? .now).formatted(date: .abbreviated, time: .shortened))
@@ -346,14 +346,14 @@ struct ChallengeCommentsSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 16, height: 16)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.special)
                             .frame(width: 32, height: 32)
                             .background(
                                 Circle()
                                     .fill(LColors.glassSurface)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LGradients.header, lineWidth: 1)
+                                            .strokeBorder(LColors.accents.secondary, lineWidth: 1)
                                     )
                             )
                     }
@@ -382,7 +382,7 @@ struct ChallengeCommentsSheet: View {
 
                             Text("\(comment.likeCount)")
                                 .font(.system(size: 14, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                         }
                     }
                     .buttonStyle(.plain)
@@ -410,7 +410,7 @@ struct ChallengeCommentsSheet: View {
 
                             Text("Reply")
                                 .font(.system(size: 14, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                         }
                     }
                     .buttonStyle(.plain)
@@ -467,7 +467,7 @@ struct ChallengeCommentsSheet: View {
     // MARK: - Composer
 
     private var commentComposer: some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .secondary) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image("chatsparkle")
@@ -475,21 +475,21 @@ struct ChallengeCommentsSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 17, height: 17)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                         .frame(width: 38, height: 38)
                         .background(
                             Circle()
                                 .fill(LColors.glassSurface)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LGradients.header, lineWidth: 1)
+                                        .strokeBorder(LColors.accents.special, lineWidth: 1)
                                 )
                         )
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(replyingTo == nil ? "Add a Comment" : "Write a Reply")
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
 
                         Text(replyingTo == nil ? "Join the conversation on this post." : "Replying to \(displayName(for: replyingTo!))")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -527,10 +527,10 @@ struct ChallengeCommentsSheet: View {
                 .padding(.vertical, 11)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.white.opacity(0.045))
+                        .fill(LColors.surface.nested)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                .strokeBorder(LColors.border.nested, lineWidth: 1)
                         )
                 )
 
@@ -552,7 +552,7 @@ struct ChallengeCommentsSheet: View {
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(canSubmit ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassSurface))
+                            .fill(canSubmit ? AnyShapeStyle(LColors.accents.primary) : AnyShapeStyle(LColors.glassSurface))
                     )
                 }
                 .buttonStyle(.plain)

@@ -46,7 +46,7 @@ struct BookRecommendationsSheet: View {
                         } else if let errorMessage {
                             Text(errorMessage)
                                 .font(.callout)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(LColors.text.secondary)
                                 .multilineTextAlignment(.center)
                                 .padding(.top, 20)
                         } else if recommendations.isEmpty {
@@ -87,11 +87,11 @@ struct BookRecommendationsSheet: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Recommendations")
                     .font(.system(size: 30, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Search by a book, author, genre, trope, theme, mood, or the kind of reading experience you want next.")
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(LColors.text.secondary)
                     .multilineTextAlignment(.leading)
             }
 
@@ -105,14 +105,14 @@ struct BookRecommendationsSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -124,7 +124,7 @@ struct BookRecommendationsSheet: View {
     }
 
     private var searchCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 14) {
                 TextField("Fourth Wing, cozy mystery, found family...", text: $searchText)
                     .textInputAutocapitalization(.words)
@@ -135,7 +135,7 @@ struct BookRecommendationsSheet: View {
 
                 Text("Lumey will blend close matches, safer picks, hidden gems, recent releases, backlist, and adjacent reads.")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(LColors.text.secondary)
                     .multilineTextAlignment(.leading)
 
                 Button {
@@ -148,16 +148,9 @@ struct BookRecommendationsSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue,
-                                    LColors.gradientPurple,
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.gradientBlue
                         )
-                        .foregroundStyle(.black)
+                        .foregroundStyle(LColors.appBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
                 .disabled(isLoading || searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -174,14 +167,14 @@ struct BookRecommendationsSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 34, height: 34)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(LColors.text.secondary)
 
             Text("No recommendations yet")
                 .font(.headline)
 
             Text("Search for a favorite book, a genre, a mood, a trope, or a plain-language reading craving.")
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(LColors.text.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 40)
@@ -197,7 +190,7 @@ struct BookRecommendationsSheet: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(strategyDisplayName(section.strategy))
                             .font(.system(size: 17, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .padding(.top, 4)
 
                         ForEach(section.books) { book in
@@ -291,7 +284,7 @@ struct BookRecommendationsSheet: View {
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(isSelected ? LGradients.header : LinearGradient(colors: [.white.opacity(0.12), .white.opacity(0.08)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .fill(isSelected ? LColors.accents.contrast : LColors.surface.subtle)
                 )
                 .overlay(
                     Capsule()
@@ -316,7 +309,7 @@ struct BookRecommendationsSheet: View {
                     if !book.author.isEmpty {
                         Text(book.author)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(LColors.text.secondary)
                     }
 
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -353,24 +346,16 @@ struct BookRecommendationsSheet: View {
                         .scaledToFit()
                         .frame(width: 14, height: 14)
                         .foregroundStyle(
-                            LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.accents.primary
                         )
                         .frame(width: 34, height: 34)
                         .background(
                             Circle()
-                                .fill(Color.white.opacity(0.06))
+                                .fill(LColors.iconContainer.primary)
                                 .overlay(
                                     Circle()
                                         .strokeBorder(
-                                            LinearGradient(
-                                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
+                                            LColors.accents.primary,
                                             lineWidth: 1.2
                                         )
                                 )
@@ -384,7 +369,7 @@ struct BookRecommendationsSheet: View {
             if isExpanded, let rationale = book.rationale, !rationale.isEmpty {
                 Text(rationale)
                     .font(.callout.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.82))
+                    .foregroundStyle(LColors.text.primary)
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white.opacity(0.08))
@@ -422,7 +407,7 @@ struct BookRecommendationsSheet: View {
         if !effective.isEmpty {
             Text(effective)
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(LColors.text.secondary)
                 .lineLimit(isExpanded ? nil : 5)
         } else if loadingSummaryKeys.contains(key) {
             getDetailsLabel("Getting details\u{2026}", loading: true)
@@ -445,17 +430,17 @@ struct BookRecommendationsSheet: View {
             }
             Text(text)
                 .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(
             Capsule(style: .continuous)
-                .fill(Color.white.opacity(0.07))
+                .fill(LColors.iconContainer.primary)
                 .overlay(
                     Capsule(style: .continuous)
-                        .strokeBorder(LGradients.header, lineWidth: 1)
+                        .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                 )
         )
     }
@@ -517,22 +502,8 @@ struct BookRecommendationsSheet: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(
                         alreadyAdded
-                            ? LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.10),
-                                    Color.white.opacity(0.06),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            : LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue,
-                                    LColors.gradientPurple,
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            ? LColors.border.nestedStrong
+                            : LColors.gradientBlue
                     )
             )
             .overlay(
@@ -670,7 +641,7 @@ struct BookRecommendationsSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 22, height: 22)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(LColors.text.secondary)
                     }
                 }
             } else {
@@ -679,7 +650,7 @@ struct BookRecommendationsSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22, height: 22)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(LColors.text.secondary)
             }
         }
         .frame(width: 62, height: 92)
@@ -690,7 +661,7 @@ struct BookRecommendationsSheet: View {
     private func metadataPill(_ text: String) -> some View {
         Text(text)
             .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(LColors.text.secondary)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(.white.opacity(0.12))

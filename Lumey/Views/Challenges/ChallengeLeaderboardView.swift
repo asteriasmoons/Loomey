@@ -103,7 +103,7 @@ struct ChallengeLeaderboardView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Leaderboard")
                     .font(.system(size: 32, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text(leaderboardTitle)
                     .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -121,14 +121,14 @@ struct ChallengeLeaderboardView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                     )
             }
@@ -144,7 +144,7 @@ struct ChallengeLeaderboardView: View {
     // MARK: - Hero
 
     private var heroCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 12) {
                     Image("startrophyfill")
@@ -152,14 +152,14 @@ struct ChallengeLeaderboardView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 24, height: 24)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
                         .frame(width: 54, height: 54)
                         .background(
                             Circle()
                                 .fill(LColors.glassSurface)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                        .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                                 )
                                 .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 14, y: 7)
                         )
@@ -167,7 +167,7 @@ struct ChallengeLeaderboardView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Challenge Rankings")
                             .font(.system(size: 18, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
 
                         Text("Ranked by likes, comments, then earliest approved submission.")
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -191,7 +191,7 @@ struct ChallengeLeaderboardView: View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -201,35 +201,35 @@ struct ChallengeLeaderboardView: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.045))
+                .fill(LColors.surface.nested)
         )
     }
 
     // MARK: - Empty
 
     private var emptyState: some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             VStack(spacing: 14) {
                 Image("sparkle")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.secondary)
                     .frame(width: 72, height: 72)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.secondary, lineWidth: 1)
                             )
                     )
 
                 VStack(spacing: 6) {
                     Text("No Rankings Yet")
                         .font(.system(size: 18, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("Approved challenge entries will appear here once readers complete submissions.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -267,7 +267,7 @@ struct ChallengeLeaderboardView: View {
         Button {
             onSubmissionTapped?(submission)
         } label: {
-            GlassCard(padding: 14) {
+            GlassCard(padding: 14, variant: .secondary) {
                 HStack(spacing: 12) {
                     rankBadge(rank)
 
@@ -288,7 +288,7 @@ struct ChallengeLeaderboardView: View {
                         HStack(spacing: 6) {
                             Text(displayUsername(profile: profile, submission: submission))
                                 .font(.system(size: 13, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                                 .lineLimit(1)
 
                             statusBadge(for: submission.validationStatus)
@@ -324,7 +324,7 @@ struct ChallengeLeaderboardView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 15, height: 15)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.special)
                     }
                 }
             }
@@ -366,7 +366,7 @@ struct ChallengeLeaderboardView: View {
     private func statusBadge(for status: ChallengeSubmissionStatus) -> some View {
         Text(status.displayName.uppercased())
             .font(.system(size: 8, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(LColors.cardTitle)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
             .background(
@@ -397,11 +397,11 @@ struct ChallengeLeaderboardView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 15, height: 15)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
 
             Text(title)
                 .font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Spacer()
         }
@@ -430,47 +430,14 @@ struct ChallengeLeaderboardView: View {
         submission.challengeTitle.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func rankGradient(for rank: Int) -> LinearGradient {
+    /// Solid rank colors — palette accents at descending intensity, then a
+    /// dark surface for everyone else. No gradients.
+    private func rankGradient(for rank: Int) -> Color {
         switch rank {
-        case 1:
-            return LinearGradient(
-                colors: [
-                    LColors.gradientPurple,
-                    LColors.gradientBlue
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-        case 2:
-            return LinearGradient(
-                colors: [
-                    LColors.gradientPurple.opacity(0.82),
-                    LColors.gradientBlue.opacity(0.82)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-        case 3:
-            return LinearGradient(
-                colors: [
-                    LColors.gradientPurple.opacity(0.64),
-                    LColors.gradientBlue.opacity(0.64)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-        default:
-            return LinearGradient(
-                colors: [
-                    LColors.glassSurface,
-                    LColors.glassSurface.opacity(0.55)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+        case 1:  return LColors.accents.contrast
+        case 2:  return LColors.accents.primary
+        case 3:  return LColors.accents.secondary
+        default: return LColors.glassSurface
         }
     }
 }

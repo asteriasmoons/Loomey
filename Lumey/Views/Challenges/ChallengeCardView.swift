@@ -17,7 +17,7 @@ struct ChallengeCardView: View {
     let badgeType: ChallengeBadgeType?
 
     var body: some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .featured) {
             HStack(spacing: 12) {
                 // Icon
                 Image(challenge.iconName)
@@ -25,7 +25,7 @@ struct ChallengeCardView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 28, height: 28)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 44, height: 44)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -41,7 +41,7 @@ struct ChallengeCardView: View {
                     HStack(spacing: 6) {
                         Text(challenge.title)
                             .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .lineLimit(1)
 
                         if let badgeType {
@@ -116,10 +116,10 @@ struct ChallengeCardView: View {
         case .featured:
             Text("FEATURED")
                 .font(.system(size: 8, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Capsule().fill(LGradients.header))
+                .background(Capsule().fill(LGradients.blue))
 
         case .weekly:
             Text("WEEKLY")
@@ -132,7 +132,7 @@ struct ChallengeCardView: View {
         case .active:
             Text("ACTIVE")
                 .font(.system(size: 8, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(Capsule().fill(LColors.accent))
@@ -142,7 +142,7 @@ struct ChallengeCardView: View {
     private func statusBadge(for status: ChallengeSubmissionStatus) -> some View {
         Text(status.displayName)
             .font(.system(size: 9, weight: .bold, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(LColors.cardTitle)
             .padding(.horizontal, 7)
             .padding(.vertical, 2)
             .background(

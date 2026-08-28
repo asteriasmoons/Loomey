@@ -214,7 +214,7 @@ struct BuddyReadingView: View {
             HStack {
                 Text("Buddy Reading")
                     .font(.system(size: 26, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
                 Spacer()
                 
                 Button {
@@ -222,7 +222,7 @@ struct BuddyReadingView: View {
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(Color.white.opacity(0.08))
+                            .fill(LColors.border.nested)
                             .overlay(Circle().stroke(LColors.glassBorder, lineWidth: 1))
                             .frame(width: 34, height: 34)
                         Image("profilewavy")
@@ -231,11 +231,7 @@ struct BuddyReadingView: View {
                             .scaledToFit()
                             .frame(width: 20, height: 20)
                             .foregroundStyle(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                                LColors.accents.primary
                             )
                             .frame(width: 40, height: 40)
                             .background(
@@ -244,11 +240,7 @@ struct BuddyReadingView: View {
                                     .overlay(
                                         Circle()
                                             .strokeBorder(
-                                                LinearGradient(
-                                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
+                                                LColors.accents.primary,
                                                 lineWidth: 1.35
                                             )
                                     )
@@ -263,7 +255,7 @@ struct BuddyReadingView: View {
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(Color.white.opacity(0.08))
+                            .fill(LColors.border.nested)
                             .overlay(Circle().stroke(LColors.glassBorder, lineWidth: 1))
                             .frame(width: 34, height: 34)
                         Image("reset")
@@ -272,11 +264,7 @@ struct BuddyReadingView: View {
                             .scaledToFit()
                             .frame(width: 20, height: 20)
                             .foregroundStyle(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                                LColors.accents.primary
                             )
                             .frame(width: 40, height: 40)
                             .background(
@@ -285,11 +273,7 @@ struct BuddyReadingView: View {
                                     .overlay(
                                         Circle()
                                             .strokeBorder(
-                                                LinearGradient(
-                                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
+                                                LColors.accents.primary,
                                                 lineWidth: 1.35
                                             )
                                     )
@@ -306,12 +290,12 @@ struct BuddyReadingView: View {
     // MARK: - My status section
     
     private var myStatusSection: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("My Status")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                     Spacer()
                 }
                 
@@ -323,7 +307,7 @@ struct BuddyReadingView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 13, height: 13)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.primary)
                             Text(groupSummaryText)
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(LColors.textPrimary)
@@ -342,7 +326,7 @@ struct BuddyReadingView: View {
                                 Text(myGroups.count > 1 ? "Open a Chat" : "Open Chat")
                                     .font(.system(size: 13, weight: .semibold))
                             }
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.contrast)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
                             .background(Capsule().fill(LColors.glassSurface2))
@@ -365,7 +349,7 @@ struct BuddyReadingView: View {
                                             .resizable()
                                             .scaledToFit()
                                             .frame(width: 12, height: 12)
-                                            .foregroundStyle(LGradients.header)
+                                            .foregroundStyle(LColors.accents.secondary)
                                         Text(announcement.bookTitle)
                                             .font(.system(size: 14, weight: .bold))
                                             .foregroundStyle(LColors.textPrimary)
@@ -402,7 +386,7 @@ struct BuddyReadingView: View {
                                 .buttonStyle(.plain)
                             }
                             .padding(10)
-                            .background(Color.white.opacity(0.06))
+                            .background(LColors.surface.subtle.opacity(0.6))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(RoundedRectangle(cornerRadius: 12).stroke(LColors.glassBorder, lineWidth: 1))
                         }
@@ -428,7 +412,7 @@ struct BuddyReadingView: View {
                                 Text(myAnnouncements.isEmpty ? "Post Announcement" : "Post Another")
                                     .font(.system(size: 13, weight: .semibold))
                             }
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.special)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
                             .background(
@@ -469,20 +453,20 @@ struct BuddyReadingView: View {
             HStack {
                 Text("Join Requests")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Spacer()
 
                 Text("\(totalPendingRequests)")
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Capsule().fill(LGradients.header))
+                    .background(Capsule().fill(LGradients.blue))
             }
 
             ForEach(groupsAwaitingResponse) { group in
-                GlassCard {
+                GlassCard(variant: .primary) {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 6) {
                             Image("books")
@@ -490,7 +474,7 @@ struct BuddyReadingView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 12, height: 12)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.primary)
 
                             Text(group.bookTitle)
                                 .font(.system(size: 14, weight: .bold))
@@ -537,7 +521,7 @@ struct BuddyReadingView: View {
                     .foregroundStyle(LColors.textPrimary)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(Color.white.opacity(0.08))
+                    .background(LColors.border.nested)
                     .clipShape(Capsule())
                     .overlay(Capsule().stroke(LColors.glassBorder, lineWidth: 1))
             }
@@ -556,7 +540,7 @@ struct BuddyReadingView: View {
             HStack {
                 Text("Announcement Board")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                 Spacer()
                 if isLoading {
                     ProgressView()
@@ -566,7 +550,7 @@ struct BuddyReadingView: View {
             }
             
             if board.isEmpty && !isLoading {
-                GlassCard {
+                GlassCard(variant: .secondary) {
                     Text("No announcements yet. Be the first to post!")
                         .font(.subheadline)
                         .foregroundStyle(LColors.textSecondary)
@@ -743,7 +727,7 @@ struct BuddyReadingView: View {
             .foregroundStyle(LColors.textPrimary)
             .padding(.horizontal, 9)
             .padding(.vertical, 6)
-            .background(Color.white.opacity(0.08))
+            .background(LColors.border.nested)
             .clipShape(Capsule())
             .overlay(Capsule().stroke(LColors.glassBorder, lineWidth: 1))
     }
@@ -791,7 +775,7 @@ struct BuddyReadingView: View {
         }
         
         var body: some View {
-            GlassCard {
+            GlassCard(variant: .tertiary) {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
@@ -801,7 +785,7 @@ struct BuddyReadingView: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 12, height: 12)
-                                    .foregroundStyle(LGradients.header)
+                                    .foregroundStyle(LColors.accents.contrast)
                                 Text(announcement.bookTitle)
                                     .font(.system(size: 14, weight: .bold))
                                     .foregroundStyle(LColors.textPrimary)
@@ -823,7 +807,7 @@ struct BuddyReadingView: View {
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
-                                    .background(Capsule().fill(LGradients.header))
+                                    .background(Capsule().fill(LGradients.blue))
                             }
 
                             Text("\(spotsLeft) spot\(spotsLeft == 1 ? "" : "s")")
@@ -831,7 +815,7 @@ struct BuddyReadingView: View {
                                 .foregroundStyle(LColors.textPrimary)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(Color.white.opacity(0.08))
+                                .background(LColors.border.nested)
                                 .clipShape(Capsule())
                                 .overlay(Capsule().stroke(LColors.glassBorder, lineWidth: 1))
                         }
@@ -881,7 +865,7 @@ struct BuddyReadingView: View {
                                     Text("Open Chat")
                                         .font(.system(size: 13, weight: .semibold))
                                 }
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.secondary)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
                                 .background(LColors.glassSurface2)
@@ -901,7 +885,7 @@ struct BuddyReadingView: View {
                                     .foregroundStyle(LColors.textPrimary)
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 10)
-                                    .background(Color.white.opacity(0.08))
+                                    .background(LColors.border.nested)
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
@@ -923,7 +907,7 @@ struct BuddyReadingView: View {
                                     Text(actionTitle)
                                         .font(.system(size: 13, weight: .semibold))
                                 }
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.special)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
                                 .background(LColors.glassSurface2)
@@ -985,11 +969,11 @@ struct BuddyGroupPickerSheet: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Which Buddy Read?")
                     .font(.system(size: 26, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("You're reading with more than one group. Pick a chat to open.")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.65))
+                    .foregroundStyle(LColors.text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -1003,14 +987,14 @@ struct BuddyGroupPickerSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -1020,22 +1004,22 @@ struct BuddyGroupPickerSheet: View {
     }
 
     private func groupRow(_ group: BuddyGroup) -> some View {
-        GlassCard {
+        GlassCard(variant: .elevated) {
             HStack(spacing: 12) {
                 Image("books")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 40, height: 40)
-                    .background(Circle().fill(Color.white.opacity(0.06)))
+                    .background(Circle().fill(LColors.iconContainer.primary))
                     .overlay(Circle().strokeBorder(LColors.glassBorder, lineWidth: 1))
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(group.bookTitle)
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .lineLimit(1)
 
                     if let author = group.bookAuthor, !author.isEmpty {
@@ -1053,7 +1037,7 @@ struct BuddyGroupPickerSheet: View {
                     if let owner = group.ownerLabel(currentUserId: currentUserId) {
                         Text(owner)
                             .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.secondary)
                     }
                 }
 
@@ -1064,7 +1048,7 @@ struct BuddyGroupPickerSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)
-                    .foregroundStyle(.white.opacity(0.85))
+                    .foregroundStyle(LColors.text.primary)
             }
         }
     }

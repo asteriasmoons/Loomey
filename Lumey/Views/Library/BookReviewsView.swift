@@ -64,7 +64,7 @@ struct BookReviewsView: View {
         HStack {
             Text("Reviews")
                 .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Spacer()
 
@@ -76,14 +76,14 @@ struct BookReviewsView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -98,14 +98,14 @@ struct BookReviewsView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -129,7 +129,7 @@ struct BookReviewsView: View {
     }
 
     private var emptyState: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(spacing: 12) {
                 Image("starcircle")
                     .renderingMode(.template)
@@ -152,13 +152,13 @@ struct BookReviewsView: View {
     }
 
     private func reviewCard(_ review: BookReview) -> some View {
-        GlassCard(cornerRadius: 20, padding: 18) {
+        GlassCard(cornerRadius: 20, padding: 18, variant: .tertiary) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     if !review.title.isEmpty {
                         Text(review.title)
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .lineLimit(1)
                     }
 
@@ -177,7 +177,7 @@ struct BookReviewsView: View {
                                 .frame(width: 30, height: 30)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.06))
+                                        .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
                                                 .strokeBorder(LGradients.blue, lineWidth: 1)
@@ -199,7 +199,7 @@ struct BookReviewsView: View {
                                 .frame(width: 30, height: 30)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.06))
+                                        .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
                                                 .strokeBorder(LGradients.blue, lineWidth: 1)
@@ -220,12 +220,8 @@ struct BookReviewsView: View {
                                 .frame(width: 14, height: 14)
                                 .foregroundStyle(
                                     star <= Int(review.rating)
-                                    ? LGradients.blue
-                                    : LinearGradient(
-                                        colors: [Color.white.opacity(0.18), Color.white.opacity(0.18)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
+                                    ? LColors.accents.secondary
+                                    : LColors.border.nestedStrong
                                 )
                         }
                     }
@@ -233,7 +229,7 @@ struct BookReviewsView: View {
 
                 Text(review.content)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.84))
+                    .foregroundStyle(LColors.text.primary)
                     .lineLimit(4)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -292,7 +288,7 @@ struct BookReviewDetailSheet: View {
                     HStack {
                         Text("Review")
                             .font(.system(size: 22, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.headingPrimary)
 
                         Spacer()
 
@@ -308,18 +304,18 @@ struct BookReviewDetailSheet: View {
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.06))
+                                        .fill(LColors.iconContainer.primary)
                                 )
                         }
                         .buttonStyle(.plain)
                     }
 
-                    GlassCard {
+                    GlassCard(variant: .primary) {
                         VStack(alignment: .leading, spacing: 14) {
                             if !review.title.isEmpty {
                                 Text(review.title)
                                     .font(.system(size: 18, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
                             }
 
                             if review.rating > 0 {
@@ -332,12 +328,8 @@ struct BookReviewDetailSheet: View {
                                             .frame(width: 16, height: 16)
                                             .foregroundStyle(
                                                 star <= Int(review.rating)
-                                                ? LGradients.blue
-                                                : LinearGradient(
-                                                    colors: [Color.white.opacity(0.18), Color.white.opacity(0.18)],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                )
+                                                ? LColors.accents.secondary
+                                                : LColors.border.nestedStrong
                                             )
                                     }
                                 }
@@ -345,7 +337,7 @@ struct BookReviewDetailSheet: View {
 
                             Text(review.content)
                                 .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.white.opacity(0.90))
+                                .foregroundStyle(LColors.text.primary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
                             Text(review.dateCreated.formatted(date: .long, time: .shortened))
@@ -388,7 +380,7 @@ struct BookReviewEditorSheet: View {
                     HStack {
                         Text(isEditing ? "Edit Review" : "New Review")
                             .font(.system(size: 22, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.headingPrimary)
 
                         Spacer()
 
@@ -404,13 +396,13 @@ struct BookReviewEditorSheet: View {
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.06))
+                                        .fill(LColors.iconContainer.primary)
                                 )
                         }
                         .buttonStyle(.plain)
                     }
 
-                    GlassCard {
+                    GlassCard(variant: .secondary) {
                         VStack(alignment: .leading, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Title (optional)")
@@ -423,7 +415,7 @@ struct BookReviewEditorSheet: View {
                                     .padding(12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .fill(Color.white.opacity(0.04))
+                                            .fill(LColors.surface.nested)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                                                     .strokeBorder(LColors.glassBorder, lineWidth: 1)
@@ -448,12 +440,8 @@ struct BookReviewEditorSheet: View {
                                                 .frame(width: 22, height: 22)
                                                 .foregroundStyle(
                                                     star <= Int(rating)
-                                                    ? LGradients.blue
-                                                    : LinearGradient(
-                                                        colors: [Color.white.opacity(0.18), Color.white.opacity(0.18)],
-                                                        startPoint: .topLeading,
-                                                        endPoint: .bottomTrailing
-                                                    )
+                                                    ? LColors.accents.secondary
+                                                    : LColors.border.nestedStrong
                                                 )
                                                 .frame(width: 28, height: 28)
                                                 .contentShape(Rectangle())
@@ -476,7 +464,7 @@ struct BookReviewEditorSheet: View {
                                     .padding(12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .fill(Color.white.opacity(0.04))
+                                            .fill(LColors.surface.nested)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                                                     .strokeBorder(LColors.glassBorder, lineWidth: 1)
@@ -491,7 +479,7 @@ struct BookReviewEditorSheet: View {
                     } label: {
                         Text(isEditing ? "Save Changes" : "Add Review")
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(

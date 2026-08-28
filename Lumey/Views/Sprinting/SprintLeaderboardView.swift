@@ -23,6 +23,7 @@ struct SprintLeaderboardView: View {
         }
         .navigationTitle("")
         .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear { Task { await load() } }
     }
 
@@ -30,7 +31,7 @@ struct SprintLeaderboardView: View {
         HStack(spacing: 12) {
             Text("All-Time Leaderboard")
                 .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Spacer()
 
@@ -48,11 +49,7 @@ struct SprintLeaderboardView: View {
                         .scaledToFit()
                         .frame(width: 18, height: 18)
                         .foregroundStyle(
-                            LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.accents.primary
                         )
                         .frame(width: 36, height: 36)
                         .background(
@@ -61,11 +58,7 @@ struct SprintLeaderboardView: View {
                                 .overlay(
                                     Circle()
                                         .strokeBorder(
-                                            LinearGradient(
-                                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
+                                            LColors.accents.primary,
                                             lineWidth: 1.35
                                         )
                                 )
@@ -85,7 +78,7 @@ struct SprintLeaderboardView: View {
         ScrollView {
             VStack(spacing: 10) {
                 if entries.isEmpty && !isLoading {
-                    GlassCard {
+                    GlassCard(variant: .featured) {
                         Text("No sprints completed yet. Be the first!")
                             .font(.subheadline)
                             .foregroundStyle(LColors.textSecondary)
@@ -107,7 +100,7 @@ struct SprintLeaderboardView: View {
     private func leaderboardRow(entry: SprintLeaderboardEntry, rank: Int) -> some View {
         let isMe = entry.userId == userId
 
-        return GlassCard {
+        return GlassCard(variant: .primary) {
             HStack(spacing: 12) {
                 rankIcon(for: rank - 1)
 
@@ -154,28 +147,28 @@ struct SprintLeaderboardView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
         case 1:
             Image("startrophyfill")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.contrast)
         case 2:
             Image("startrophyfill")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.secondary)
         default:
             Image("sparklybook")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.special)
         }
     }
 

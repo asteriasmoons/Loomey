@@ -217,7 +217,7 @@ private extension ReadingHomeView {
             HStack {
                 Text("Lumey")
                     .font(.system(size: 38, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Spacer()
 
@@ -227,7 +227,7 @@ private extension ReadingHomeView {
                     } label: {
                         Text("Sign In")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                             .background(
@@ -251,7 +251,7 @@ private extension ReadingHomeView {
 
 private extension ReadingHomeView {
     var currentlyReadingSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        return VStack(alignment: .leading, spacing: 14) {
             sectionHeader("Currently Reading")
 
             if currentlyReadingBooks.isEmpty {
@@ -261,8 +261,12 @@ private extension ReadingHomeView {
                 )
             } else {
                 VStack(spacing: 12) {
-                    ForEach(currentlyReadingBooks.prefix(3)) { book in
-                        HomeCurrentReadingCard(book: book)
+                    ForEach(Array(currentlyReadingBooks.prefix(3).enumerated()), id: \.element.id) { index, book in
+                        HomeCurrentReadingCard(
+                            book: book,
+                            variant: GlassCardRotation.variant(for: index),
+                            accentIndex: index
+                        )
                     }
                 }
             }
@@ -274,55 +278,70 @@ private extension ReadingHomeView {
 
 private extension ReadingHomeView {
     var libraryPulseSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let activeReadingRatio = activeBooks.isEmpty ? 0 : Double(currentlyReadingBooks.count) / Double(activeBooks.count)
+
+        return VStack(alignment: .leading, spacing: 14) {
             sectionHeader("Library Pulse")
 
-            GlassCard {
+            GlassCard(variant: .featured) {
                 HStack(spacing: 16) {
                     VStack(spacing: 12) {
                         frostedStatBox(
                             value: "\(activeBooks.count)",
-                            label: "Total Books"
+                            label: "Total Books",
+                            tint: LColors.accents.contrast
                         )
 
                         frostedStatBox(
                             value: "\(currentlyReadingBooks.count)",
-                            label: "Currently Reading"
+                            label: "Currently Reading",
+                            tint: LColors.accents.primary
                         )
                     }
 
                     Spacer()
 
-                    DottedProgressRing(
-                        progress: activeBooks.isEmpty ? 0 : Double(currentlyReadingBooks.count) / Double(activeBooks.count),
-                        size: 120,
-                        dotCount: 24,
-                        dotSize: 6
-                    )
+                    VStack(spacing: 8) {
+                        DottedProgressRing(
+                            progress: activeReadingRatio,
+                            size: 120,
+                            dotCount: 24,
+                            dotSize: 6
+                        )
+
+                        Text("Reading Now")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .foregroundStyle(LColors.cardTitle)
+
+                        Text("of active library")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(LColors.textSecondary)
+                    }
+                    .frame(width: 132)
                 }
             }
         }
     }
 
-    func frostedStatBox(value: String, label: String) -> some View {
+    func frostedStatBox(value: String, label: String, tint: Color = LColors.accents.primary) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
                 .font(.system(size: 26, weight: .black, design: .rounded))
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(tint)
 
             Text(label)
                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(LColors.text.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.06))
+                .fill(LColors.surface.nestedStrong)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                        .strokeBorder(tint.opacity(0.35), lineWidth: 1)
                 )
         )
     }
@@ -342,32 +361,37 @@ private extension ReadingHomeView {
             sectionHeader("Your Writing")
 
             LazyVGrid(columns: columns, spacing: 12) {
-                writingStatCard(icon: "lovedocument", title: "Notes", count: allNotes.count)
-                writingStatCard(icon: "starmark", title: "Quotes", count: allQuotes.count)
-                writingStatCard(icon: "starcircle", title: "Reviews", count: allReviews.count)
+                writingStatCard(icon: "lovedocument", title: "Notes",   count: allNotes.count,   accentIndex: 0)
+                writingStatCard(icon: "starmark",    title: "Quotes",  count: allQuotes.count,  accentIndex: 1)
+                writingStatCard(icon: "starcircle",  title: "Reviews", count: allReviews.count, accentIndex: 2)
             }
         }
     }
 
-    func writingStatCard(icon: String, title: String, count: Int) -> some View {
-        GlassCard(cornerRadius: 18, padding: 14) {
+    /// Distributes accents across adjacent stat cards so three siblings show
+    /// three different palette colors instead of one repeated accent.
+    func writingStatCard(icon: String, title: String, count: Int, accentIndex: Int) -> some View {
+        let tint: Color = {
+            switch accentIndex % 3 {
+            case 0:  return LColors.accents.primary
+            case 1:  return LColors.accents.contrast
+            default: return LColors.accents.secondary
+            }
+        }()
+        let variant: GlassCardVariant = {
+            switch accentIndex % 3 {
+            case 0:  return .primary
+            case 1:  return .featured
+            default: return .secondary
+            }
+        }()
+
+        return GlassCard(cornerRadius: 18, padding: 14, variant: variant) {
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue.opacity(0.18),
-                                    LColors.gradientPurple.opacity(0.22)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .overlay(
-                            Circle()
-                                .strokeBorder(LGradients.blue, lineWidth: 1)
-                        )
+                        .fill(LColors.iconContainer.primary)
+                        .overlay(Circle().strokeBorder(tint, lineWidth: 1))
                         .frame(width: 40, height: 40)
 
                     Image(icon)
@@ -375,16 +399,16 @@ private extension ReadingHomeView {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(LGradients.blue)
+                        .foregroundStyle(tint)
                 }
 
                 Text("\(count)")
                     .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(tint)
 
                 Text(title)
                     .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(LColors.text.secondary)
             }
             .frame(maxWidth: .infinity)
         }
@@ -398,9 +422,9 @@ private extension ReadingHomeView {
         VStack(alignment: .leading, spacing: 14) {
             sectionHeader("Reading Momentum")
 
-            GlassCard {
+            GlassCard(variant: .tertiary) {
                 VStack(spacing: 16) {
-                    // Streak row
+                    // Streak row — current in accent, best in contrast
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: 6) {
@@ -409,16 +433,16 @@ private extension ReadingHomeView {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 22, height: 22)
-                                    .foregroundStyle(LGradients.header)
+                                    .foregroundStyle(LColors.accents.primary)
 
                                 Text("\(currentStreak)")
                                     .font(.system(size: 32, weight: .black, design: .rounded))
-                                    .foregroundStyle(LGradients.header)
+                                    .foregroundStyle(LColors.accents.primary)
                             }
 
                             Text("day streak")
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
-                                .foregroundStyle(LColors.textSecondary)
+                                .foregroundStyle(LColors.text.secondary)
                         }
 
                         Spacer()
@@ -426,29 +450,31 @@ private extension ReadingHomeView {
                         VStack(alignment: .trailing, spacing: 4) {
                             Text("\(bestStreak)")
                                 .font(.system(size: 20, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.accents.contrast)
 
                             Text("best streak")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                                .foregroundStyle(LColors.textSecondary)
+                                .foregroundStyle(LColors.text.tertiary)
                         }
                     }
 
                     // 7-day activity strip
                     weekActivityStrip
 
-                    // Today's stats pills
+                    // Today's stats pills — pages in secondary, minutes in contrast
                     HStack(spacing: 10) {
                         todayPill(
                             icon: "openbook",
                             value: "\(pagesReadToday)",
-                            label: "pages today"
+                            label: "pages today",
+                            tint: LColors.accents.secondary
                         )
 
                         todayPill(
                             icon: "clockfill",
                             value: "\(minutesReadToday)",
-                            label: "min today"
+                            label: "min today",
+                            tint: LColors.accents.contrast
                         )
                     }
                 }
@@ -479,13 +505,13 @@ private extension ReadingHomeView {
                 VStack(spacing: 6) {
                     Text(day.label)
                         .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                        .foregroundStyle(LColors.text.secondary)
 
                     Circle()
                         .fill(
                             day.isActive
-                            ? AnyShapeStyle(LGradients.blue)
-                            : AnyShapeStyle(Color.white.opacity(0.08))
+                            ? AnyShapeStyle(LColors.accents.primary)
+                            : AnyShapeStyle(LColors.surface.subtle)
                         )
                         .frame(width: 10, height: 10)
                         .overlay(
@@ -493,7 +519,7 @@ private extension ReadingHomeView {
                                 .strokeBorder(
                                     day.isActive
                                     ? AnyShapeStyle(Color.clear)
-                                    : AnyShapeStyle(Color.white.opacity(0.12)),
+                                    : AnyShapeStyle(LColors.border.primary.opacity(0.5)),
                                     lineWidth: 1
                                 )
                         )
@@ -505,40 +531,40 @@ private extension ReadingHomeView {
         .padding(.horizontal, 8)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.04))
+                .fill(LColors.surface.nested)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                        .strokeBorder(LColors.border.subtle, lineWidth: 1)
                 )
         )
     }
 
-    func todayPill(icon: String, value: String, label: String) -> some View {
+    func todayPill(icon: String, value: String, label: String, tint: Color = LColors.accents.primary) -> some View {
         HStack(spacing: 8) {
             Image(icon)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 14, height: 14)
-                .foregroundStyle(LGradients.blue)
+                .foregroundStyle(tint)
 
             Text(value)
                 .font(.system(size: 14, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.text.primary)
 
             Text(label)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(LColors.text.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
         .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(0.06))
+                .fill(LColors.surface.nested)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                        .strokeBorder(tint.opacity(0.32), lineWidth: 1)
                 )
         )
     }
@@ -557,17 +583,17 @@ private extension ReadingHomeView {
                     message: "Create a reading goal to track your progress here."
                 )
             } else {
-                GlassCard {
+                GlassCard(variant: .secondary) {
                     VStack(spacing: 0) {
                         ForEach(Array(activeReadingGoals.prefix(3).enumerated()), id: \.element.id) { index, goal in
                             if index > 0 {
                                 Rectangle()
-                                    .fill(LColors.glassBorder)
+                                    .fill(LColors.border.subtle)
                                     .frame(height: 1)
                                     .padding(.vertical, 10)
                             }
 
-                            CompactGoalRow(goal: goal)
+                            CompactGoalRow(goal: goal, accentIndex: index)
                         }
                     }
                 }
@@ -582,19 +608,19 @@ private extension ReadingHomeView {
     func sectionHeader(_ title: String) -> some View {
         Text(title)
             .font(.system(size: 20, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(LColors.headingPrimary)
     }
 
     func emptyCard(title: String, message: String) -> some View {
-        GlassCard {
+        GlassCard(variant: .subtle) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.text.primary)
 
                 Text(message)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(LColors.text.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -646,14 +672,8 @@ struct DottedProgressRing: View {
                 Circle()
                     .fill(
                         isFilled
-                        ? AnyShapeStyle(
-                            LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        : AnyShapeStyle(Color.white.opacity(0.10))
+                        ? AnyShapeStyle(LumeyProgressStyle.fill)
+                        : AnyShapeStyle(LumeyProgressStyle.track)
                     )
                     .frame(width: dotSize, height: dotSize)
                     .offset(
@@ -664,7 +684,7 @@ struct DottedProgressRing: View {
 
             Text("\(Int(clampedProgress * 100))%")
                 .font(.system(size: 22, weight: .black, design: .rounded))
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
         }
         .frame(width: size, height: size)
     }
@@ -691,14 +711,8 @@ struct DottedProgressBar: View {
                 Circle()
                     .fill(
                         index < filledDots
-                        ? AnyShapeStyle(
-                            LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        : AnyShapeStyle(Color.white.opacity(0.10))
+                        ? AnyShapeStyle(LumeyProgressStyle.fill)
+                        : AnyShapeStyle(LumeyProgressStyle.track)
                     )
                     .frame(width: dotSize, height: dotSize)
             }
@@ -710,6 +724,16 @@ struct DottedProgressBar: View {
 
 struct HomeCurrentReadingCard: View {
     let book: Book
+    var variant: GlassCardVariant = .primary
+    var accentIndex: Int = 0
+
+    private var accent: Color {
+        switch accentIndex % 3 {
+        case 0:  return LColors.accents.primary
+        case 1:  return LColors.accents.contrast
+        default: return LColors.accents.secondary
+        }
+    }
 
     private var lastReadLabel: String {
         let date = book.lastUpdated
@@ -741,34 +765,31 @@ struct HomeCurrentReadingCard: View {
     }
 
     var body: some View {
-        GlassCard {
+        GlassCard(variant: variant) {
             HStack(alignment: .top, spacing: 12) {
                 Image("openbook")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(accent)
                     .frame(width: 38, height: 38)
                     .background(
                         Circle()
-                            .fill(Color.white.opacity(0.06))
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
-                            )
+                            .fill(LColors.iconContainer.primary)
+                            .overlay(Circle().strokeBorder(accent, lineWidth: 1))
                     )
 
                 VStack(alignment: .leading, spacing: 8) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(book.displayTitle)
                             .font(.system(size: 17, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.text.primary)
                             .lineLimit(2)
 
                         Text(book.displayAuthor)
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
+                            .foregroundStyle(LColors.text.secondary)
                             .lineLimit(1)
                     }
 
@@ -777,18 +798,18 @@ struct HomeCurrentReadingCard: View {
 
                         Text(percentText)
                             .font(.system(size: 12, weight: .black, design: .rounded))
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(accent)
                     }
                     .padding(.top, 2)
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(book.progressText)
                             .font(.system(size: 11, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.text.primary)
 
                         Text(lastReadLabel)
                             .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
+                            .foregroundStyle(LColors.text.tertiary)
                     }
                 }
 
@@ -802,6 +823,15 @@ struct HomeCurrentReadingCard: View {
 
 struct CompactGoalRow: View {
     let goal: ReadingGoals
+    var accentIndex: Int = 0
+
+    private var accent: Color {
+        switch accentIndex % 3 {
+        case 0:  return LColors.accents.primary
+        case 1:  return LColors.accents.contrast
+        default: return LColors.accents.secondary
+        }
+    }
 
     private var isCompletedToday: Bool {
         guard let date = goal.lastCompletedDate else { return false }
@@ -815,17 +845,14 @@ struct CompactGoalRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(accent)
                 .frame(width: 34, height: 34)
-                .background(
-                    Circle()
-                        .fill(Color.white.opacity(0.06))
-                )
+                .background(Circle().fill(LColors.iconContainer.primary))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(goal.displayTitle)
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.text.primary)
                     .lineLimit(1)
 
                 if isCompletedToday {
@@ -835,11 +862,11 @@ struct CompactGoalRow: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 12, height: 12)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.state.completionText)
 
                         Text("Done today")
                             .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.state.completionText)
                     }
                 } else {
                     DottedProgressBar(value: goal.progressValue, dotCount: 12, dotSize: 5)
@@ -855,16 +882,16 @@ struct CompactGoalRow: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(accent)
 
                     Text("\(goal.currentStreak)")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(accent)
                 }
             } else {
                 Text("\(goal.progressPercentage)%")
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(accent)
             }
         }
     }
@@ -876,6 +903,7 @@ struct BookCoverThumbnail: View {
     let book: Book
     var width: CGFloat = 58
     var height: CGFloat = 84
+    var accent: Color = LColors.accents.primary
 
     var body: some View {
         ZStack {
@@ -883,8 +911,8 @@ struct BookCoverThumbnail: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            LColors.gradientBlue.opacity(0.55),
-                            LColors.gradientPurple.opacity(0.65)
+                            accent.opacity(0.55),
+                            LColors.accents.secondary.opacity(0.65)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -901,13 +929,13 @@ struct BookCoverThumbnail: View {
             } else {
                 Text(book.displayTitle.prefix(1).uppercased())
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.text.primary)
             }
         }
         .frame(width: width, height: height)
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.22), lineWidth: 1)
+                .strokeBorder(accent.opacity(0.35), lineWidth: 1)
         )
     }
 }
@@ -918,21 +946,23 @@ struct StatCard: View {
     let title: String
     let value: String
     let subtitle: String
+    var variant: GlassCardVariant = .primary
+    var accent: Color = LColors.accents.primary
 
     var body: some View {
-        GlassCard {
+        GlassCard(variant: variant) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(title)
                     .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(LColors.text.secondary)
 
                 Text(value)
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(accent)
 
                 Text(subtitle)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(LColors.text.tertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -943,26 +973,28 @@ struct StatCard: View {
 
 struct RecentBookRow: View {
     let book: Book
+    var variant: GlassCardVariant = .primary
+    var accent: Color = LColors.accents.primary
 
     var body: some View {
-        GlassCard {
+        GlassCard(variant: variant) {
             HStack(spacing: 12) {
-                BookCoverThumbnail(book: book, width: 46, height: 66)
+                BookCoverThumbnail(book: book, width: 46, height: 66, accent: accent)
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(book.displayTitle)
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.text.primary)
                         .lineLimit(1)
 
                     Text(book.displayAuthor)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                        .foregroundStyle(LColors.text.secondary)
                         .lineLimit(1)
 
                     Text(book.status.rawValue)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(accent)
                 }
 
                 Spacer()
@@ -970,10 +1002,10 @@ struct RecentBookRow: View {
                 if book.rating > 0 {
                     Text(String(format: "%.1f", book.rating))
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.text.primary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(LColors.glassSurface2, in: Capsule())
+                        .background(LColors.state.completionFill, in: Capsule())
                 }
             }
         }

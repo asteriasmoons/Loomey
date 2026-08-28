@@ -22,10 +22,15 @@ final class ChallengeSubmission {
     // User content
     var submissionNote: String = ""
     var proofSummary: String = ""
+    var photoURL: String = ""
 
     // Validation
     var validationStatusRawValue: String = ChallengeSubmissionStatus.submitted.rawValue
     var validationMessage: String?
+    var photoValidationStatusRawValue: String = ChallengeSubmissionStatus.submitted.rawValue
+    var photoValidationMessage: String?
+    var photoValidationConfidence: Double = 0
+    var photoValidationJSON: String = ""
 
     // Dates
     var submittedDate: Date = Date()
@@ -57,6 +62,7 @@ final class ChallengeSubmission {
         linkedReadingListIDs: [UUID] = [],
         submissionNote: String = "",
         proofSummary: String = "",
+        photoURL: String = "",
         cycleID: String = "",
         cycleStartDate: Date? = nil,
         cycleEndDate: Date? = nil
@@ -73,6 +79,7 @@ final class ChallengeSubmission {
         self.linkedReadingListIDs = linkedReadingListIDs
         self.submissionNote = submissionNote
         self.proofSummary = proofSummary
+        self.photoURL = photoURL
         self.submittedDate = Date()
         self.cycleID = cycleID
         self.cycleStartDate = cycleStartDate
@@ -86,6 +93,11 @@ extension ChallengeSubmission {
     var validationStatus: ChallengeSubmissionStatus {
         get { ChallengeSubmissionStatus(rawValue: validationStatusRawValue) ?? .submitted }
         set { validationStatusRawValue = newValue.rawValue }
+    }
+
+    var photoValidationStatus: ChallengeSubmissionStatus {
+        get { ChallengeSubmissionStatus(rawValue: photoValidationStatusRawValue) ?? .submitted }
+        set { photoValidationStatusRawValue = newValue.rawValue }
     }
 
     var linkedBookIDs: [UUID] {
@@ -110,6 +122,10 @@ extension ChallengeSubmission {
 
     var isApproved: Bool {
         validationStatus == .approved
+    }
+
+    var hasPhotoProof: Bool {
+        !photoURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     // MARK: - JSON Helpers

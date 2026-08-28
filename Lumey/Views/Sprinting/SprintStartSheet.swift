@@ -30,7 +30,7 @@ struct SprintStartSheet: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        GlassCard {
+                        GlassCard(variant: .featured) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Duration")
 
@@ -52,18 +52,14 @@ struct SprintStartSheet: View {
                                                 .padding(.vertical, 12)
                                                 .background(
                                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                        .fill(selectedDuration == duration ? LColors.glassSurface2 : Color.white.opacity(0.06))
+                                                        .fill(selectedDuration == duration ? LColors.glassSurface2 : LColors.surface.subtle.opacity(0.6))
                                                 )
                                                 .overlay(
                                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                                                         .strokeBorder(
                                                             selectedDuration == duration
-                                                            ? LGradients.header
-                                                            : LinearGradient(
-                                                                colors: [LColors.glassBorder, LColors.glassBorder],
-                                                                startPoint: .topLeading,
-                                                                endPoint: .bottomTrailing
-                                                            ),
+                                                            ? LColors.accents.secondary
+                                                            : LColors.glassBorder,
                                                             lineWidth: 1
                                                         )
                                                 )
@@ -74,7 +70,7 @@ struct SprintStartSheet: View {
                             }
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .primary) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Your Start Page")
 
@@ -86,16 +82,16 @@ struct SprintStartSheet: View {
                                     .padding(.vertical, 12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .fill(Color.white.opacity(0.055))
+                                            .fill(LColors.surface.nestedSoft)
                                     )
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                            .strokeBorder(LColors.border.nested, lineWidth: 1)
                                     )
                             }
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .secondary) {
                             Text("A 30 second join window opens before the sprint begins. Others can join during this time.")
                                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                                 .foregroundStyle(LColors.textSecondary)
@@ -123,7 +119,7 @@ struct SprintStartSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Start a Sprint")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Choose your duration and starting page.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -141,11 +137,7 @@ struct SprintStartSheet: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(
-                        LinearGradient(
-                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        LColors.accents.secondary
                     )
                     .frame(width: 40, height: 40)
                     .background(
@@ -154,11 +146,7 @@ struct SprintStartSheet: View {
                             .overlay(
                                 Circle()
                                     .strokeBorder(
-                                        LinearGradient(
-                                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
+                                        LColors.accents.secondary,
                                         lineWidth: 1.35
                                     )
                             )
@@ -185,7 +173,7 @@ struct SprintStartSheet: View {
                 } else {
                     Text("Start Sprint")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -194,7 +182,7 @@ struct SprintStartSheet: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(
                         canStart
-                        ? LGradients.header
+                        ? LGradients.blue
                         : LinearGradient(
                             colors: [
                                 Color.gray.opacity(0.3),

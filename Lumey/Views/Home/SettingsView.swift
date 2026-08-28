@@ -51,6 +51,7 @@ private struct PendingReadingStreakSettingsChange {
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
     private var books: [Book]
@@ -72,6 +73,7 @@ struct SettingsView: View {
     @State private var selectedLegacyCleanupBookIDs: Set<UUID> = []
     @State private var pendingStreakChange: PendingReadingStreakSettingsChange?
     @State private var showStreakResetConfirm = false
+    @State private var showingReleaseNotes = false
 
     private var syncedBooks: [Book] {
         books.filter { $0.deletedAt == nil }
@@ -134,6 +136,8 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         header
                         commandCenter
+                        releaseNotesCard
+                        AppThemeSettingsSection()
                         libraryPulse
                         readingStreaksSettings
                         dataVault
@@ -219,6 +223,11 @@ struct SettingsView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            .adaptivePresentation(isPresented: $showingReleaseNotes, useFullScreenCover: horizontalSizeClass == .regular) {
+                ReleaseNotesPage()
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.hidden)
+            }
         }
     }
 }
@@ -230,7 +239,7 @@ private extension SettingsView {
         VStack(alignment: .leading, spacing: 8) {
             Text("Settings")
                 .font(.system(size: 38, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Text("Your Lumey control room")
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -240,7 +249,7 @@ private extension SettingsView {
     }
 
     var commandCenter: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 14) {
                     Image("settingswavy")
@@ -248,14 +257,14 @@ private extension SettingsView {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 25, height: 25)
-                        .foregroundStyle(.black)
+                        .foregroundStyle(LColors.appBackground)
                         .frame(width: 52, height: 52)
                         .background(Circle().fill(LGradients.header))
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Library Ops")
                             .font(.system(size: 22, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.headingPrimary)
 
                         Text("\(activeBooks.count) active books moving through iCloud")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -271,6 +280,17 @@ private extension SettingsView {
                     SettingsSignalPill(title: "Saved", value: "\(syncedBooks.count)")
                 }
             }
+        }
+    }
+
+    var releaseNotesCard: some View {
+        SettingsActionCard(
+            title: "Release Notes",
+            subtitle: "See what changed across the latest Loomey updates.",
+            iconName: "timebook",
+            gradientColors: [LColors.accents.contrast, LColors.accents.primary]
+        ) {
+            showingReleaseNotes = true
         }
     }
 
@@ -302,13 +322,13 @@ private extension SettingsView {
         VStack(alignment: .leading, spacing: 14) {
             Text("Data Vault")
                 .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             SettingsActionCard(
                 title: "Import Goodreads",
                 subtitle: "Review CSV rows first. Likely duplicates are off by default.",
                 iconName: "upload",
-                gradientColors: [LColors.gradientBlue, LColors.gradientPurple]
+                gradientColors: [LColors.accents.contrast, LColors.accents.primary]
             ) {
                 showGoodreadsImporter = true
             }
@@ -348,22 +368,22 @@ private extension SettingsView {
     }
 
     var cloudKitCard: some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             HStack(alignment: .top, spacing: 14) {
                 Image("cloudmind")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
-                    .background(Circle().fill(Color.white.opacity(0.06)))
+                    .background(Circle().fill(LColors.iconContainer.primary))
                     .overlay(Circle().strokeBorder(LColors.glassBorder, lineWidth: 1))
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("CloudKit Library")
                         .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("Confirmed imports become normal Lumey books with a Goodreads batch tag, so future batch undo deletes exactly that import and syncs through iCloud.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -373,6 +393,21 @@ private extension SettingsView {
 
                 Spacer(minLength: 0)
             }
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func adaptivePresentation<Content: View>(
+        isPresented: Binding<Bool>,
+        useFullScreenCover: Bool,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        if useFullScreenCover {
+            self.fullScreenCover(isPresented: isPresented, content: content)
+        } else {
+            self.sheet(isPresented: isPresented, content: content)
         }
     }
 }
@@ -642,7 +677,7 @@ private struct GoodreadsImportReviewSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Review Import")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("\(selectedCount) selected of \(preview.candidates.count)")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -656,7 +691,7 @@ private struct GoodreadsImportReviewSheet: View {
             } label: {
                 Text("Import \(selectedCount)")
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(LColors.appBackground)
                     .padding(.horizontal, 15)
                     .padding(.vertical, 10)
                     .background(Capsule(style: .continuous).fill(LGradients.header))
@@ -671,10 +706,10 @@ private struct GoodreadsImportReviewSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 42, height: 42)
                     .background(Circle().fill(LColors.bg))
-                    .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1.2))
+                    .overlay(Circle().strokeBorder(LColors.accents.primary, lineWidth: 1.2))
             }
             .buttonStyle(.plain)
         }
@@ -684,18 +719,18 @@ private struct GoodreadsImportReviewSheet: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
     }
 
     private var summaryCard: some View {
-        GlassCard(cornerRadius: 20, padding: 16) {
+        GlassCard(cornerRadius: 20, padding: 16, variant: .secondary) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Likely duplicates are off by default")
                     .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text("\(preview.duplicateCount) possible duplicates found. \(preview.skippedInvalidRows) invalid rows skipped before review.")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -727,21 +762,21 @@ private struct GoodreadsCandidateRow: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)
-                    .foregroundStyle(isSelected ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.textSecondary))
+                    .foregroundStyle(isSelected ? AnyShapeStyle(LColors.accents.special) : AnyShapeStyle(LColors.textSecondary))
                     .frame(width: 34, height: 34)
-                    .background(Circle().fill(Color.white.opacity(0.06)))
+                    .background(Circle().fill(LColors.iconContainer.primary))
 
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 8) {
                         Text(candidate.draft.title)
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .lineLimit(2)
 
                         if candidate.isLikelyDuplicate {
                             Text("Possible Duplicate")
                                 .font(.system(size: 9, weight: .black, design: .rounded))
-                                .foregroundStyle(.black)
+                                .foregroundStyle(LColors.appBackground)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(Capsule(style: .continuous).fill(LColors.gradientYellow))
@@ -769,12 +804,12 @@ private struct GoodreadsCandidateRow: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(isSelected ? LColors.glassSurface2 : Color.white.opacity(0.045))
+                    .fill(isSelected ? LColors.glassSurface2 : LColors.surface.subtle.opacity(0.5))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(
-                        isSelected ? LColors.gradientBlue.opacity(0.8) : Color.white.opacity(0.10),
+                        isSelected ? LColors.gradientBlue.opacity(0.8) : LColors.border.nestedStrong,
                         lineWidth: 1
                     )
             )
@@ -817,7 +852,7 @@ private struct LegacyGoodreadsCleanupSheet: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 12) {
-                        GlassCard(cornerRadius: 20, padding: 16) {
+                        GlassCard(cornerRadius: 20, padding: 16, variant: .tertiary) {
                             Text("These are only likely matches from the recent untagged import. Uncheck anything you want to keep before deleting.")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(LColors.textSecondary)
@@ -846,7 +881,7 @@ private struct LegacyGoodreadsCleanupSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Cleanup Preview")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("\(selectedCount) selected of \(books.count)")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -860,7 +895,7 @@ private struct LegacyGoodreadsCleanupSheet: View {
             } label: {
                 Text("Delete \(selectedCount)")
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(LColors.appBackground)
                     .padding(.horizontal, 15)
                     .padding(.vertical, 10)
                     .background(Capsule(style: .continuous).fill(LColors.gradientPink))
@@ -875,10 +910,10 @@ private struct LegacyGoodreadsCleanupSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.secondary)
                     .frame(width: 42, height: 42)
                     .background(Circle().fill(LColors.bg))
-                    .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1.2))
+                    .overlay(Circle().strokeBorder(LColors.accents.contrast, lineWidth: 1.2))
             }
             .buttonStyle(.plain)
         }
@@ -888,7 +923,7 @@ private struct LegacyGoodreadsCleanupSheet: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
@@ -916,14 +951,14 @@ private struct LegacyCleanupBookRow: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)
-                    .foregroundStyle(isSelected ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.textSecondary))
+                    .foregroundStyle(isSelected ? AnyShapeStyle(LColors.accents.primary) : AnyShapeStyle(LColors.textSecondary))
                     .frame(width: 34, height: 34)
-                    .background(Circle().fill(Color.white.opacity(0.06)))
+                    .background(Circle().fill(LColors.iconContainer.primary))
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(book.displayTitle)
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .lineLimit(2)
 
                     Text(book.displayAuthor)
@@ -940,12 +975,12 @@ private struct LegacyCleanupBookRow: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(isSelected ? LColors.glassSurface2 : Color.white.opacity(0.045))
+                    .fill(isSelected ? LColors.glassSurface2 : LColors.surface.subtle.opacity(0.5))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(
-                        isSelected ? LColors.gradientPink.opacity(0.8) : Color.white.opacity(0.10),
+                        isSelected ? LColors.gradientPink.opacity(0.8) : LColors.border.nestedStrong,
                         lineWidth: 1
                     )
             )
@@ -969,7 +1004,7 @@ private struct ReadingStreakSettingsSection: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Reading Streaks")
                 .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             dailyCard
             weekendCard
@@ -997,7 +1032,7 @@ private struct ReadingStreakSettingsSection: View {
             VStack(alignment: .leading, spacing: 13) {
                 Text("Current Weekend: \(normalizedConfiguration.weekendDay1.fullName) + \(normalizedConfiguration.weekendDay2.fullName)")
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.special)
 
                 weekdaySelector(
                     title: "Weekend Day 1",
@@ -1110,14 +1145,14 @@ private struct ReadingStreakSettingsSection: View {
                                 Capsule(style: .continuous)
                                     .fill(
                                         selectedDay == day
-                                        ? AnyShapeStyle(LGradients.header)
+                                        ? AnyShapeStyle(LColors.accents.contrast)
                                         : AnyShapeStyle(LColors.glassSurface)
                                     )
                             )
                             .overlay(
                                 Capsule(style: .continuous)
                                     .strokeBorder(
-                                        isEnabled ? LColors.glassBorder : Color.white.opacity(0.06),
+                                        isEnabled ? LColors.glassBorder : LColors.surface.subtle.opacity(0.6),
                                         lineWidth: 1
                                     )
                             )
@@ -1139,11 +1174,11 @@ private struct ReadingStreakSettingsSection: View {
                 .frame(height: 32)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(isSelected ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassSurface))
+                        .fill(isSelected ? AnyShapeStyle(LColors.accents.secondary) : AnyShapeStyle(LColors.glassSurface))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(isSelected ? Color.white.opacity(0.16) : LColors.glassBorder, lineWidth: 1)
+                        .strokeBorder(isSelected ? LColors.border.subtle : LColors.glassBorder, lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
@@ -1172,7 +1207,7 @@ private struct StreakSettingsCard<Content: View>: View {
     }
 
     var body: some View {
-        GlassCard(cornerRadius: 20, padding: 16) {
+        GlassCard(cornerRadius: 20, padding: 16, variant: .elevated) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 12) {
                     Image(iconName)
@@ -1180,15 +1215,15 @@ private struct StreakSettingsCard<Content: View>: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                         .frame(width: 38, height: 38)
-                        .background(Circle().fill(Color.white.opacity(0.06)))
-                        .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1))
+                        .background(Circle().fill(LColors.iconContainer.primary))
+                        .overlay(Circle().strokeBorder(LColors.accents.secondary, lineWidth: 1))
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(title)
                             .font(.system(size: 16, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
 
                         Text(subtitle)
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -1218,7 +1253,7 @@ private struct SettingsSignalPill: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(value)
                 .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Text(title)
                 .font(.system(size: 10, weight: .black, design: .rounded))
@@ -1229,11 +1264,11 @@ private struct SettingsSignalPill: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.06))
+                .fill(LColors.iconContainer.primary)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                .strokeBorder(LColors.border.subtle, lineWidth: 1)
         )
     }
 }
@@ -1244,21 +1279,21 @@ private struct SettingsMetricCard: View {
     let iconName: String
 
     var body: some View {
-        GlassCard(cornerRadius: 20, padding: 16) {
+        GlassCard(cornerRadius: 20, padding: 16, variant: .subtle) {
             HStack(spacing: 12) {
                 Image(iconName)
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 38, height: 38)
-                    .background(Circle().fill(Color.white.opacity(0.06)))
+                    .background(Circle().fill(LColors.iconContainer.primary))
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(value)
                         .font(.system(size: 24, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.headingPrimary)
 
                     Text(title)
                         .font(.system(size: 11, weight: .black, design: .rounded))
@@ -1286,7 +1321,7 @@ private struct SettingsActionCard: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22, height: 22)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(LColors.appBackground)
                     .frame(width: 48, height: 48)
                     .background(
                         Circle()
@@ -1302,7 +1337,7 @@ private struct SettingsActionCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .lineLimit(1)
 
                     Text(subtitle)
@@ -1329,15 +1364,7 @@ private struct SettingsActionCard: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                LColors.gradientBlue.opacity(0.72),
-                                LColors.gradientPurple.opacity(0.72),
-                                Color.white.opacity(0.22)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
+                        LColors.gradientBlue.opacity(0.72),
                         lineWidth: 1
                     )
             )

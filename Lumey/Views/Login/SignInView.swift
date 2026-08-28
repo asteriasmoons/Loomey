@@ -31,9 +31,10 @@ struct SignInView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 17, height: 17)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.contrast)
                             .frame(width: 38, height: 38)
-                            .background(Circle().fill(LColors.glassSurface2))
+                            .background(Circle().fill(LColors.surface.elevated))
+                            .overlay(Circle().strokeBorder(LColors.accents.contrast.opacity(0.4), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                 }
@@ -44,11 +45,11 @@ struct SignInView: View {
 
                 Text("Sign In")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.text.primary)
 
                 Text("Log in to sync your data across devices.")
                     .font(.system(size: 14))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(LColors.text.secondary)
 
                 if let errorText {
                     Text(errorText)
@@ -71,7 +72,7 @@ struct SignInView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: LSpacing.buttonRadius, style: .continuous)
-                        .strokeBorder(LGradients.header, lineWidth: 1.5)
+                        .strokeBorder(LColors.accents.primary, lineWidth: 1.5)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: LSpacing.buttonRadius))
                 .padding(.horizontal, LSpacing.pageHorizontal)

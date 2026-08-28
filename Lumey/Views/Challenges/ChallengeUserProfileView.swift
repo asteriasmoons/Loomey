@@ -102,7 +102,7 @@ struct ChallengeUserProfileView: View {
         HStack(spacing: 12) {
             Text("Reader Profile")
                 .font(.system(size: 32, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Spacer()
 
@@ -114,14 +114,14 @@ struct ChallengeUserProfileView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                     )
             }
@@ -137,7 +137,7 @@ struct ChallengeUserProfileView: View {
     // MARK: - Hero
 
     private var profileHero: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(spacing: 16) {
                 avatarUploadButton
 
@@ -164,7 +164,7 @@ struct ChallengeUserProfileView: View {
                             } label: {
                                 Text("Save Username")
                                     .font(.system(size: 12, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
                                     .padding(.horizontal, 18)
                                     .padding(.vertical, 9)
                                     .background(
@@ -182,7 +182,7 @@ struct ChallengeUserProfileView: View {
                             HStack(spacing: 6) {
                                 Text(displayUsername)
                                     .font(.system(size: 24, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.headingPrimary)
                                     .multilineTextAlignment(.center)
 
                                 Image("pencil")
@@ -203,7 +203,7 @@ struct ChallengeUserProfileView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 12, height: 12)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.contrast)
 
                             Text(displayFavoriteGenre)
                                 .font(.system(size: 12, weight: .black, design: .rounded))
@@ -217,15 +217,15 @@ struct ChallengeUserProfileView: View {
                         } label: {
                             Text(isFollowing ? "Following" : "Follow")
                                 .font(.system(size: 12, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 10)
                                 .background(
                                     Capsule(style: .continuous)
-                                        .fill(isFollowing ? AnyShapeStyle(LColors.glassSurface) : AnyShapeStyle(LGradients.header))
+                                        .fill(isFollowing ? AnyShapeStyle(LColors.glassSurface) : AnyShapeStyle(LColors.accents.secondary))
                                         .overlay(
                                             Capsule(style: .continuous)
-                                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                                .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                                         )
                                 )
                         }
@@ -245,10 +245,10 @@ struct ChallengeUserProfileView: View {
                                 .frame(width: 38, height: 38)
                                 .background(
                                     Circle()
-                                        .fill(isCreatingConversation ? AnyShapeStyle(LColors.glassSurface) : AnyShapeStyle(LGradients.header))
+                                        .fill(isCreatingConversation ? AnyShapeStyle(LColors.glassSurface) : AnyShapeStyle(LColors.accents.special))
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                                .strokeBorder(LColors.accents.secondary, lineWidth: 1)
                                         )
                                 )
                         }
@@ -263,14 +263,14 @@ struct ChallengeUserProfileView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 18, height: 18)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.secondary)
                                 .frame(width: 38, height: 38)
                                 .background(
                                     Circle()
                                         .fill(LColors.glassSurface)
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                                .strokeBorder(LColors.accents.special, lineWidth: 1)
                                         )
                                 )
                         }
@@ -313,7 +313,7 @@ struct ChallengeUserProfileView: View {
                             .fill(LGradients.header)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+                                    .strokeBorder(LColors.border.primary, lineWidth: 1)
                             )
                     )
             }
@@ -335,7 +335,7 @@ struct ChallengeUserProfileView: View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -345,7 +345,7 @@ struct ChallengeUserProfileView: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.045))
+                .fill(LColors.surface.nested)
         )
     }
 
@@ -395,32 +395,32 @@ struct ChallengeUserProfileView: View {
         value: String,
         subtitle: String
     ) -> some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .elevated) {
             VStack(alignment: .leading, spacing: 12) {
                 Image(icon)
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 17, height: 17)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.special)
                     .frame(width: 38, height: 38)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1)
                             )
                     )
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(value)
                         .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.headingPrimary)
 
                     Text(title)
                         .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text(subtitle)
                         .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -434,28 +434,28 @@ struct ChallengeUserProfileView: View {
     // MARK: - Current Challenge
 
     private func currentChallengeCard(_ title: String) -> some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             HStack(spacing: 12) {
                 Image("stargoal")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                             )
                     )
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Current Challenge")
                         .font(.system(size: 12, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text(title)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -471,7 +471,7 @@ struct ChallengeUserProfileView: View {
     // MARK: - Bio
 
     private var bioCard: some View {
-        GlassCard {
+        GlassCard(variant: .secondary) {
             VStack(alignment: .leading, spacing: 10) {
                 sectionHeader(icon: "starnote", title: "About")
 
@@ -490,18 +490,18 @@ struct ChallengeUserProfileView: View {
             sectionHeader(icon: "sparkle", title: "Recent Challenge Entries")
 
             if recentSubmissions.isEmpty {
-                GlassCard {
+                GlassCard(variant: .tertiary) {
                     VStack(spacing: 10) {
                         Image("openbook")
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 28, height: 28)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.contrast)
 
                         Text("No recent entries yet.")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
 
                         Text("Challenge submissions will appear here once this reader starts joining events.")
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -532,21 +532,21 @@ struct ChallengeUserProfileView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 15, height: 15)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.secondary)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
                         .fill(LColors.glassSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
                         )
                 )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(submission.validationStatus.displayName)
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(submission.submittedDate.formatted(date: .abbreviated, time: .omitted))
                     .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -562,7 +562,7 @@ struct ChallengeUserProfileView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12, height: 12)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.special)
 
                     Text("\(submission.likeCount)")
                         .font(.system(size: 10, weight: .black, design: .rounded))
@@ -586,10 +586,10 @@ struct ChallengeUserProfileView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .fill(Color.white.opacity(0.045))
+                .fill(LColors.surface.nested)
                 .overlay(
                     RoundedRectangle(cornerRadius: 15, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                        .strokeBorder(LColors.border.nested, lineWidth: 1)
                 )
         )
     }
@@ -601,11 +601,11 @@ struct ChallengeUserProfileView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 15, height: 15)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
 
             Text(title)
                 .font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Spacer()
         }

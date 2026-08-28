@@ -134,7 +134,7 @@ struct AddEditReadingGoalSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(isEditing ? "Edit Goal" : "Add Goal")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
                 
                 Text(isEditing ? "Update your reading goal" : "Create a new Lumey reading goal")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -148,12 +148,12 @@ struct AddEditReadingGoalSheet: View {
             } label: {
                 Text("Save")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 9)
                     .background(
                         Capsule(style: .continuous)
-                            .fill(LGradients.header)
+                            .fill(LGradients.completion)
                     )
             }
             .buttonStyle(.plain)
@@ -166,14 +166,14 @@ struct AddEditReadingGoalSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -186,7 +186,7 @@ struct AddEditReadingGoalSheet: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
@@ -196,11 +196,11 @@ struct AddEditReadingGoalSheet: View {
         title: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 13) {
                 Text(title)
                     .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                 
                 VStack(spacing: 12) {
                     content()
@@ -239,12 +239,12 @@ struct AddEditReadingGoalSheet: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 14, height: 14)
-                                    .foregroundStyle(LGradients.header)
+                                    .foregroundStyle(LColors.accents.contrast)
                                 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(book.title)
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(LColors.cardTitle)
                                         .lineLimit(1)
                                     
                                     Text(book.author)
@@ -265,7 +265,7 @@ struct AddEditReadingGoalSheet: View {
                                         .frame(width: 12, height: 12)
                                         .foregroundStyle(LColors.textSecondary)
                                         .frame(width: 28, height: 28)
-                                        .background(Circle().fill(Color.white.opacity(0.06)))
+                                        .background(Circle().fill(LColors.iconContainer.primary))
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -273,11 +273,11 @@ struct AddEditReadingGoalSheet: View {
                             .padding(.vertical, 8)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.white.opacity(0.04))
+                                    .fill(LColors.surface.nested)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                    .strokeBorder(LColors.border.nested, lineWidth: 1)
                             )
                         }
                     }
@@ -302,11 +302,11 @@ struct AddEditReadingGoalSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 13, height: 13)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.secondary)
                         
                         Text("Link a Book")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                         
                         Spacer()
                         
@@ -342,11 +342,11 @@ struct AddEditReadingGoalSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.special)
                     
                     Text(linkedSeriesName)
                         .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .lineLimit(1)
                     
                     Spacer()
@@ -361,7 +361,7 @@ struct AddEditReadingGoalSheet: View {
                             .frame(width: 12, height: 12)
                             .foregroundStyle(LColors.textSecondary)
                             .frame(width: 28, height: 28)
-                            .background(Circle().fill(Color.white.opacity(0.06)))
+                            .background(Circle().fill(LColors.iconContainer.primary))
                     }
                     .buttonStyle(.plain)
                 }
@@ -369,11 +369,11 @@ struct AddEditReadingGoalSheet: View {
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.white.opacity(0.04))
+                        .fill(LColors.surface.nested)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                        .strokeBorder(LColors.border.nested, lineWidth: 1)
                 )
             }
             
@@ -391,11 +391,11 @@ struct AddEditReadingGoalSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 13, height: 13)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.primary)
                         
                         Text("Link a Series")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                         
                         Spacer()
                         

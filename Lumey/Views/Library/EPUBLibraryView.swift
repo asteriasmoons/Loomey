@@ -157,7 +157,7 @@ struct EPUBLibraryView: View {
         HStack {
             Text("Library")
                 .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Spacer()
 
@@ -169,7 +169,7 @@ struct EPUBLibraryView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22, height: 22)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
             }
             .buttonStyle(.plain)
 
@@ -181,7 +181,7 @@ struct EPUBLibraryView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22, height: 22)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
             }
             .buttonStyle(.plain)
         }
@@ -308,14 +308,7 @@ struct EPUBLibraryView: View {
                             .scaledToFit()
                     } else {
                         ZStack {
-                            LinearGradient(
-                                colors: [
-                                    Color(hex: book.coverColorHex) ?? LColors.gradientBlue,
-                                    Color(hex: book.accentColorHex) ?? LColors.gradientPurple
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            Color(hex: book.coverColorHex) ?? LColors.gradientBlue
 
                             VStack(spacing: 6) {
                                 Image("sparklybook")
@@ -323,11 +316,11 @@ struct EPUBLibraryView: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 28, height: 28)
-                                    .foregroundStyle(.white.opacity(0.7))
+                                    .foregroundStyle(LColors.text.secondary)
 
                                 Text(book.displayTitle)
                                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
                                     .multilineTextAlignment(.center)
                                     .lineLimit(3)
                                     .padding(.horizontal, 8)
@@ -378,7 +371,7 @@ struct EPUBLibraryView: View {
 
             Text(book.displayTitle)
                 .font(.system(size: 12, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
 
@@ -398,11 +391,11 @@ struct EPUBLibraryView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 52, height: 52)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.secondary)
 
             Text(selectedCollectionID != nil ? "No ebooks in this collection" : "No ebooks yet")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Text("Tap + to import an EPUB file")
                 .font(.system(size: 14, weight: .medium, design: .rounded))
@@ -546,7 +539,7 @@ private struct AddToCollectionSheet: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Add to Collection")
                     .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
                     .padding(.top, 8)
 
                 if collections.isEmpty && !showNewField {
@@ -570,11 +563,11 @@ private struct AddToCollectionSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 18, height: 18)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.special)
 
                             Text(collection.name)
                                 .font(.system(size: 15, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
 
                             Spacer()
 
@@ -641,7 +634,7 @@ private struct AddToCollectionSheet: View {
                             Text("Create New Collection")
                                 .font(.system(size: 14, weight: .bold, design: .rounded))
                         }
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -672,7 +665,7 @@ private struct ManageCollectionsSheet: View {
                 HStack {
                     Text("Collections")
                         .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.headingPrimary)
 
                     Spacer()
 
@@ -702,7 +695,7 @@ private struct ManageCollectionsSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18, height: 18)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.contrast)
 
                         if editingID == collection.id {
                             TextField("Name", text: $editName)
@@ -718,7 +711,7 @@ private struct ManageCollectionsSheet: View {
                         } else {
                             Text(collection.name)
                                 .font(.system(size: 15, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                         }
 
                         Spacer()

@@ -80,6 +80,7 @@ struct GoalNotesTimelinePage: View {
         }
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .adaptivePresentation(isPresented: $showingAddNote, useFullScreenCover: horizontalSizeClass == .regular) {
             AddGoalNoteSheet(goal: goal, onSave: { text in
                 let note = GoalNote(
@@ -109,7 +110,7 @@ struct GoalNotesTimelinePage: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Goal Notes")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 HStack(spacing: 6) {
                     Text("\(goalNotes.count) Notes")
@@ -139,14 +140,14 @@ struct GoalNotesTimelinePage: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
                                 .fill(LColors.bg)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                        .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                                 )
                                 .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                         )
@@ -162,11 +163,7 @@ struct GoalNotesTimelinePage: View {
                         .scaledToFit()
                         .frame(width: 24, height: 24)
                         .foregroundStyle(
-                            LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.accents.special
                         )
                         .frame(width: 46, height: 46)
                         .background(
@@ -175,11 +172,7 @@ struct GoalNotesTimelinePage: View {
                                 .overlay(
                                     Circle()
                                         .strokeBorder(
-                                            LinearGradient(
-                                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
+                                            LColors.accents.special,
                                             lineWidth: 1.35
                                         )
                                 )
@@ -212,7 +205,7 @@ struct GoalNotesTimelinePage: View {
                             Capsule(style: .continuous)
                                 .fill(
                                     isActive
-                                        ? AnyShapeStyle(LGradients.header)
+                                        ? AnyShapeStyle(LColors.accents.secondary)
                                         : AnyShapeStyle(LColors.glassSurface2)
                                 )
                         )
@@ -221,7 +214,7 @@ struct GoalNotesTimelinePage: View {
                                 .strokeBorder(
                                     isActive
                                         ? AnyShapeStyle(Color.clear)
-                                        : AnyShapeStyle(Color.white.opacity(0.08)),
+                                        : AnyShapeStyle(LColors.border.nested),
                                     lineWidth: 1
                                 )
                         )
@@ -268,22 +261,22 @@ struct GoalNotesTimelinePage: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(spacing: 14) {
                 Image("lovepage")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 44, height: 44)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
 
                 Text(activeFilter == .all ? "No notes yet" : "No notes for \(activeFilter.rawValue.lowercased())")
                     .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text("Capture your thoughts, reactions, and progress as you work toward this goal.")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(LColors.text.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -303,7 +296,7 @@ struct GoalNotesTimelinePage: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
-                    .background(Capsule(style: .continuous).fill(LGradients.header))
+                    .background(Capsule(style: .continuous).fill(LGradients.completion))
                 }
                 .buttonStyle(.plain)
             }
@@ -375,12 +368,12 @@ struct GoalNoteTimelineRow: View {
         HStack(alignment: .top, spacing: 12) {
             VStack(spacing: 0) {
                 Rectangle()
-                    .fill(isFirst ? Color.clear : Color.white.opacity(0.12))
+                    .fill(isFirst ? Color.clear : LColors.border.subtle)
                     .frame(width: 1.5, height: 8)
 
                 Text("\(note.progressPercentage)%")
                     .font(.system(size: 10, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .frame(width: nodeSize, height: nodeSize)
                     .background(
                         Circle()
@@ -388,11 +381,11 @@ struct GoalNoteTimelineRow: View {
                     )
                     .overlay(
                         Circle()
-                            .strokeBorder(LGradients.header, lineWidth: 1)
+                            .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                     )
 
                 Rectangle()
-                    .fill(isLast ? Color.clear : Color.white.opacity(0.12))
+                    .fill(isLast ? Color.clear : LColors.border.subtle)
                     .frame(width: 1.5)
                     .frame(maxHeight: .infinity)
             }
@@ -409,7 +402,7 @@ struct GoalNoteTimelineRow: View {
 
                 Text(note.noteText)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.84))
+                    .foregroundStyle(LColors.text.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -429,7 +422,7 @@ struct GoalNoteTimelineRow: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                    .strokeBorder(LColors.border.nested, lineWidth: 1)
             )
             .padding(.bottom, isLast ? 0 : 8)
         }
@@ -456,7 +449,7 @@ struct AddGoalNoteSheet: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Add Note")
                             .font(.system(size: 24, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.headingPrimary)
 
                         Text("\(goal.progressPercentage)% Complete")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -473,10 +466,10 @@ struct AddGoalNoteSheet: View {
                     } label: {
                         Text("Save")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 9)
-                            .background(Capsule(style: .continuous).fill(LGradients.header))
+                            .background(Capsule(style: .continuous).fill(LGradients.completion))
                     }
                     .buttonStyle(.plain)
 
@@ -489,11 +482,7 @@ struct AddGoalNoteSheet: View {
                             .scaledToFit()
                             .frame(width: 24, height: 24)
                             .foregroundStyle(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                                LColors.accents.special
                             )
                             .frame(width: 46, height: 46)
                             .background(
@@ -502,11 +491,7 @@ struct AddGoalNoteSheet: View {
                                     .overlay(
                                         Circle()
                                             .strokeBorder(
-                                                LinearGradient(
-                                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
+                                                LColors.accents.special,
                                                 lineWidth: 1.35
                                             )
                                     )
@@ -520,13 +505,13 @@ struct AddGoalNoteSheet: View {
                 .padding(.bottom, 14)
                 .background(LColors.bg.opacity(0.98))
                 .overlay(alignment: .bottom) {
-                    Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1)
+                    Rectangle().fill(LColors.border.nested).frame(height: 1)
                 }
                 .safeAreaPadding(.top)
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        GlassCard {
+                        GlassCard(variant: .primary) {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text("Note")
                                     .font(.system(size: 14, weight: .black, design: .rounded))
@@ -563,7 +548,7 @@ struct GoalNoteDetailSheet: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(note.createdAt.formatted(date: .long, time: .shortened))
                             .font(.system(size: 20, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.headingPrimary)
 
                         HStack(spacing: 6) {
                             Text("\(note.progressPercentage)% Complete")
@@ -589,11 +574,7 @@ struct GoalNoteDetailSheet: View {
                             .scaledToFit()
                             .frame(width: 24, height: 24)
                             .foregroundStyle(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                                LColors.accents.special
                             )
                             .frame(width: 46, height: 46)
                             .background(
@@ -602,11 +583,7 @@ struct GoalNoteDetailSheet: View {
                                     .overlay(
                                         Circle()
                                             .strokeBorder(
-                                                LinearGradient(
-                                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
+                                                LColors.accents.special,
                                                 lineWidth: 1.35
                                             )
                                     )
@@ -620,16 +597,16 @@ struct GoalNoteDetailSheet: View {
                 .padding(.bottom, 14)
                 .background(LColors.bg.opacity(0.98))
                 .overlay(alignment: .bottom) {
-                    Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1)
+                    Rectangle().fill(LColors.border.nested).frame(height: 1)
                 }
                 .safeAreaPadding(.top)
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        GlassCard {
+                        GlassCard(variant: .secondary) {
                             Text(note.noteText)
                                 .font(.system(size: 15, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.white.opacity(0.88))
+                                .foregroundStyle(LColors.text.primary)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }

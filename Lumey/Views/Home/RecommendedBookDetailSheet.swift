@@ -93,7 +93,7 @@ struct RecommendedBookDetailSheet: View {
         return HStack(spacing: 12) {
             Text("Book Details")
                 .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.86)
 
@@ -136,22 +136,8 @@ struct RecommendedBookDetailSheet: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(
                         alreadyAdded
-                            ? LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.10),
-                                    Color.white.opacity(0.06),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            : LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue,
-                                    LColors.gradientPurple,
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            ? LColors.border.nestedStrong
+                            : LColors.gradientBlue
                     )
             )
             .overlay(
@@ -172,7 +158,7 @@ struct RecommendedBookDetailSheet: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(displayedDetail?.title ?? book.title)
                         .font(.system(size: 27, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.headingPrimary)
                         .lineLimit(4)
 
                     Text(displayedDetail?.author ?? book.author)
@@ -182,7 +168,7 @@ struct RecommendedBookDetailSheet: View {
                     if let subtitle = displayedDetail?.subtitle, !subtitle.isEmpty {
                         Text(subtitle)
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.72))
+                            .foregroundStyle(LColors.text.secondary)
                             .lineLimit(3)
                     }
                 }
@@ -203,14 +189,14 @@ struct RecommendedBookDetailSheet: View {
     }
 
     private var summaryLoadingCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             HStack(spacing: 14) {
                 LumeyDottedGradientSpinner(size: 40)
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Writing summary")
                         .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("Lumey is writing the recommendation detail copy.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -221,11 +207,11 @@ struct RecommendedBookDetailSheet: View {
     }
 
     private func errorCard(_ message: String) -> some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Detail unavailable")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(message)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -235,15 +221,15 @@ struct RecommendedBookDetailSheet: View {
     }
 
     private var summaryCard: some View {
-        GlassCard {
+        GlassCard(variant: .secondary) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Summary")
                     .font(.system(size: 18, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(displayedDetail?.summary ?? "")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.80))
+                    .foregroundStyle(LColors.text.primary)
                     .lineSpacing(4)
             }
         }
@@ -316,11 +302,11 @@ struct RecommendedBookDetailSheet: View {
     }
 
     private func metadataCard(title: String, values: [String]) -> some View {
-        GlassCard {
+        GlassCard(variant: .tertiary) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(title)
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 FlowLayout(spacing: 8) {
                     ForEach(values, id: \.self) { value in
@@ -349,32 +335,25 @@ struct RecommendedBookDetailSheet: View {
             }
         }
         .frame(width: 108, height: 162)
-        .background(Color.white.opacity(0.10))
+        .background(LColors.border.nestedStrong)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.20), lineWidth: 1)
+                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.24), radius: 18, y: 10)
     }
 
     private var fallbackCover: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    LColors.gradientBlue.opacity(0.48),
-                    LColors.gradientPurple.opacity(0.62)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            LColors.gradientBlue.opacity(0.48)
 
             Image("bookstand")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 32, height: 32)
-                .foregroundStyle(.white.opacity(0.84))
+                .foregroundStyle(LColors.text.primary)
         }
     }
 
@@ -391,11 +370,11 @@ struct RecommendedBookDetailSheet: View {
     private func metadataPill(_ value: String) -> some View {
         Text(value)
             .font(.system(size: 11, weight: .black, design: .rounded))
-            .foregroundStyle(.white.opacity(0.88))
+            .foregroundStyle(LColors.text.primary)
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
-            .background(Color.white.opacity(0.10), in: Capsule())
-            .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+            .background(LColors.border.nestedStrong, in: Capsule())
+            .overlay(Capsule().strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
     }
 
     private func headerCircleIcon(_ icon: String) -> some View {
@@ -404,14 +383,14 @@ struct RecommendedBookDetailSheet: View {
             .resizable()
             .scaledToFit()
             .frame(width: 20, height: 20)
-            .foregroundStyle(LGradients.header)
+            .foregroundStyle(LColors.accents.primary)
             .frame(width: 42, height: 42)
             .background(
                 Circle()
                     .fill(LColors.bg)
                     .overlay(
                         Circle()
-                            .strokeBorder(LGradients.header, lineWidth: 1.2)
+                            .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                     )
                     .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
             )

@@ -48,7 +48,7 @@ struct BuddyProgressUpdateSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack(spacing: 12) {
-                            GlassCard {
+                            GlassCard(variant: .featured) {
                                 VStack(alignment: .leading, spacing: 12) {
                                     fieldLabel("Chapter")
                                     buddyTextField(placeholder: "5", text: $chapterText)
@@ -56,7 +56,7 @@ struct BuddyProgressUpdateSheet: View {
                                 }
                             }
 
-                            GlassCard {
+                            GlassCard(variant: .primary) {
                                 VStack(alignment: .leading, spacing: 12) {
                                     fieldLabel("Page")
                                     buddyTextField(placeholder: "120", text: $pageText)
@@ -65,7 +65,7 @@ struct BuddyProgressUpdateSheet: View {
                             }
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .secondary) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Add a Note Optional")
                                 buddyTextField(placeholder: "Can't believe that plot twist!", text: $noteText)
@@ -93,7 +93,7 @@ struct BuddyProgressUpdateSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Progress Update")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Share where you are in the book.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -111,11 +111,7 @@ struct BuddyProgressUpdateSheet: View {
                     .scaledToFit()
                     .frame(width: 24, height: 24)
                     .foregroundStyle(
-                        LinearGradient(
-                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        LColors.accents.primary
                     )
                     .frame(width: 46, height: 46)
                     .background(
@@ -124,11 +120,7 @@ struct BuddyProgressUpdateSheet: View {
                             .overlay(
                                 Circle()
                                     .strokeBorder(
-                                        LinearGradient(
-                                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
+                                        LColors.accents.primary,
                                         lineWidth: 1.35
                                     )
                             )
@@ -143,7 +135,7 @@ struct BuddyProgressUpdateSheet: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
@@ -158,14 +150,14 @@ struct BuddyProgressUpdateSheet: View {
                 } else {
                     Text("Share Progress")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(canSend ? LGradients.header : LinearGradient(colors: [Color.gray.opacity(0.3), Color.gray.opacity(0.22)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(canSend ? LColors.accents.contrast : LColors.surface.subtle)
             )
             .shadow(color: canSend ? LColors.accent.opacity(0.3) : .clear, radius: 12, y: 6)
         }
@@ -188,11 +180,11 @@ struct BuddyProgressUpdateSheet: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0.055))
+                    .fill(LColors.surface.nestedSoft)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                    .strokeBorder(LColors.border.nested, lineWidth: 1)
             )
     }
 

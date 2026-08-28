@@ -71,7 +71,7 @@ struct ReadingBookDetailView: View {
         HStack {
             Text(book.displayTitle)
                 .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
             
             Spacer()
             
@@ -83,14 +83,14 @@ struct ReadingBookDetailView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -102,7 +102,7 @@ struct ReadingBookDetailView: View {
     // MARK: - EPUB Reader
 
     private var epubReaderCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 12) {
                     Image("openbook")
@@ -110,21 +110,21 @@ struct ReadingBookDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
-                                .fill(Color.white.opacity(0.06))
+                                .fill(LColors.iconContainer.primary)
                         )
                         .overlay(
                             Circle()
-                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                         )
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(book.hasEPUB ? "EPUB Attached" : "No EPUB Attached")
                             .font(.system(size: 17, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
 
                         Text(book.hasEPUB ? book.epubOriginalFileName : "Import an EPUB file to read inside Lumey.")
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -177,7 +177,7 @@ struct ReadingBookDetailView: View {
             Text(title)
                 .font(.system(size: 13, weight: .black, design: .rounded))
         }
-        .foregroundStyle(LGradients.header)
+        .foregroundStyle(LColors.accents.secondary)
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(
@@ -195,7 +195,6 @@ struct ReadingBookDetailView: View {
     private var featureCards: some View {
         let columns = [
             GridItem(.flexible(), spacing: 12),
-            GridItem(.flexible(), spacing: 12),
             GridItem(.flexible(), spacing: 12)
         ]
 
@@ -203,81 +202,91 @@ struct ReadingBookDetailView: View {
             NavigationLink {
                 BookNotesView(book: book)
             } label: {
-                featureCard(icon: "lovedocument", title: "Notes")
+                featureCard(icon: "lovedocument", title: "Notes", count: book.bookNotes?.count ?? 0)
             }
             .buttonStyle(.plain)
 
             NavigationLink {
                 BookQuotesView(book: book)
             } label: {
-                featureCard(icon: "starmark", title: "Quotes")
+                featureCard(icon: "starmark", title: "Quotes", count: book.bookQuotes?.count ?? 0)
             }
             .buttonStyle(.plain)
 
             NavigationLink {
                 BookReviewsView(book: book)
             } label: {
-                featureCard(icon: "starcircle", title: "Reviews")
+                featureCard(icon: "starcircle", title: "Reviews", count: book.bookReviews?.count ?? 0)
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink {
+                BookInsightsView(book: book)
+            } label: {
+                featureCard(icon: "pencil", title: "Insights", count: book.insights?.count ?? 0)
             }
             .buttonStyle(.plain)
         }
     }
 
-    private func featureCard(icon: String, title: String) -> some View {
-        GlassCard(cornerRadius: 18, padding: 14) {
-            VStack(spacing: 10) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue.opacity(0.18),
-                                    LColors.gradientPurple.opacity(0.22)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+    private func featureCard(icon: String, title: String, count: Int) -> some View {
+        GlassCard(cornerRadius: 18, padding: 14, variant: .tertiary) {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LColors.gradientBlue.opacity(0.18)
                             )
-                        )
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
-                        )
-                        .frame(width: 44, height: 44)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(
+                                        LColors.accents.contrast,
+                                        lineWidth: 1
+                                    )
+                            )
+                            .frame(width: 54, height: 54)
 
-                    Image(icon)
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                        Image(icon)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 26, height: 26)
+                            .foregroundStyle(
+                                LColors.accents.contrast
                             )
-                        )
+                    }
+
+                    Text(title)
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundStyle(LColors.cardTitle)
                 }
+                .frame(maxWidth: .infinity)
+                .frame(height: 100)
 
-                Text(title)
-                    .font(.system(size: 11, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                Text("\(count)")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.cardTitle)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(LGradients.header)
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .strokeBorder(LColors.border.subtle, lineWidth: 1)
+                    )
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 70)
         }
     }
 
     // MARK: - Detail Header
 
     private var detailHeader: some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             VStack(alignment: .leading, spacing: 14) {
                 ZStack(alignment: .topTrailing) {
                     HStack(alignment: .top, spacing: 14) {
@@ -286,7 +295,7 @@ struct ReadingBookDetailView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(book.displayTitle)
                                 .font(.system(size: 24, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.headingPrimary)
                                 .lineLimit(nil)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .padding(.trailing, book.summary.isEmpty ? 0 : 44)
@@ -358,7 +367,7 @@ struct ReadingBookDetailView: View {
 
             Text(book.summary)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.84))
+                .foregroundStyle(LColors.text.primary)
                 .lineLimit(isSummaryExpanded ? nil : 4)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -377,24 +386,16 @@ struct ReadingBookDetailView: View {
                 .scaledToFit()
                 .frame(width: 14, height: 14)
                 .foregroundStyle(
-                    LinearGradient(
-                        colors: [LColors.gradientBlue, LColors.gradientPurple],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    LColors.accents.contrast
                 )
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
-                        .fill(Color.white.opacity(0.06))
+                        .fill(LColors.iconContainer.primary)
                         .overlay(
                             Circle()
                                 .strokeBorder(
-                                    LinearGradient(
-                                        colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
+                                    LColors.accents.contrast,
                                     lineWidth: 1.2
                                 )
                         )
@@ -452,11 +453,11 @@ struct ReadingBookDetailView: View {
     }
     
     private func detailCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        GlassCard {
+        GlassCard(variant: .secondary) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(title)
                     .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                 
                 content()
             }

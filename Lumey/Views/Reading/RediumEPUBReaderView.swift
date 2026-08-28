@@ -854,7 +854,7 @@ final class ReadiumReaderChromeViewController: UIViewController {
             message: locator.title ?? "Current page",
             preferredStyle: .alert
         )
-        alert.view.tintColor = UIColor(red: 0.0118, green: 0.8588, blue: 0.9882, alpha: 1.0)
+        alert.view.tintColor = UIColor(LColors.accents.contrast)
         alert.addTextField { field in
             field.placeholder = "Bookmark title (optional)"
             field.autocapitalizationType = .sentences
@@ -1836,8 +1836,8 @@ final class LumeyGradientIconButton: UIButton {
         addSubview(iconImageView)
 
         gradientLayer.colors = [
-            UIColor(red: 0.0118, green: 0.8588, blue: 0.9882, alpha: 1.0).cgColor,
-            UIColor(red: 0.4902, green: 0.0980, blue: 0.9686, alpha: 1.0).cgColor
+            UIColor(LColors.accents.contrast).cgColor,
+            UIColor(LColors.accents.primary).cgColor
         ]
         gradientLayer.startPoint = CGPoint(x: 0, y: 0)
         gradientLayer.endPoint = CGPoint(x: 1, y: 1)
@@ -1884,8 +1884,8 @@ final class LumeyGradientIconImageView: UIImageView {
         translatesAutoresizingMaskIntoConstraints = false
 
         gradientLayer.colors = [
-            UIColor(red: 0.0118, green: 0.8588, blue: 0.9882, alpha: 1.0).cgColor,
-            UIColor(red: 0.4902, green: 0.0980, blue: 0.9686, alpha: 1.0).cgColor
+            UIColor(LColors.accents.contrast).cgColor,
+            UIColor(LColors.accents.primary).cgColor
         ]
         gradientLayer.startPoint = CGPoint(x: 0, y: 0)
         gradientLayer.endPoint = CGPoint(x: 1, y: 1)

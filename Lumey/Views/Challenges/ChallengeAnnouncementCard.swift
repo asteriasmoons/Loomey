@@ -35,7 +35,7 @@ struct ChallengeAnnouncementCard: View {
     }
 
     var body: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Image("megaphone")
@@ -43,11 +43,11 @@ struct ChallengeAnnouncementCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
 
                     Text("ANNOUNCEMENT")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
 
                     Spacer()
 
@@ -67,14 +67,14 @@ struct ChallengeAnnouncementCard: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.secondary)
                             .frame(width: 30, height: 30)
                             .background(
                                 Circle()
                                     .fill(LColors.glassSurface)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LGradients.header, lineWidth: 1)
+                                            .strokeBorder(LColors.accents.primary, lineWidth: 1)
                                     )
                             )
                     }
@@ -83,7 +83,7 @@ struct ChallengeAnnouncementCard: View {
 
                     Text(announcement.title)
                         .font(.system(size: 18, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .transition(.opacity.combined(with: .move(edge: .top)))
 
                    if !isCollapsed {
@@ -119,11 +119,11 @@ struct ChallengeAnnouncementCard: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 15, height: 15)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.special)
                                 .frame(width: 32, height: 32)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.07))
+                                        .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
                                                 .strokeBorder(LColors.glassBorder, lineWidth: 1)
@@ -138,14 +138,7 @@ struct ChallengeAnnouncementCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(
-                    LinearGradient(
-                        colors: [
-                            LColors.gradientBlue.opacity(0.6),
-                            LColors.gradientPurple.opacity(0.2),
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
+                    LColors.gradientBlue.opacity(0.6),
                     lineWidth: 1.2
                 )
         )
@@ -179,11 +172,7 @@ struct AnnouncementRichBodyView: View {
                     HStack(alignment: .top, spacing: 10) {
                         RoundedRectangle(cornerRadius: 2, style: .continuous)
                             .fill(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
+                                LColors.accents.primary
                             )
                             .frame(width: 3)
 
@@ -203,29 +192,13 @@ struct AnnouncementRichBodyView: View {
                                 .overlay {
                                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                                         .fill(
-                                            LinearGradient(
-                                                colors: [
-                                                    LColors.gradientBlue.opacity(0.18),
-                                                    LColors.gradientPurple.opacity(0.22),
-                                                    Color.white.opacity(0.03)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
+                                            LColors.gradientBlue.opacity(0.18)
                                         )
                                 }
                                 .overlay {
                                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                                         .strokeBorder(
-                                            LinearGradient(
-                                                colors: [
-                                                    LColors.gradientBlue.opacity(0.92),
-                                                    LColors.gradientPurple.opacity(0.92),
-                                                    Color.white.opacity(0.38)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
+                                            LColors.gradientBlue.opacity(0.92),
                                             lineWidth: 1.05
                                         )
                                 }
@@ -472,14 +445,14 @@ struct AnnouncementRichBodyView: View {
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                         .frame(width: size, height: size)
                 )
             case .sfSymbol:
                 view = AnyView(
                     Image(systemName: icon.name)
                         .font(.system(size: size * 0.75, weight: .semibold))
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
                         .frame(width: size, height: size)
                 )
             }
@@ -489,7 +462,7 @@ struct AnnouncementRichBodyView: View {
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.secondary)
                     .frame(width: size, height: size)
             )
         } else {
@@ -513,11 +486,11 @@ struct AnnouncementRichBodyView: View {
             .padding(.vertical, 2)
             .background(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(Color.white.opacity(0.1))
+                    .fill(LColors.border.nestedStrong)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                    .strokeBorder(LColors.border.subtle, lineWidth: 0.5)
             )
 
         let renderer = ImageRenderer(content: pill)
@@ -585,7 +558,7 @@ struct AnnouncementIconInsertPicker: View {
                 HStack {
                     Text("Insert Icon")
                         .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.headingPrimary)
 
                     Spacer()
 
@@ -597,14 +570,14 @@ struct AnnouncementIconInsertPicker: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18, height: 18)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.special)
                             .frame(width: 40, height: 40)
                             .background(
                                 Circle()
                                     .fill(LColors.bg)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                            .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                                     )
                             )
                     }

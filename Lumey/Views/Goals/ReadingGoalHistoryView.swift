@@ -11,6 +11,9 @@ struct ReadingGoalHistoryView: View {
     @Query(sort: \ReadingGoalHistory.createdAt, order: .reverse)
     private var historyItems: [ReadingGoalHistory]
 
+    @Query(sort: \ReadingMissionHistory.createdAt, order: .reverse)
+    private var missionHistoryItems: [ReadingMissionHistory]
+
     @Query(sort: \ReadingDream.updatedAt, order: .reverse)
     private var allDreams: [ReadingDream]
 
@@ -42,6 +45,17 @@ struct ReadingGoalHistoryView: View {
         return historyItems.filter { $0.createdAt >= start && $0.createdAt < end }
     }
 
+    private var filteredMissionHistory: [ReadingMissionHistory] {
+        let start = selectedDate
+        guard let end = calendar.date(byAdding: .day, value: 1, to: start) else { return [] }
+        return missionHistoryItems
+            .filter { item in
+                let eventDate = item.eventDate
+                return eventDate >= start && eventDate < end
+            }
+            .sorted { $0.eventDate > $1.eventDate }
+    }
+
     private var isToday: Bool {
         calendar.isDateInToday(selectedDate)
     }
@@ -58,17 +72,23 @@ struct ReadingGoalHistoryView: View {
 
                     dateRow
                     
-                    if historyItems.isEmpty && completedDreams.isEmpty {
+                    if historyItems.isEmpty && missionHistoryItems.isEmpty && completedDreams.isEmpty {
                         emptyState
                     } else {
                         if !completedDreams.isEmpty {
                             completedDreamsSection
                         }
 
-                        if filteredHistory.isEmpty {
+                        if filteredHistory.isEmpty && filteredMissionHistory.isEmpty {
                             dayEmptyState
                         } else {
-                            goalHistorySection
+                            if !filteredMissionHistory.isEmpty {
+                                missionHistorySection
+                            }
+
+                            if !filteredHistory.isEmpty {
+                                goalHistorySection
+                            }
                         }
                     }
                 }
@@ -85,11 +105,11 @@ struct ReadingGoalHistoryView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Reading History")
                 .font(.system(size: 32, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Text("A soft timeline of your reading goal progress, completed goals, streak changes, and milestones.")
                 .font(.system(size: 14, weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.65))
+                .foregroundStyle(LColors.text.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -110,7 +130,7 @@ struct ReadingGoalHistoryView: View {
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 32, height: 52)
                     .contentShape(Rectangle())
             }
@@ -141,11 +161,7 @@ struct ReadingGoalHistoryView: View {
                             .fill(
                                 isSelected
                                 ? AnyShapeStyle(
-                                    LinearGradient(
-                                        colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
+                                    LColors.accents.special
                                 )
                                 : AnyShapeStyle(LColors.glassSurface2)
                             )
@@ -155,7 +171,7 @@ struct ReadingGoalHistoryView: View {
                             .strokeBorder(
                                 isSelected
                                 ? Color.clear
-                                : (isTodayBubble ? Color.white.opacity(0.18) : Color.white.opacity(0.08)),
+                                : (isTodayBubble ? LColors.border.nestedStrong : LColors.border.nested),
                                 lineWidth: 1
                             )
                     )
@@ -174,7 +190,7 @@ struct ReadingGoalHistoryView: View {
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 32, height: 52)
                     .contentShape(Rectangle())
             }
@@ -185,7 +201,7 @@ struct ReadingGoalHistoryView: View {
     // MARK: - Empty States
     
     private var emptyState: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(spacing: 14) {
                 Image("openbook")
                     .renderingMode(.template)
@@ -197,11 +213,11 @@ struct ReadingGoalHistoryView: View {
                 
                 Text("No reading history yet")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                 
                 Text("When you update or complete reading goals, your progress will appear here.")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(LColors.text.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -211,22 +227,22 @@ struct ReadingGoalHistoryView: View {
     }
 
     private var dayEmptyState: some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             VStack(spacing: 14) {
                 Image("sparkle")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 40, height: 40)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.secondary)
 
                 Text(dayEmptyTitle)
                     .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(dayEmptyMessage)
                     .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(LColors.text.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -265,24 +281,24 @@ struct ReadingGoalHistoryView: View {
             HStack {
                 Text("Completed Dreams")
                     .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Spacer()
 
                 Text("\(completedDreams.count)")
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(Capsule().fill(LColors.glassSurface2))
             }
 
-            GlassCard {
+            GlassCard(variant: .secondary) {
                 VStack(spacing: 0) {
                     ForEach(Array(completedDreams.enumerated()), id: \.element.id) { index, dream in
                         if index > 0 {
                             Rectangle()
-                                .fill(Color.white.opacity(0.07))
+                                .fill(LColors.iconContainer.primary)
                                 .frame(height: 1)
                                 .padding(.vertical, 10)
                         }
@@ -300,7 +316,7 @@ struct ReadingGoalHistoryView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Goal History")
                 .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             VStack(spacing: 0) {
                 ForEach(Array(filteredHistory.enumerated()), id: \.element.id) { index, item in
@@ -311,6 +327,150 @@ struct ReadingGoalHistoryView: View {
                     )
                 }
             }
+        }
+    }
+
+    private var missionHistorySection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Reading Missions")
+                .font(.system(size: 20, weight: .black, design: .rounded))
+                .foregroundStyle(LColors.headingPrimary)
+
+            VStack(spacing: 0) {
+                ForEach(Array(filteredMissionHistory.enumerated()), id: \.element.id) { index, item in
+                    MissionTimelineRow(
+                        item: item,
+                        isFirst: index == 0,
+                        isLast: index == filteredMissionHistory.count - 1
+                    )
+                }
+            }
+        }
+    }
+}
+
+private struct MissionTimelineRow: View {
+    let item: ReadingMissionHistory
+    let isFirst: Bool
+    let isLast: Bool
+
+    private let nodeSize: CGFloat = 42
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 0) {
+                Rectangle()
+                    .fill(isFirst ? Color.clear : LColors.border.subtle)
+                    .frame(width: 1.5)
+                    .frame(height: 10)
+
+                Image(timelineIconName)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+                    .foregroundStyle(item.eventType == .generated ? AnyShapeStyle(LColors.text.secondary) : AnyShapeStyle(LColors.accents.contrast))
+                    .frame(width: nodeSize, height: nodeSize)
+                    .background(Circle().fill(LColors.glassSurface2))
+                    .overlay(Circle().strokeBorder(item.eventType == .generated ? AnyShapeStyle(LColors.border.nestedStrong) : AnyShapeStyle(LColors.accents.secondary), lineWidth: 1))
+
+                Rectangle()
+                    .fill(isLast ? Color.clear : LColors.border.subtle)
+                    .frame(width: 1.5)
+                    .frame(maxHeight: .infinity)
+            }
+            .frame(width: nodeSize)
+
+            ReadingMissionHistoryCard(item: item)
+                .padding(.bottom, isLast ? 0 : 10)
+        }
+    }
+
+    private var timelineIconName: String {
+        switch item.eventType {
+        case .generated:
+            return "wand"
+        case .scored:
+            return "sparklesearch"
+        case .completed:
+            return "sparkletrophy"
+        }
+    }
+}
+
+private struct ReadingMissionHistoryCard: View {
+    let item: ReadingMissionHistory
+
+    var body: some View {
+        GlassCard(cornerRadius: 18, padding: 16, variant: .tertiary) {
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .black, design: .rounded))
+                        .foregroundStyle(item.eventType == .generated ? AnyShapeStyle(Color.white) : AnyShapeStyle(LColors.accents.special))
+
+                    Text(item.bookTitle)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(LColors.text.secondary)
+
+                    Text(item.bookAuthor)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(LColors.textSecondary)
+                }
+
+                HStack(spacing: 8) {
+                    ReadingGoalPill(
+                        text: pillText,
+                        usePurpleStyle: item.eventType != .generated
+                    )
+
+                    if item.eventType == .scored {
+                        ReadingGoalPill(
+                            text: "\(item.score)/100",
+                            usePurpleStyle: false
+                        )
+                    } else {
+                        ReadingGoalPill(
+                            text: ReadingMissionStatsCalculator.formattedDuration(seconds: item.durationSeconds),
+                            usePurpleStyle: false
+                        )
+                    }
+                }
+
+                if item.eventType == .scored, !item.scoreSummary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(item.scoreSummary)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(LColors.text.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Text(item.eventDate.formatted(date: .abbreviated, time: .shortened))
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(LColors.text.muted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var title: String {
+        switch item.eventType {
+        case .generated:
+            return "Mission Generated"
+        case .scored:
+            return "Mission Scored"
+        case .completed:
+            return "Mission Complete"
+        }
+    }
+
+    private var pillText: String {
+        switch item.eventType {
+        case .generated:
+            return "Active"
+        case .scored:
+            return item.scoreLabel.isEmpty ? "Scored" : item.scoreLabel
+        case .completed:
+            return "Completed"
         }
     }
 }
@@ -331,7 +491,7 @@ private struct TimelineRow: View {
             VStack(spacing: 0) {
                 // Line above icon
                 Rectangle()
-                    .fill(isFirst ? Color.clear : Color.white.opacity(0.12))
+                    .fill(isFirst ? Color.clear : LColors.border.subtle)
                     .frame(width: 1.5)
                     .frame(height: 10)
 
@@ -340,7 +500,7 @@ private struct TimelineRow: View {
 
                 // Line below icon
                 Rectangle()
-                    .fill(isLast ? Color.clear : Color.white.opacity(0.12))
+                    .fill(isLast ? Color.clear : LColors.border.subtle)
                     .frame(width: 1.5)
                     .frame(maxHeight: .infinity)
             }
@@ -373,9 +533,9 @@ private struct TimelineRow: View {
     private var iconForeground: some ShapeStyle {
         switch item.eventType {
         case .completed:
-            return AnyShapeStyle(LGradients.header)
+            return AnyShapeStyle(LColors.accents.primary)
         default:
-            return AnyShapeStyle(Color.white.opacity(0.7))
+            return AnyShapeStyle(LColors.text.secondary)
         }
     }
 
@@ -383,14 +543,10 @@ private struct TimelineRow: View {
         switch item.eventType {
         case .completed:
             return AnyShapeStyle(
-                LinearGradient(
-                    colors: [LColors.gradientBlue.opacity(0.6), LColors.gradientPurple.opacity(0.6)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                LColors.gradientBlue.opacity(0.6)
             )
         default:
-            return AnyShapeStyle(Color.white.opacity(0.10))
+            return AnyShapeStyle(LColors.border.nestedStrong)
         }
     }
 
@@ -415,7 +571,7 @@ private struct ReadingGoalHistoryCard: View {
     let item: ReadingGoalHistory
 
     var body: some View {
-        GlassCard(cornerRadius: 18, padding: 16) {
+        GlassCard(cornerRadius: 18, padding: 16, variant: .elevated) {
             cardContent
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -452,12 +608,12 @@ private struct ReadingGoalHistoryCard: View {
             if item.targetValue > 0 {
                 Text("Target: \(formattedNumber(item.targetValue))")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(LColors.text.tertiary)
             }
 
             Text("Goal created.")
                 .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(LColors.text.tertiary)
                 .italic()
         }
     }
@@ -472,21 +628,21 @@ private struct ReadingGoalHistoryCard: View {
             HStack(spacing: 6) {
                 Text(formattedNumber(item.previousValue))
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(LColors.text.tertiary)
 
                 Image(systemName: "arrow.right")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.special)
 
                 Text(formattedNumber(item.newValue))
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 if item.targetValue > 0 {
                     Spacer()
                     Text("/ \(formattedNumber(item.targetValue))")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(LColors.text.muted)
                 }
             }
 
@@ -495,7 +651,7 @@ private struct ReadingGoalHistoryCard: View {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.white.opacity(0.08))
+                            .fill(LColors.border.nested)
                             .frame(height: 6)
 
                         RoundedRectangle(cornerRadius: 4)
@@ -512,7 +668,7 @@ private struct ReadingGoalHistoryCard: View {
             if !item.note.isEmpty {
                 Text(item.note)
                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(LColors.text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -525,37 +681,37 @@ private struct ReadingGoalHistoryCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Completed")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
 
                 Text(goalTitle)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.78))
+                    .foregroundStyle(LColors.text.secondary)
 
                 Text(item.createdAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(LColors.text.muted)
             }
 
             if item.targetValue > 0 {
                 HStack(spacing: 4) {
                     Text(formattedNumber(item.newValue))
                         .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.headingPrimary)
 
                     Text("/ \(formattedNumber(item.targetValue))")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.45))
+                        .foregroundStyle(LColors.text.muted)
                 }
             }
 
             Text("Goal completed!")
                 .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.contrast)
 
             if !item.note.isEmpty {
                 Text(item.note)
                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(LColors.text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -571,20 +727,20 @@ private struct ReadingGoalHistoryCard: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Streak")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(LColors.text.muted)
 
                     HStack(spacing: 5) {
                         Text("\(item.previousStreak)")
                             .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.55))
+                            .foregroundStyle(LColors.text.tertiary)
 
                         Image(systemName: "arrow.right")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.secondary)
 
                         Text("\(item.newStreak)")
                             .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                     }
                 }
 
@@ -592,11 +748,11 @@ private struct ReadingGoalHistoryCard: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Best")
                             .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.4))
+                            .foregroundStyle(LColors.text.muted)
 
                         Text("\(item.bestStreak)")
                             .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.78))
+                            .foregroundStyle(LColors.text.secondary)
                     }
                 }
             }
@@ -604,7 +760,7 @@ private struct ReadingGoalHistoryCard: View {
             if !item.note.isEmpty {
                 Text(item.note)
                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(LColors.text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -623,18 +779,18 @@ private struct ReadingGoalHistoryCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.special)
 
                     Text(item.rewardEarned)
                         .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(LColors.text.primary)
                 }
             }
 
             if !item.note.isEmpty {
                 Text(item.note)
                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(LColors.text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -649,7 +805,7 @@ private struct ReadingGoalHistoryCard: View {
             if !item.note.isEmpty {
                 Text(item.note)
                     .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.72))
+                    .foregroundStyle(LColors.text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -663,13 +819,13 @@ private struct ReadingGoalHistoryCard: View {
 
             Text(description)
                 .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(LColors.text.tertiary)
                 .italic()
 
             if !item.note.isEmpty {
                 Text(item.note)
                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(LColors.text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -681,16 +837,16 @@ private struct ReadingGoalHistoryCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(item.eventType.rawValue)
                 .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Text(goalTitle)
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.65))
+                .foregroundStyle(LColors.text.secondary)
                 .lineLimit(2)
 
             Text(item.createdAt.formatted(date: .abbreviated, time: .shortened))
                 .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(LColors.text.muted)
         }
     }
 
@@ -721,21 +877,21 @@ struct CompletedDreamRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
-                        .fill(Color.white.opacity(0.06))
+                        .fill(LColors.iconContainer.primary)
                 )
                 .overlay(
                     Circle()
-                        .strokeBorder(LGradients.header, lineWidth: 1)
+                        .strokeBorder(LColors.accents.primary, lineWidth: 1)
                 )
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(dream.title.isEmpty ? "Untitled Dream" : dream.title)
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .lineLimit(2)
 
                 if !dream.notes.isEmpty {
@@ -759,7 +915,7 @@ struct CompletedDreamRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 14, height: 14)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.contrast)
         }
     }
 }

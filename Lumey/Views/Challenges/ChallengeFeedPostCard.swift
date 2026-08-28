@@ -74,7 +74,7 @@ struct ChallengeFeedPostCard: View {
     }
 
     var body: some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .featured) {
             VStack(alignment: .leading, spacing: 13) {
                 headerRow
 
@@ -132,7 +132,7 @@ struct ChallengeFeedPostCard: View {
                 HStack(spacing: 6) {
                     Text(displayUsername)
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .lineLimit(1)
 
                     if isEdited {
@@ -154,7 +154,7 @@ struct ChallengeFeedPostCard: View {
 
                         Text(displayMood)
                             .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.primary)
                             .lineLimit(1)
                     }
                 }
@@ -167,14 +167,14 @@ struct ChallengeFeedPostCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.contrast)
                 .frame(width: 32, height: 32)
                 .background(
                     Circle()
                         .fill(LColors.glassSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                .strokeBorder(LColors.accents.primary, lineWidth: 1)
                         )
                 )
         }
@@ -198,11 +198,11 @@ struct ChallengeFeedPostCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 12, height: 12)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.secondary)
 
             Text("Contains spoilers")
                 .font(.system(size: 10, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Spacer()
         }
@@ -210,10 +210,10 @@ struct ChallengeFeedPostCard: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .fill(Color.white.opacity(0.045))
+                .fill(LColors.surface.nested)
                 .overlay(
                     RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(LGradients.header, lineWidth: 1)
+                        .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                 )
         )
     }
@@ -239,7 +239,7 @@ struct ChallengeFeedPostCard: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                            .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
                     )
             )
         } else {
@@ -250,7 +250,7 @@ struct ChallengeFeedPostCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 17, height: 17)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.special)
 
                     Text("Photo could not load")
                         .font(.system(size: 11, weight: .black, design: .rounded))
@@ -261,7 +261,7 @@ struct ChallengeFeedPostCard: View {
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 15, style: .continuous)
-                        .fill(Color.white.opacity(0.045))
+                        .fill(LColors.surface.nested)
                 )
             )
         }
@@ -273,7 +273,7 @@ struct ChallengeFeedPostCard: View {
             case .empty:
                 ZStack {
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(Color.white.opacity(0.045))
+                        .fill(LColors.surface.nested)
 
                     ProgressView()
                         .tint(.white)
@@ -291,7 +291,7 @@ struct ChallengeFeedPostCard: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                            .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
                     )
 
             case .failure:
@@ -301,7 +301,7 @@ struct ChallengeFeedPostCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 17, height: 17)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
 
                     Text("Photo could not load")
                         .font(.system(size: 11, weight: .black, design: .rounded))
@@ -312,7 +312,7 @@ struct ChallengeFeedPostCard: View {
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 15, style: .continuous)
-                        .fill(Color.white.opacity(0.045))
+                        .fill(LColors.surface.nested)
                 )
 
             @unknown default:
@@ -376,7 +376,7 @@ struct ChallengeFeedPostCard: View {
         .padding(.vertical, 5)
         .background(
             Capsule(style: .continuous)
-                .fill(Color.white.opacity(0.045))
+                .fill(LColors.surface.nested)
         )
     }
     
@@ -389,10 +389,10 @@ struct ChallengeFeedPostCard: View {
                 .padding(.vertical, 11)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.white.opacity(0.045))
+                        .fill(LColors.surface.nested)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                .strokeBorder(LColors.border.nested, lineWidth: 1)
                         )
                 )
 
@@ -442,7 +442,7 @@ struct ChallengeFeedPostCard: View {
 
                     Text("\(feedItem.likeCount)")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .buttonStyle(.plain)
@@ -465,7 +465,7 @@ struct ChallengeFeedPostCard: View {
 
                     Text("\(feedItem.commentCount)")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .buttonStyle(.plain)
@@ -497,7 +497,7 @@ struct ChallengeFeedPostCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
                 }
                 .buttonStyle(.plain)
             }

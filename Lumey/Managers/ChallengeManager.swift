@@ -28,15 +28,158 @@ final class ChallengeManager: ObservableObject {
     // MARK: - Seed Challenges
 
     func seedChallengesIfNeeded() {
+        let seedChallenges = ChallengeSeedData.allChallenges()
+        let seedIdentities = Set(seedChallenges.map { seedIdentity(for: $0) })
         let descriptor = FetchDescriptor<ReadingChallenge>()
-        let existingCount = (try? modelContext.fetchCount(descriptor)) ?? 0
-        guard existingCount == 0 else { return }
+        var existingChallenges = (try? modelContext.fetch(descriptor)) ?? []
+        let didConsolidateDuplicates = consolidateDuplicateSeedChallenges(
+            existingChallenges: existingChallenges,
+            seedIdentities: seedIdentities
+        )
 
-        let challenges = ChallengeSeedData.allChallenges()
+        if didConsolidateDuplicates {
+            existingChallenges = (try? modelContext.fetch(descriptor)) ?? []
+        }
+
+        let existingKeys = Set(existingChallenges.map { seedIdentity(for: $0) })
+        var didUpdateExistingChallenge = false
+
+        for seedChallenge in seedChallenges {
+            guard let existing = existingChallenges.first(where: {
+                seedIdentity(for: $0) == seedIdentity(for: seedChallenge)
+            }) else { continue }
+
+            didUpdateExistingChallenge = syncSeedChallenge(existing, from: seedChallenge) || didUpdateExistingChallenge
+        }
+
+        let challenges = seedChallenges.filter {
+            !existingKeys.contains(seedIdentity(for: $0))
+        }
+
+        guard !challenges.isEmpty || didUpdateExistingChallenge || didConsolidateDuplicates else { return }
+
         for challenge in challenges {
             modelContext.insert(challenge)
         }
         try? modelContext.save()
+    }
+
+    private func seedIdentity(for challenge: ReadingChallenge) -> String {
+        [
+            challenge.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+            challenge.category.rawValue
+        ].joined(separator: "|")
+    }
+
+    private func consolidateDuplicateSeedChallenges(
+        existingChallenges: [ReadingChallenge],
+        seedIdentities: Set<String>
+    ) -> Bool {
+        let grouped = Dictionary(grouping: existingChallenges) { seedIdentity(for: $0) }
+        let duplicateGroups = grouped
+            .filter { seedIdentities.contains($0.key) && $0.value.count > 1 }
+            .map(\.value)
+
+        guard !duplicateGroups.isEmpty else { return false }
+
+        var duplicateToCanonicalID: [UUID: UUID] = [:]
+        var duplicatesToDelete: [ReadingChallenge] = []
+
+        for group in duplicateGroups {
+            let sorted = group.sorted {
+                if $0.createdDate != $1.createdDate {
+                    return $0.createdDate < $1.createdDate
+                }
+
+                return $0.id.uuidString < $1.id.uuidString
+            }
+
+            guard let canonical = sorted.first else { continue }
+
+            for duplicate in sorted.dropFirst() {
+                duplicateToCanonicalID[duplicate.id] = canonical.id
+                duplicatesToDelete.append(duplicate)
+            }
+        }
+
+        guard !duplicateToCanonicalID.isEmpty else { return false }
+
+        let entryDescriptor = FetchDescriptor<ChallengeEntry>()
+        let entries = (try? modelContext.fetch(entryDescriptor)) ?? []
+        for entry in entries {
+            if let canonicalID = duplicateToCanonicalID[entry.challengeID] {
+                entry.challengeID = canonicalID
+            }
+        }
+
+        let submissionDescriptor = FetchDescriptor<ChallengeSubmission>()
+        let submissions = (try? modelContext.fetch(submissionDescriptor)) ?? []
+        for submission in submissions {
+            if let canonicalID = duplicateToCanonicalID[submission.challengeID] {
+                submission.challengeID = canonicalID
+            }
+        }
+
+        let bookmarkDescriptor = FetchDescriptor<ChallengeBookmark>()
+        let bookmarks = (try? modelContext.fetch(bookmarkDescriptor)) ?? []
+        for bookmark in bookmarks {
+            if let canonicalID = duplicateToCanonicalID[bookmark.challengeID] {
+                bookmark.challengeID = canonicalID
+            }
+        }
+
+        for duplicate in duplicatesToDelete {
+            modelContext.delete(duplicate)
+        }
+
+        return true
+    }
+
+    private func syncSeedChallenge(_ existing: ReadingChallenge, from seed: ReadingChallenge) -> Bool {
+        var changed = false
+
+        func assign<T: Equatable>(_ keyPath: ReferenceWritableKeyPath<ReadingChallenge, T>, _ value: T) {
+            if existing[keyPath: keyPath] != value {
+                existing[keyPath: keyPath] = value
+                changed = true
+            }
+        }
+
+        assign(\.challengeDescription, seed.challengeDescription)
+        assign(\.iconName, seed.iconName)
+        assign(\.categoryRawValue, seed.categoryRawValue)
+        assign(\.points, seed.points)
+        assign(\.durationDays, seed.durationDays)
+        assign(\.requirementText, seed.requirementText)
+        assign(\.validationTypeRawValue, seed.validationTypeRawValue)
+        assign(\.recurrenceRawValue, seed.recurrenceRawValue)
+        assign(\.requiredBookCount, seed.requiredBookCount)
+        assign(\.requiredPageCount, seed.requiredPageCount)
+        assign(\.requiredSessionCount, seed.requiredSessionCount)
+        assign(\.requiredReviewCount, seed.requiredReviewCount)
+        assign(\.requiredRating, seed.requiredRating)
+        assign(\.requiredGenre, seed.requiredGenre)
+        assign(\.requiredTagsStorage, seed.requiredTagsStorage)
+        assign(\.requiredThemesStorage, seed.requiredThemesStorage)
+        assign(\.requiresAIValidation, seed.requiresAIValidation)
+        assign(\.requiredSessionMinutes, seed.requiredSessionMinutes)
+        assign(\.requiredWordCount, seed.requiredWordCount)
+        assign(\.requiredUniqueAuthorCount, seed.requiredUniqueAuthorCount)
+        assign(\.requiredSameAuthorCount, seed.requiredSameAuthorCount)
+        assign(\.requiredMinPages, seed.requiredMinPages)
+        assign(\.requiredMaxPages, seed.requiredMaxPages)
+        assign(\.requiredDaysStreak, seed.requiredDaysStreak)
+        assign(\.isFeatured, seed.isFeatured)
+        assign(\.isWeekly, seed.isWeekly)
+        assign(\.featuredStartDate, seed.featuredStartDate)
+        assign(\.featuredEndDate, seed.featuredEndDate)
+
+        if existing.cycleAnchorDate == nil, let seedAnchor = seed.cycleAnchorDate {
+            existing.cycleAnchorDate = seedAnchor
+            changed = true
+        }
+
+        return changed
     }
 
     // MARK: - Join Challenge
@@ -89,6 +232,7 @@ final class ChallengeManager: ObservableObject {
         print("Submission linkedSessionIDs:", submission.linkedSessionIDs)
         print("Submission proofSummary:", submission.proofSummary)
         print("Submission note:", submission.submissionNote)
+        print("Submission photoURL:", submission.photoURL)
 
         isValidating = true
         defer { isValidating = false }
@@ -110,21 +254,42 @@ final class ChallengeManager: ObservableObject {
             await approveSubmission(submission, entry: entry, challenge: challenge, message: message)
 
         case .inProgress(let message):
+            if submission.hasPhotoProof {
+                await runPhotoValidation(challenge: challenge, entry: entry, submission: submission)
+                return
+            }
+
             submission.validationStatus = .inProgress
             submission.validationMessage = message
             entry.status = .inProgress
 
         case .needsMoreInfo(let message):
+            if submission.hasPhotoProof {
+                await runPhotoValidation(challenge: challenge, entry: entry, submission: submission)
+                return
+            }
+
             submission.validationStatus = .needsMoreInfo
             submission.validationMessage = message
             entry.status = .needsMoreInfo
 
         case .rejected(let message):
+            if submission.hasPhotoProof {
+                await runPhotoValidation(challenge: challenge, entry: entry, submission: submission)
+                return
+            }
+
             submission.validationStatus = .rejected
             submission.validationMessage = message
             entry.status = .rejected
 
         case .requiresAI(let preMessage):
+            if submission.hasPhotoProof {
+                submission.validationMessage = preMessage
+                await runPhotoValidation(challenge: challenge, entry: entry, submission: submission)
+                return
+            }
+
             // Step 2: Call AI validation
             submission.validationMessage = preMessage
             await runAIValidation(challenge: challenge, entry: entry, submission: submission)
@@ -132,6 +297,98 @@ final class ChallengeManager: ObservableObject {
 
         lastValidationResult = result
         try? modelContext.save()
+    }
+
+    // MARK: - Photo Validation
+
+    private func runPhotoValidation(
+        challenge: ReadingChallenge,
+        entry: ChallengeEntry,
+        submission: ChallengeSubmission
+    ) async {
+        let descriptor = FetchDescriptor<Book>()
+        let allBooks = (try? modelContext.fetch(descriptor)) ?? []
+        let linkedBooks = allBooks.filter { submission.linkedBookIDs.contains($0.id) }
+
+        submission.validationStatus = .validating
+        submission.photoValidationStatus = .validating
+        submission.photoValidationMessage = "Checking your photo proof."
+        entry.status = .submitted
+        try? modelContext.save()
+
+        let packet = ChallengeAIValidationService.buildPhotoPacket(
+            challenge: challenge,
+            books: linkedBooks,
+            submission: submission
+        )
+
+        do {
+            let response = try await aiService.validatePhoto(packet: packet)
+            let photoResult = validationResult(from: response)
+
+            submission.photoValidationConfidence = response.confidence
+            submission.photoValidationMessage = response.message
+            submission.photoValidationJSON = encodedPhotoValidationJSON(response)
+
+            switch photoResult {
+            case .approved(let message):
+                submission.photoValidationStatus = .approved
+                await approveSubmission(submission, entry: entry, challenge: challenge, message: message)
+
+            case .inProgress(let message):
+                submission.photoValidationStatus = .inProgress
+                submission.validationStatus = .inProgress
+                submission.validationMessage = message
+                entry.status = .inProgress
+
+            case .needsMoreInfo(let message):
+                submission.photoValidationStatus = .needsMoreInfo
+                submission.validationStatus = .needsMoreInfo
+                submission.validationMessage = message
+                entry.status = .needsMoreInfo
+
+            case .rejected(let message):
+                submission.photoValidationStatus = .rejected
+                submission.validationStatus = .rejected
+                submission.validationMessage = message
+                entry.status = .rejected
+
+            case .requiresAI:
+                submission.photoValidationStatus = .needsMoreInfo
+                submission.validationStatus = .needsMoreInfo
+                submission.validationMessage = "Photo validation needs a little more proof before this challenge can be approved."
+                entry.status = .needsMoreInfo
+            }
+
+            lastValidationResult = photoResult
+        } catch {
+            submission.photoValidationStatus = .needsMoreInfo
+            submission.photoValidationMessage = "Could not validate this photo right now. Please try again soon."
+            submission.validationStatus = .needsMoreInfo
+            submission.validationMessage = "Could not validate this photo right now. Please try again soon."
+            entry.status = .needsMoreInfo
+            lastValidationResult = .needsMoreInfo("Photo validation service unavailable.")
+        }
+
+        try? modelContext.save()
+    }
+
+    private func validationResult(from response: ChallengePhotoValidationResponse) -> ChallengeValidationResult {
+        switch response.status.lowercased() {
+        case "approved":
+            return .approved(response.message)
+        case "rejected":
+            return .rejected(response.message)
+        default:
+            return .needsMoreInfo(response.message)
+        }
+    }
+
+    private func encodedPhotoValidationJSON(_ response: ChallengePhotoValidationResponse) -> String {
+        guard let data = try? JSONEncoder().encode(response),
+              let string = String(data: data, encoding: .utf8)
+        else { return "" }
+        return string
     }
 
     // MARK: - AI Validation
@@ -307,8 +564,13 @@ final class ChallengeManager: ObservableObject {
             linkedReadingListIDs: submission.linkedReadingListIDs.map { $0.uuidString },
             submissionNote: submission.submissionNote,
             proofSummary: submission.proofSummary,
+            photoURL: submission.photoURL,
             validationStatus: validationStatus,
             validationMessage: submission.validationMessage,
+            photoValidationStatus: submission.photoValidationStatus.rawValue,
+            photoValidationMessage: submission.photoValidationMessage,
+            photoValidationConfidence: submission.photoValidationConfidence,
+            photoValidationJSON: submission.photoValidationJSON,
             submittedDate: submission.submittedDate,
             approvedDate: nil,
             cycleID: submission.cycleID,

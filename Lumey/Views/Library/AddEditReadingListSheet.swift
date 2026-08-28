@@ -23,6 +23,11 @@ struct AddEditReadingListSheet: View {
     @State private var hasDueDate = false
     @State private var dueDate = Date()
     @State private var selectedBookIDs: [UUID] = []
+    @State private var manualBookTitle = ""
+    @State private var manualBookAuthor = ""
+    @State private var manualBookSummary = ""
+    @State private var isGeneratingManualSummary = false
+    @State private var manualSummaryError: String?
     
     @State private var showingIconPicker = false
     
@@ -97,17 +102,17 @@ struct AddEditReadingListSheet: View {
         HStack(spacing: 12) {
             Text(isEditing ? "Edit List" : "New List")
                 .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
             
             Spacer()
             
             Button { saveList() } label: {
                 Text("Save")
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 9)
-                    .background(Capsule(style: .continuous).fill(LGradients.header))
+                    .background(Capsule(style: .continuous).fill(LGradients.blue))
             }
             .buttonStyle(.plain)
             
@@ -117,9 +122,17 @@ struct AddEditReadingListSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 17, height: 17)
-                    .foregroundStyle(LGradients.header)
-                    .frame(width: 38, height: 38)
-                    .background(Circle().fill(LColors.glassSurface2))
+                    .foregroundStyle(LColors.accents.primary)
+                    .frame(width: 42, height: 42)
+                    .background(
+                        Circle()
+                            .fill(LColors.bg)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
+                            )
+                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
+                    )
             }
             .buttonStyle(.plain)
         }
@@ -128,7 +141,7 @@ struct AddEditReadingListSheet: View {
         .padding(.bottom, 14)
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1)
+            Rectangle().fill(LColors.border.nested).frame(height: 1)
         }
         .safeAreaPadding(.top)
     }
@@ -147,12 +160,12 @@ struct AddEditReadingListSheet: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 14, height: 14)
-                                    .foregroundStyle(LGradients.header)
+                                    .foregroundStyle(LColors.accents.contrast)
                                 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(book.title)
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(LColors.cardTitle)
                                         .lineLimit(1)
                                     
                                     Text(book.author)
@@ -173,7 +186,7 @@ struct AddEditReadingListSheet: View {
                                         .frame(width: 12, height: 12)
                                         .foregroundStyle(LColors.textSecondary)
                                         .frame(width: 28, height: 28)
-                                        .background(Circle().fill(Color.white.opacity(0.06)))
+                                        .background(Circle().fill(LColors.iconContainer.primary))
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -181,11 +194,11 @@ struct AddEditReadingListSheet: View {
                             .padding(.vertical, 8)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.white.opacity(0.04))
+                                    .fill(LColors.surface.nested)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                    .strokeBorder(LColors.border.nested, lineWidth: 1)
                             )
                         }
                     }
@@ -210,11 +223,11 @@ struct AddEditReadingListSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 13, height: 13)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.secondary)
                         
-                        Text("Add a Book")
+                        Text("Add Existing Book")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                         
                         Spacer()
                         
@@ -234,7 +247,113 @@ struct AddEditReadingListSheet: View {
                 }
                 .buttonStyle(.plain)
             }
+            
+            manualBookEntry
         }
+    }
+    
+    private var manualBookEntry: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Manual Book")
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(LColors.textSecondary)
+            
+            LumeyTextField(title: "Title", text: $manualBookTitle)
+            LumeyTextField(title: "Author", text: $manualBookAuthor)
+            LumeyTextEditor(title: "Summary", text: $manualBookSummary, minHeight: 88)
+
+            Button {
+                Task { await generateManualSummary() }
+            } label: {
+                HStack(spacing: 8) {
+                    if isGeneratingManualSummary {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .tint(.white)
+                    }
+
+                    Text(isGeneratingManualSummary ? "Generating..." : "Get Summary")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+
+                    Spacer()
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(canGenerateManualSummary ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.glassSurface2))
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!canGenerateManualSummary || isGeneratingManualSummary)
+            .opacity(canGenerateManualSummary ? 1 : 0.55)
+
+            if let manualSummaryError {
+                Text(manualSummaryError)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(LColors.danger)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            
+            Button {
+                addManualBook()
+            } label: {
+                HStack(spacing: 8) {
+                    Image("addwavy")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 13, height: 13)
+                    
+                    Text("Add Manual Book")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                    
+                    Spacer()
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(canAddManualBook ? AnyShapeStyle(LColors.accents.secondary) : AnyShapeStyle(LColors.glassSurface2))
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!canAddManualBook)
+            .opacity(canAddManualBook ? 1 : 0.55)
+        }
+        .padding(.top, 4)
+    }
+    
+    private var canAddManualBook: Bool {
+        !manualBookTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        && !manualBookAuthor.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var canGenerateManualSummary: Bool {
+        canAddManualBook
+    }
+
+    @MainActor
+    private func generateManualSummary() async {
+        guard canGenerateManualSummary, !isGeneratingManualSummary else { return }
+
+        isGeneratingManualSummary = true
+        manualSummaryError = nil
+
+        do {
+            let summary = try await RegularRecBookSummaryService.shared.fetchSummary(
+                title: manualBookTitle.trimmingCharacters(in: .whitespacesAndNewlines),
+                author: manualBookAuthor.trimmingCharacters(in: .whitespacesAndNewlines),
+                summary: manualBookSummary
+            )
+            manualBookSummary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            manualSummaryError = error.localizedDescription
+        }
+
+        isGeneratingManualSummary = false
     }
     
     // MARK: - Series Quick Add
@@ -251,14 +370,14 @@ struct AddEditReadingListSheet: View {
                             } label: {
                                 Text(seriesName)
                                     .font(.system(size: 12, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 7)
                                     .background(
                                         Capsule().fill(LColors.glassSurface2)
                                     )
                                     .overlay(
-                                        Capsule().strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                        Capsule().strokeBorder(LColors.border.nested, lineWidth: 1)
                                     )
                             }
                             .buttonStyle(.plain)
@@ -276,11 +395,11 @@ struct AddEditReadingListSheet: View {
         title: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 13) {
                 Text(title)
                     .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                 
                 VStack(spacing: 12) {
                     content()
@@ -307,6 +426,10 @@ struct AddEditReadingListSheet: View {
     }
     
     private func saveList() {
+        if canAddManualBook {
+            addManualBook()
+        }
+        
         let target = list ?? ReadingList()
         let wasNew = list == nil
         
@@ -343,6 +466,25 @@ struct AddEditReadingListSheet: View {
         
         try? modelContext.save()
         dismiss()
+    }
+    
+    private func addManualBook() {
+        let trimmedTitle = manualBookTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedAuthor = manualBookAuthor.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedSummary = manualBookSummary.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty, !trimmedAuthor.isEmpty else { return }
+        
+        let book = Book(
+            title: trimmedTitle,
+            author: trimmedAuthor,
+            summary: trimmedSummary
+        )
+        modelContext.insert(book)
+        selectedBookIDs.append(book.id)
+        
+        manualBookTitle = ""
+        manualBookAuthor = ""
+        manualBookSummary = ""
     }
     
     private func addSeriesBooks(_ seriesName: String) {

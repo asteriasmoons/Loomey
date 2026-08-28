@@ -45,7 +45,7 @@ struct BuddyPostAnnouncementSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         if !readingBooks.isEmpty {
-                            GlassCard {
+                            GlassCard(variant: .featured) {
                                 VStack(alignment: .leading, spacing: 10) {
                                     fieldLabel("Currently Reading")
 
@@ -64,14 +64,14 @@ struct BuddyPostAnnouncementSheet: View {
                                             } label: {
                                                 Text(book.title)
                                                     .font(.system(size: 13, weight: .black, design: .rounded))
-                                                    .foregroundStyle(.white)
+                                                    .foregroundStyle(LColors.cardTitle)
                                                     .lineLimit(1)
                                                     .padding(.horizontal, 14)
                                                     .padding(.vertical, 10)
                                                     .frame(maxWidth: .infinity)
                                                     .background(
                                                         Capsule(style: .continuous)
-                                                            .fill(Color.white.opacity(0.07))
+                                                            .fill(LColors.iconContainer.primary)
                                                     )
                                                     .overlay(
                                                         Capsule(style: .continuous)
@@ -85,21 +85,21 @@ struct BuddyPostAnnouncementSheet: View {
                             }
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .primary) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Book Title")
                                 buddyTextField(placeholder: "Book title", text: $bookTitle)
                             }
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .secondary) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Author")
                                 buddyTextField(placeholder: "Author (optional)", text: $bookAuthor)
                             }
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .tertiary) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Current Page")
                                 buddyTextField(placeholder: "e.g. 42", text: $currentChapterText)
@@ -107,7 +107,7 @@ struct BuddyPostAnnouncementSheet: View {
                             }
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .elevated) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Max Buddies")
 
@@ -122,12 +122,12 @@ struct BuddyPostAnnouncementSheet: View {
                                                 .frame(width: 46, height: 44)
                                                 .background(
                                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                        .fill(maxMembers == count ? LColors.glassSurface2 : Color.white.opacity(0.06))
+                                                        .fill(maxMembers == count ? LColors.glassSurface2 : LColors.surface.subtle.opacity(0.6))
                                                 )
                                                 .overlay(
                                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                                                         .strokeBorder(
-                                                            maxMembers == count ? LGradients.header : LinearGradient(colors: [LColors.glassBorder, LColors.glassBorder], startPoint: .topLeading, endPoint: .bottomTrailing),
+                                                            maxMembers == count ? LColors.accents.contrast : LColors.glassBorder,
                                                             lineWidth: 1
                                                         )
                                                 )
@@ -139,7 +139,7 @@ struct BuddyPostAnnouncementSheet: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .subtle) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Note Optional")
                                 buddyTextEditor(placeholder: "e.g. Looking to discuss themes and theories!", text: $message)
@@ -167,7 +167,7 @@ struct BuddyPostAnnouncementSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Post Announcement")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Invite readers to join your buddy group.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -185,11 +185,7 @@ struct BuddyPostAnnouncementSheet: View {
                     .scaledToFit()
                     .frame(width: 18, height: 18)
                     .foregroundStyle(
-                        LinearGradient(
-                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        LColors.accents.contrast
                     )
                     .frame(width: 36, height: 36)
                     .background(
@@ -198,11 +194,7 @@ struct BuddyPostAnnouncementSheet: View {
                             .overlay(
                                 Circle()
                                     .strokeBorder(
-                                        LinearGradient(
-                                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
+                                        LColors.accents.contrast,
                                         lineWidth: 1.35
                                     )
                             )
@@ -227,14 +219,14 @@ struct BuddyPostAnnouncementSheet: View {
                 } else {
                     Text("Post to Board")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(canPost ? LGradients.header : LinearGradient(colors: [Color.gray.opacity(0.3), Color.gray.opacity(0.22)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(canPost ? LColors.accents.contrast : LColors.surface.subtle)
             )
             .shadow(color: canPost ? LColors.accent.opacity(0.3) : .clear, radius: 12, y: 6)
         }
@@ -258,11 +250,11 @@ struct BuddyPostAnnouncementSheet: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0.055))
+                    .fill(LColors.surface.nestedSoft)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                    .strokeBorder(LColors.border.nested, lineWidth: 1)
             )
     }
 
@@ -286,11 +278,11 @@ struct BuddyPostAnnouncementSheet: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.055))
+                .fill(LColors.surface.nestedSoft)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                .strokeBorder(LColors.border.nested, lineWidth: 1)
         )
     }
 

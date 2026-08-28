@@ -9,6 +9,7 @@ import SwiftData
 struct ChallengesView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var appState: AppState
 
     @Query(sort: \ReadingChallenge.createdDate)
@@ -24,12 +25,14 @@ struct ChallengesView: View {
     private var allProfiles: [ChallengeUserProfile]
 
     @State private var selectedCategory: ChallengeCategory?
+    @State private var showingPhotoProofChallenges = false
     @State private var selectedChallenge: ReadingChallenge?
     @State private var searchText = ""
     @State private var showingProfile = false
     @State private var showingLeaderboard = false
     @State private var showingFeedRoute = false
     @State private var showingCreateFeedPost = false
+    @State private var featuredRotationDay = Calendar.current.startOfDay(for: Date())
 
     private var currentUserID: String {
         appState.currentAppleUserId ?? "local-user"
@@ -67,9 +70,18 @@ struct ChallengesView: View {
                 }
             }
             .task {
+                refreshFeaturedRotationDay()
                 seedIfNeeded()
                 backfillChallengeCycles()
                 backfillSubmissionChallengeTitles()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    refreshFeaturedRotationDay()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+                refreshFeaturedRotationDay()
             }
             .adaptivePresentation(item: $selectedChallenge, useFullScreenCover: horizontalSizeClass == .regular) { challenge in
                 ChallengeDetailView(challenge: challenge)
@@ -130,7 +142,7 @@ struct ChallengesView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Challenges")
                     .font(.system(size: 32, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Join reading events and earn points")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -153,7 +165,7 @@ struct ChallengesView: View {
                         .fill(LColors.bg)
                         .overlay(
                             Circle()
-                                .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                         )
                         .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                 )
@@ -168,14 +180,14 @@ struct ChallengesView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -190,14 +202,14 @@ struct ChallengesView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.secondary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -214,20 +226,20 @@ struct ChallengesView: View {
             Button {
                 selectedChallenge = challenge
             } label: {
-                GlassCard {
+                GlassCard(variant: .featured) {
                     HStack(spacing: 14) {
                         Image(challenge.iconName)
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 36, height: 36)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.secondary)
 
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: 6) {
                                 Text(challenge.title)
                                     .font(.system(size: 17, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
 
                                 featuredBadge
                             }
@@ -294,41 +306,32 @@ struct ChallengesView: View {
 
     private var categorySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Categories")
+            sectionTitle("Filters")
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
+                    filterChip(
+                        title: "Photo Proof",
+                        iconName: "image",
+                        isSelected: showingPhotoProofChallenges
+                    ) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            showingPhotoProofChallenges.toggle()
+                            selectedCategory = nil
+                        }
+                    }
+
                     ForEach(ChallengeCategory.allCases) { category in
                         Button {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                showingPhotoProofChallenges = false
                                 selectedCategory = selectedCategory == category ? nil : category
                             }
                         } label: {
-                            HStack(spacing: 8) {
-                                Image(category.iconName)
-                                    .renderingMode(.template)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 16, height: 16)
-
-                                Text(category.displayName)
-                                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                            }
-                            .foregroundStyle(selectedCategory == category ? .white : LColors.textSecondary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(
-                                Capsule(style: .continuous)
-                                    .fill(selectedCategory == category ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassSurface2))
-                            )
-                            .overlay(
-                                Capsule(style: .continuous)
-                                    .strokeBorder(
-                                        selectedCategory == category
-                                            ? AnyShapeStyle(Color.clear)
-                                            : AnyShapeStyle(LColors.glassBorder),
-                                        lineWidth: 1
-                                    )
+                            filterChipContent(
+                                title: category.displayName,
+                                iconName: category.iconName,
+                                isSelected: selectedCategory == category
                             )
                         }
                         .buttonStyle(.plain)
@@ -340,7 +343,15 @@ struct ChallengesView: View {
 
     private var allChallengesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if let selectedCategory {
+            if showingPhotoProofChallenges {
+                filterHeader(
+                    title: "Photo Proof",
+                    iconName: "image",
+                    count: filteredChallenges.count
+                )
+
+                challengeList(filteredChallenges)
+            } else if let selectedCategory {
                 categoryHeader(
                     category: selectedCategory,
                     count: filteredChallenges.count
@@ -365,7 +376,7 @@ struct ChallengesView: View {
     // MARK: - Helpers
 
     private var featuredChallenge: ReadingChallenge? {
-        ReadingChallenge.rotatingFeaturedChallenge(from: allChallenges)
+        ReadingChallenge.rotatingFeaturedChallenge(from: allChallenges, date: featuredRotationDay)
     }
 
     private var weeklyChallenges: [ReadingChallenge] {
@@ -385,6 +396,18 @@ struct ChallengesView: View {
     }
 
     private var filteredChallenges: [ReadingChallenge] {
+        if showingPhotoProofChallenges {
+            return allChallenges
+                .filter(\.isPhotoProofChallenge)
+                .sorted { lhs, rhs in
+                    if lhs.isRecurring != rhs.isRecurring {
+                        return lhs.isRecurring && !rhs.isRecurring
+                    }
+
+                    return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+                }
+        }
+
         if let category = selectedCategory {
             return allChallenges.filter { $0.category == category }
         }
@@ -435,6 +458,12 @@ struct ChallengesView: View {
         manager.seedChallengesIfNeeded()
     }
 
+    private func refreshFeaturedRotationDay() {
+        let today = Calendar.current.startOfDay(for: Date())
+        guard today != featuredRotationDay else { return }
+        featuredRotationDay = today
+    }
+
     private func backfillChallengeCycles() {
         let manager = ChallengeManager(modelContext: modelContext)
         manager.backfillCycleMetadata()
@@ -471,7 +500,92 @@ struct ChallengesView: View {
     private func sectionTitle(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 20, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(LColors.headingPrimary)
+    }
+
+    private func filterChip(
+        title: String,
+        iconName: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            filterChipContent(
+                title: title,
+                iconName: iconName,
+                isSelected: isSelected
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func filterChipContent(
+        title: String,
+        iconName: String,
+        isSelected: Bool
+    ) -> some View {
+        HStack(spacing: 8) {
+            Image(iconName)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 16, height: 16)
+
+            Text(title)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+        }
+        .foregroundStyle(isSelected ? .white : LColors.textSecondary)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(
+            Capsule(style: .continuous)
+                .fill(isSelected ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.glassSurface2))
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .strokeBorder(
+                    isSelected
+                        ? AnyShapeStyle(Color.clear)
+                        : AnyShapeStyle(LColors.glassBorder),
+                    lineWidth: 1
+                )
+        )
+    }
+
+    private func filterHeader(
+        title: String,
+        iconName: String,
+        count: Int
+    ) -> some View {
+        HStack(spacing: 9) {
+            Image(iconName)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 16, height: 16)
+                .foregroundStyle(LColors.accents.special)
+                .frame(width: 34, height: 34)
+                .background(
+                    Circle()
+                        .fill(LColors.glassSurface)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(LColors.accents.special, lineWidth: 1)
+                        )
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.headingPrimary)
+
+                Text("\(count) challenge\(count == 1 ? "" : "s")")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
+            }
+
+            Spacer()
+        }
     }
 
     private func categoryHeader(
@@ -484,21 +598,21 @@ struct ChallengesView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
                         .fill(LColors.glassSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                .strokeBorder(LColors.accents.primary, lineWidth: 1)
                         )
                 )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(category.displayName)
                     .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("\(count) challenge\(count == 1 ? "" : "s")")
                     .font(.system(size: 10, weight: .black, design: .rounded))
@@ -529,7 +643,7 @@ struct ChallengesView: View {
     private var featuredBadge: some View {
         Text("FEATURED")
             .font(.system(size: 9, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(LColors.cardTitle)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(

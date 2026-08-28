@@ -18,6 +18,7 @@ struct ReadingListDetailSheet: View {
     
     @State private var showingEditSheet = false
     @State private var showingDeleteConfirm = false
+    @State private var selectedBookForSummary: Book?
     
     private var listBooks: [(item: ReadingListItemData, book: Book)] {
         list.items.compactMap { item in
@@ -26,6 +27,7 @@ struct ReadingListDetailSheet: View {
         }
     }
     
+    // Count a book as read when either this list item or the library book status says it is finished.
     private var effectiveCompletedCount: Int {
         listBooks.filter { entry in
             entry.item.isCompleted || entry.book.status == .finished
@@ -76,6 +78,11 @@ struct ReadingListDetailSheet: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.hidden)
         }
+        .sheet(item: $selectedBookForSummary) { book in
+            ReadingListBookSummarySheet(book: book)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.hidden)
+        }
         .alert("Delete List?", isPresented: $showingDeleteConfirm) {
             Button("Delete", role: .destructive) {
                 modelContext.delete(list)
@@ -94,7 +101,7 @@ struct ReadingListDetailSheet: View {
         HStack(spacing: 12) {
             Text(list.displayTitle)
                 .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
                 .lineLimit(1)
             
             Spacer()
@@ -107,14 +114,14 @@ struct ReadingListDetailSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -127,14 +134,14 @@ struct ReadingListDetailSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -146,7 +153,7 @@ struct ReadingListDetailSheet: View {
         .padding(.bottom, 14)
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1)
+            Rectangle().fill(LColors.border.nested).frame(height: 1)
         }
         .safeAreaPadding(.top)
     }
@@ -154,7 +161,7 @@ struct ReadingListDetailSheet: View {
     // MARK: - Overview
     
     private var overviewCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 14) {
                     Image(list.iconName)
@@ -162,15 +169,15 @@ struct ReadingListDetailSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 26, height: 26)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.secondary)
                         .frame(width: 50, height: 50)
-                        .background(Circle().fill(Color.white.opacity(0.06)))
-                        .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1.15))
+                        .background(Circle().fill(LColors.iconContainer.primary))
+                        .overlay(Circle().strokeBorder(LColors.accents.secondary, lineWidth: 1.15))
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(list.displayTitle)
                             .font(.system(size: 18, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .lineLimit(2)
                         
                         HStack(spacing: 6) {
@@ -200,7 +207,7 @@ struct ReadingListDetailSheet: View {
                             
                             Text("\(effectiveProgressPercentage)%")
                                 .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                         }
                     }
                 }
@@ -228,7 +235,7 @@ struct ReadingListDetailSheet: View {
     // MARK: - Description
     
     private var descriptionCard: some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Description")
                     .font(.system(size: 14, weight: .black, design: .rounded))
@@ -236,7 +243,7 @@ struct ReadingListDetailSheet: View {
                 
                 Text(list.listDescription)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.84))
+                    .foregroundStyle(LColors.text.primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -249,14 +256,14 @@ struct ReadingListDetailSheet: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Books")
                 .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
             
             if listBooks.isEmpty {
-                GlassCard {
+                GlassCard(variant: .secondary) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("No books in this list")
                             .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                         
                         Text("Edit this list to add books from your library.")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -273,6 +280,9 @@ struct ReadingListDetailSheet: View {
                             onToggle: {
                                 list.toggleBookCompleted(bookID: entry.book.id)
                                 try? modelContext.save()
+                            },
+                            onOpenSummary: {
+                                selectedBookForSummary = entry.book
                             }
                         )
                     }
@@ -303,7 +313,7 @@ struct ReadingListDetailSheet: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(Capsule(style: .continuous).fill(LGradients.header))
+                    .background(Capsule(style: .continuous).fill(LGradients.blue))
                 }
                 .buttonStyle(.plain)
             }
@@ -337,10 +347,12 @@ struct ReadingListBookRow: View {
     let book: Book
     let isCompleted: Bool
     let onToggle: () -> Void
+    let onOpenSummary: () -> Void
     
     var body: some View {
-        GlassCard {
-            HStack(spacing: 12) {
+        GeometryReader { geometry in
+            GlassCard(variant: .tertiary) {
+                HStack(spacing: 12) {
                 Button(action: onToggle) {
                     Image(isCompleted ? "checkwavy" : "sparkle")
                         .renderingMode(.template)
@@ -349,49 +361,63 @@ struct ReadingListBookRow: View {
                         .frame(width: 16, height: 16)
                         .foregroundStyle(
                             isCompleted
-                            ? AnyShapeStyle(LGradients.header)
-                            : AnyShapeStyle(Color.white.opacity(0.35))
+                            ? AnyShapeStyle(LColors.accents.special)
+                            : AnyShapeStyle(LColors.text.muted)
                         )
                         .frame(width: 36, height: 36)
                         .background(
                             Circle()
-                                .fill(isCompleted ? Color.white.opacity(0.08) : Color.white.opacity(0.04))
+                                .fill(isCompleted ? LColors.border.nested : LColors.surface.subtle.opacity(0.5))
                         )
                         .overlay(
                             Circle()
                                 .strokeBorder(
                                     isCompleted
-                                    ? AnyShapeStyle(LGradients.header)
-                                    : AnyShapeStyle(Color.white.opacity(0.10)),
+                                    ? AnyShapeStyle(LColors.accents.primary)
+                                    : AnyShapeStyle(LColors.border.nestedStrong),
                                     lineWidth: 1
                                 )
                         )
                 }
                 .buttonStyle(.plain)
                 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(book.title)
-                        .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(isCompleted ? .white.opacity(0.55) : .white)
-                        .strikethrough(isCompleted, color: .white.opacity(0.3))
-                        .lineLimit(1)
-                    
-                    Text(book.author)
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
-                        .lineLimit(1)
+                Button(action: onOpenSummary) {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(book.title)
+                                .font(.system(size: 14, weight: .black, design: .rounded))
+                                .foregroundStyle(isCompleted ? .white.opacity(0.55) : .white)
+                                .strikethrough(isCompleted, color: .white.opacity(0.3))
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            Text(book.author)
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(LColors.textSecondary)
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .layoutPriority(1)
+                        
+                        Text(book.status.rawValue)
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .foregroundStyle(LColors.textSecondary)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(LColors.iconContainer.primary))
+                    }
+                    .contentShape(Rectangle())
                 }
-                
-                Spacer()
-                
-                Text(book.status.rawValue)
-                    .font(.system(size: 10, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(Color.white.opacity(0.06)))
+                .buttonStyle(.plain)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .frame(width: geometry.size.width)
         }
+        .frame(height: 84)
     }
 }
 
@@ -405,7 +431,7 @@ struct ListDetailMiniStat: View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             
@@ -417,11 +443,11 @@ struct ListDetailMiniStat: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.05))
+                .fill(LColors.surface.nested)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                .strokeBorder(LColors.border.nested, lineWidth: 1)
         )
     }
 }

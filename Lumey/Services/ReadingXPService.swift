@@ -114,7 +114,7 @@ enum ReadingXPService {
         stats: ReadingStats,
         modelContext: ModelContext
     ) -> Int {
-        guard session.linkedGoalID != nil else { return 0 }
+        guard session.hasLinkedGoal else { return 0 }
 
         let dayKey = dayKey(for: session.date)
         var total = award(
@@ -381,6 +381,20 @@ enum ReadingXPService {
         )
     }
 
+    @discardableResult
+    static func awardReadingMissionCompletion(_ mission: ReadingMission, modelContext: ModelContext) -> Int {
+        award(
+            amount: 125,
+            sourceType: "readingMissionCompleted",
+            sourceID: mission.id.uuidString,
+            capKey: "readingMissionCompleted",
+            reason: "Reading mission completed",
+            occurredAt: mission.completedAt ?? Date(),
+            metadataJSON: missionXPMetadata(for: mission),
+            modelContext: modelContext
+        )
+    }
+
     static func preferredProfile(from profiles: [ReadingXPProfile]) -> ReadingXPProfile? {
         profiles.max { $0.updatedAt < $1.updatedAt }
     }
@@ -532,6 +546,21 @@ enum ReadingXPService {
         guard goal.isRecurringGoal else { return goal.id.uuidString }
 
         return "\(goal.id.uuidString):\(goal.cadence.rawValue):\(periodKey(for: occurredAt, cadence: goal.cadence))"
+    }
+
+    private static func missionXPMetadata(for mission: ReadingMission) -> String {
+        let payload = [
+            "bookTitle": mission.bookTitle,
+            "bookAuthor": mission.bookAuthor
+        ]
+
+        guard let data = try? JSONEncoder().encode(payload),
+              let string = String(data: data, encoding: .utf8)
+        else {
+            return "{}"
+        }
+
+        return string
     }
 
     private static func periodKey(for date: Date, cadence: ReadingGoalCadence) -> String {

@@ -98,7 +98,7 @@ struct CreateChallengeFeedPostSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Create Post")
                     .font(.system(size: 24, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Share an update with the challenge feed")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -115,14 +115,14 @@ struct CreateChallengeFeedPostSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                     )
             }
@@ -138,7 +138,7 @@ struct CreateChallengeFeedPostSheet: View {
     // MARK: - Composer
 
     private var composerCard: some View {
-        GlassCard(padding: 16) {
+        GlassCard(padding: 16, variant: .featured) {
             VStack(alignment: .leading, spacing: 12) {
                 sectionHeader(
                     icon: "bookchat",
@@ -155,10 +155,10 @@ struct CreateChallengeFeedPostSheet: View {
                         .padding(10)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color.white.opacity(0.045))
+                                .fill(LColors.surface.nested)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                        .strokeBorder(LColors.border.nested, lineWidth: 1)
                                 )
                         )
 
@@ -192,7 +192,7 @@ struct CreateChallengeFeedPostSheet: View {
     // MARK: - Photo
 
     private var photoCard: some View {
-        GlassCard(padding: 16) {
+        GlassCard(padding: 16, variant: .primary) {
             VStack(alignment: .leading, spacing: 12) {
                 sectionHeader(
                     icon: "image",
@@ -213,7 +213,7 @@ struct CreateChallengeFeedPostSheet: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                                    .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
                             )
 
                         TextField("Photo caption optional", text: $photoCaption)
@@ -223,10 +223,10 @@ struct CreateChallengeFeedPostSheet: View {
                             .padding(.vertical, 12)
                             .background(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(Color.white.opacity(0.045))
+                                    .fill(LColors.surface.nested)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                            .strokeBorder(LColors.border.nested, lineWidth: 1)
                                     )
                             )
 
@@ -260,21 +260,21 @@ struct CreateChallengeFeedPostSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 30, height: 30)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.contrast)
                                 .frame(width: 72, height: 72)
                                 .background(
                                     Circle()
                                         .fill(LColors.glassSurface)
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                                .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                                         )
                                 )
 
                             VStack(spacing: 4) {
                                 Text("Add a Photo")
                                     .font(.system(size: 15, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
 
                                 Text("Choose an optional image for your feed post.")
                                     .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -286,10 +286,10 @@ struct CreateChallengeFeedPostSheet: View {
                         .padding(.vertical, 22)
                         .background(
                             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(Color.white.opacity(0.045))
+                                .fill(LColors.surface.nested)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                        .strokeBorder(LColors.border.nested, lineWidth: 1)
                                 )
                         )
                     }
@@ -302,7 +302,7 @@ struct CreateChallengeFeedPostSheet: View {
     // MARK: - Linked Details
 
     private var linkedDetailsCard: some View {
-        GlassCard(padding: 16) {
+        GlassCard(padding: 16, variant: .secondary) {
             VStack(alignment: .leading, spacing: 12) {
                 sectionHeader(
                     icon: "link",
@@ -370,7 +370,7 @@ struct CreateChallengeFeedPostSheet: View {
     // MARK: - Options
 
     private var optionsCard: some View {
-        GlassCard(padding: 16) {
+        GlassCard(padding: 16, variant: .tertiary) {
             VStack(alignment: .leading, spacing: 12) {
                 sectionHeader(
                     icon: "settingswavy",
@@ -385,12 +385,12 @@ struct CreateChallengeFeedPostSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 16, height: 16)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.secondary)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Contains Spoilers")
                                 .font(.system(size: 13, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
 
                             Text("Marks this post so readers know before opening it.")
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -439,7 +439,7 @@ struct CreateChallengeFeedPostSheet: View {
             .padding(.vertical, 15)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(canPost && !isPosting ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassSurface))
+                    .fill(canPost && !isPosting ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.glassSurface))
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .strokeBorder(LGradients.header.opacity(canPost ? 1 : 0.35), lineWidth: 1)
@@ -463,21 +463,21 @@ struct CreateChallengeFeedPostSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 17, height: 17)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.special)
                 .frame(width: 38, height: 38)
                 .background(
                     Circle()
                         .fill(LColors.glassSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(LGradients.header, lineWidth: 1)
+                                .strokeBorder(LColors.accents.secondary, lineWidth: 1)
                         )
                 )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(subtitle)
                     .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -499,21 +499,21 @@ struct CreateChallengeFeedPostSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 15, height: 15)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
                         .fill(LColors.glassSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
                         )
                 )
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(value)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -528,15 +528,15 @@ struct CreateChallengeFeedPostSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 12, height: 12)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.contrast)
         }
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.045))
+                .fill(LColors.surface.nested)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                        .strokeBorder(LColors.border.nested, lineWidth: 1)
                 )
         )
     }
@@ -563,7 +563,7 @@ struct CreateChallengeFeedPostSheet: View {
                 .fill(LColors.glassSurface)
                 .overlay(
                     Capsule(style: .continuous)
-                        .strokeBorder(LGradients.header, lineWidth: 1)
+                        .strokeBorder(LColors.accents.special, lineWidth: 1)
                 )
         )
     }
@@ -571,7 +571,7 @@ struct CreateChallengeFeedPostSheet: View {
     private func miniBadge(text: String) -> some View {
         Text(text)
             .font(.system(size: 8, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(LColors.cardTitle)
             .padding(.horizontal, 7)
             .padding(.vertical, 4)
             .background(
@@ -579,7 +579,7 @@ struct CreateChallengeFeedPostSheet: View {
                     .fill(LColors.glassSurface)
                     .overlay(
                         Capsule(style: .continuous)
-                            .strokeBorder(LGradients.header, lineWidth: 1)
+                            .strokeBorder(LColors.accents.primary, lineWidth: 1)
                     )
             )
     }

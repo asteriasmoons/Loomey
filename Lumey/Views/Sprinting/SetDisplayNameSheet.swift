@@ -37,7 +37,7 @@ struct SetDisplayNameSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         if !isChanging {
-                            GlassCard {
+                            GlassCard(variant: .featured) {
                                 Text("This name will appear in the Sprint Room chat and on the leaderboard. You can change it later.")
                                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                                     .foregroundStyle(LColors.textSecondary)
@@ -45,7 +45,7 @@ struct SetDisplayNameSheet: View {
                             }
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .primary) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Display Name")
 
@@ -57,11 +57,11 @@ struct SetDisplayNameSheet: View {
                                     .padding(.vertical, 12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .fill(Color.white.opacity(0.055))
+                                            .fill(LColors.surface.nestedSoft)
                                     )
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                            .strokeBorder(LColors.border.nested, lineWidth: 1)
                                     )
 
                                 HStack {
@@ -100,7 +100,7 @@ struct SetDisplayNameSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(isChanging ? "Change Display Name" : "Choose a Display Name")
                     .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text(isChanging ? "Update the name people see." : "Pick the name people will see in sprint rooms.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -119,11 +119,7 @@ struct SetDisplayNameSheet: View {
                         .scaledToFit()
                         .frame(width: 18, height: 18)
                         .foregroundStyle(
-                            LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.accents.primary
                         )
                         .frame(width: 36, height: 36)
                         .background(
@@ -132,11 +128,7 @@ struct SetDisplayNameSheet: View {
                                 .overlay(
                                     Circle()
                                         .strokeBorder(
-                                            LinearGradient(
-                                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
+                                            LColors.accents.primary,
                                             lineWidth: 1.35
                                         )
                                 )
@@ -162,7 +154,7 @@ struct SetDisplayNameSheet: View {
                 } else {
                     Text(isChanging ? "Save" : "Let's Go")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -171,7 +163,7 @@ struct SetDisplayNameSheet: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(
                         canSave
-                        ? LGradients.header
+                        ? LGradients.blue
                         : LinearGradient(
                             colors: [
                                 Color.gray.opacity(0.3),

@@ -82,11 +82,11 @@ struct ReadingTimerSheet: View {
     // MARK: - Setup Card
 
     private var setupCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Before You Start")
                     .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 if !readingBooks.isEmpty {
                     Menu {
@@ -143,14 +143,14 @@ struct ReadingTimerSheet: View {
                                     } label: {
                                         Text(goal.displayTitle)
                                             .font(.system(size: 12, weight: .black, design: .rounded))
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(LColors.cardTitle)
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 7)
                                             .background(
                                                 Capsule().fill(
                                                     isSelected
-                                                    ? LinearGradient(colors: [LColors.gradientBlue, LColors.gradientPurple], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                                    : LinearGradient(colors: [LColors.glassSurface2, LColors.glassSurface2], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                                    ? LColors.accents.primary
+                                                    : LColors.glassSurface2
                                                 )
                                             )
                                     }
@@ -168,15 +168,15 @@ struct ReadingTimerSheet: View {
     // MARK: - Timer Face
 
     private var timerCard: some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             VStack(spacing: 20) {
                 // Elapsed
                 Text(formattedElapsed)
                     .font(.system(size: 72, weight: .black, design: .monospaced))
                     .foregroundStyle(
                         timer.isPaused
-                        ? LinearGradient(colors: [.white.opacity(0.4), .white.opacity(0.4)], startPoint: .leading, endPoint: .trailing)
-                        : LinearGradient(colors: [LColors.gradientBlue, LColors.gradientPurple], startPoint: .leading, endPoint: .trailing)
+                        ? LColors.text.muted
+                        : LColors.accents.primary
                     )
                     .monospacedDigit()
                     .frame(maxWidth: .infinity)
@@ -202,7 +202,7 @@ struct ReadingTimerSheet: View {
     // MARK: - Controls
 
     private var controlCard: some View {
-        GlassCard {
+        GlassCard(variant: .secondary) {
             HStack(spacing: 12) {
                 if !timer.isActive {
                     // Start
@@ -270,11 +270,7 @@ struct ReadingTimerSheet: View {
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(
-                        LinearGradient(
-                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        LColors.accents.primary
                     )
             )
         }
@@ -284,7 +280,7 @@ struct ReadingTimerSheet: View {
     // MARK: - Info card (while running)
 
     private var infoCard: some View {
-        GlassCard {
+        GlassCard(variant: .tertiary) {
             HStack {
                 Image(systemName: "waveform")
                     .font(.system(size: 14, weight: .bold))
@@ -304,7 +300,7 @@ struct ReadingTimerSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Reading Timer")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
                 Text("Dismiss anytime — timer lives in the Dynamic Island")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
@@ -320,14 +316,14 @@ struct ReadingTimerSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -340,7 +336,7 @@ struct ReadingTimerSheet: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
@@ -367,6 +363,7 @@ struct ReadingTimerSheet: View {
 struct SaveSessionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     let goals: [ReadingGoals]
     let books: [Book]
@@ -378,9 +375,10 @@ struct SaveSessionSheet: View {
     @State private var selectedBook: Book? = nil
     @State private var startPage = ""
     @State private var endPage = ""
-    @State private var sessionNotes = ""
     @State private var sessionDate = Date()
     @State private var selectedGoal: ReadingGoals?
+    @State private var showingInsightSheet = false
+    @State private var insightDraft = ReadingInsightDraft()
 
     private var readingBooks: [Book] {
         books.filter { $0.status == .reading && !$0.isArchived }
@@ -411,17 +409,20 @@ struct SaveSessionSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         // Summary
-                        GlassCard {
+                        GlassCard(variant: .elevated) {
                             HStack(spacing: 14) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 28, weight: .bold))
+                                Image("checkwavy")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 28, height: 28)
                                     .foregroundStyle(
-                                        LinearGradient(colors: [LColors.gradientBlue, LColors.gradientPurple], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        LColors.accents.primary
                                     )
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Session complete")
                                         .font(.system(size: 16, weight: .black, design: .rounded))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(LColors.cardTitle)
                                     Text("\(prefillMinutes) minutes read")
                                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                                         .foregroundStyle(LColors.textSecondary)
@@ -432,11 +433,11 @@ struct SaveSessionSheet: View {
 
                         // Book link
                         if !readingBooks.isEmpty {
-                            GlassCard {
+                            GlassCard(variant: .subtle) {
                                 VStack(alignment: .leading, spacing: 12) {
                                     Text("Book")
                                         .font(.system(size: 17, weight: .black, design: .rounded))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(LColors.cardTitle)
                                     
                                     Menu {
                                         Button("No Book") {
@@ -477,11 +478,11 @@ struct SaveSessionSheet: View {
                         }
 
                         // Pages
-                        GlassCard {
+                        GlassCard(variant: .featured) {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Pages")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
                                 
                                 LumeyTextField(title: "Start Page", text: $startPage)
                                     .keyboardType(.numberPad)
@@ -498,7 +499,7 @@ struct SaveSessionSheet: View {
                                     
                                     Text("\(calculatedPagesRead)")
                                         .font(.system(size: 16, weight: .black, design: .rounded))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(LColors.cardTitle)
                                 }
                                 .padding(.top, 2)
                             }
@@ -506,11 +507,11 @@ struct SaveSessionSheet: View {
 
                         // Goal link
                         if !goals.filter({ $0.status == .active && !$0.isArchived }).isEmpty {
-                            GlassCard {
+                            GlassCard(variant: .primary) {
                                 VStack(alignment: .leading, spacing: 12) {
                                     Text("Link to Goal")
                                         .font(.system(size: 17, weight: .black, design: .rounded))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(LColors.cardTitle)
 
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 8) {
@@ -521,14 +522,14 @@ struct SaveSessionSheet: View {
                                                 } label: {
                                                     Text(goal.displayTitle)
                                                         .font(.system(size: 12, weight: .black, design: .rounded))
-                                                        .foregroundStyle(.white)
+                                                        .foregroundStyle(LColors.cardTitle)
                                                         .padding(.horizontal, 12)
                                                         .padding(.vertical, 7)
                                                         .background(
                                                             Capsule().fill(
                                                                 isSelected
-                                                                ? LinearGradient(colors: [LColors.gradientBlue, LColors.gradientPurple], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                                                : LinearGradient(colors: [LColors.glassSurface2, LColors.glassSurface2], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                                                ? LColors.accents.primary
+                                                                : LColors.glassSurface2
                                                             )
                                                         )
                                                 }
@@ -541,21 +542,21 @@ struct SaveSessionSheet: View {
                             }
                         }
 
-                        // Notes & date
-                        GlassCard {
+                        // Date & time
+                        GlassCard(variant: .secondary) {
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Notes & Date")
+                                Text("Date & Time")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
-                                LumeyTextEditor(title: "Session notes (optional)", text: $sessionNotes, minHeight: 80)
-                                DatePicker("Date", selection: $sessionDate, displayedComponents: [.date, .hourAndMinute])
-                                    .tint(LColors.accent)
-                                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                                    .foregroundStyle(LColors.cardTitle)
+
+                                LumeyGradientDateTimeDrumPicker(date: $sessionDate)
                             }
                         }
 
+                        insightButton
+
                         // Points
-                        GlassCard {
+                        GlassCard(variant: .tertiary) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Points Earned")
@@ -563,7 +564,7 @@ struct SaveSessionSheet: View {
                                         .foregroundStyle(LColors.textSecondary)
                                     Text("+\(previewPoints) pts")
                                         .font(.system(size: 26, weight: .black, design: .rounded))
-                                        .foregroundStyle(LGradients.header)
+                                        .foregroundStyle(LColors.accents.contrast)
                                 }
                                 Spacer()
                                 Image("levelup")
@@ -572,7 +573,7 @@ struct SaveSessionSheet: View {
                                     .scaledToFit()
                                     .frame(width: 26, height: 26)
                                     .foregroundStyle(
-                                        LinearGradient(colors: [LColors.gradientBlue, LColors.gradientPurple], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        LColors.accents.primary
                                     )
                             }
                         }
@@ -588,6 +589,46 @@ struct SaveSessionSheet: View {
             selectedGoal = prefillGoal
             selectedBook = prefillBook
         }
+        .adaptivePresentation(isPresented: $showingInsightSheet, useFullScreenCover: horizontalSizeClass == .regular) {
+            ReadingInsightCaptureSheet(
+                draft: $insightDraft,
+                bookTitle: selectedBook?.displayTitle ?? "Reading Session"
+            )
+        }
+    }
+
+    private var insightButton: some View {
+        Button {
+            showingInsightSheet = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(insightDraft.hasContent ? "pencil" : "pagechat")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+
+                Text(insightDraft.hasContent ? "Edit Insight" : "Insights")
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(selectedBook == nil ? AnyShapeStyle(LColors.surface.subtle.opacity(0.6)) : AnyShapeStyle(LColors.accents.contrast))
+                    .shadow(color: selectedBook == nil ? .clear : LColors.gradientBlue.opacity(0.18), radius: 14, y: 7)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(selectedBook == nil ? AnyShapeStyle(LColors.glassBorder) : AnyShapeStyle(LColors.border.subtle), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(selectedBook == nil)
+        .opacity(selectedBook == nil ? 0.55 : 1)
     }
 
     // MARK: - Header
@@ -597,7 +638,7 @@ struct SaveSessionSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Save Session")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
                 Text("Add details and log your session")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
@@ -608,16 +649,12 @@ struct SaveSessionSheet: View {
             Button { saveSession() } label: {
                 Text("Save")
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 9)
                     .background(
                         Capsule(style: .continuous)
-                            .fill(LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ))
+                            .fill(LColors.accents.primary)
                     )
             }
             .buttonStyle(.plain)
@@ -628,7 +665,7 @@ struct SaveSessionSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 17, height: 17)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.secondary)
                     .frame(width: 38, height: 38)
                     .background(Circle().fill(LColors.glassSurface2))
             }
@@ -639,7 +676,7 @@ struct SaveSessionSheet: View {
         .padding(.bottom, 14)
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1)
+            Rectangle().fill(LColors.border.nested).frame(height: 1)
         }
         .safeAreaPadding(.top)
     }
@@ -660,10 +697,11 @@ struct SaveSessionSheet: View {
             linkedGoalTitle: selectedGoal?.displayTitle ?? "",
             durationMinutes: prefillMinutes,
             pagesRead: pages,
-            notes: sessionNotes.trimmingCharacters(in: .whitespacesAndNewlines),
+            notes: "",
             date: sessionDate
         )
         modelContext.insert(session)
+        insertInsightIfNeeded(for: session)
         updateSelectedBookProgress(to: enteredEndPage)
 
         // Fetch or create ReadingStats early so goal streak bridging can reference it
@@ -777,6 +815,23 @@ struct SaveSessionSheet: View {
         ReadingXPService.awardReadingSession(session, stats: stats, modelContext: modelContext)
 
         dismiss()
+    }
+
+    private func insertInsightIfNeeded(for session: ReadingSession) {
+        guard let selectedBook, insightDraft.hasContent else { return }
+
+        let insight = ReadingInsight(
+            book: selectedBook,
+            session: session,
+            whatHappened: insightDraft.whatHappened.trimmingCharacters(in: .whitespacesAndNewlines),
+            whatStoodOut: insightDraft.whatStoodOut.trimmingCharacters(in: .whitespacesAndNewlines),
+            howIFeel: insightDraft.howIFeel,
+            moodTags: insightDraft.selectedMoods,
+            feelingNote: insightDraft.feelingNote.trimmingCharacters(in: .whitespacesAndNewlines),
+            predictions: insightDraft.predictions.trimmingCharacters(in: .whitespacesAndNewlines),
+            favoriteMoment: insightDraft.notesAndThoughts.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+        modelContext.insert(insight)
     }
 
     private func updateSelectedBookProgress(to endPage: Int) {

@@ -8,11 +8,13 @@ import SwiftData
 
 struct LibraryBookRow: View {
     let book: Book
+    var variant: GlassCardVariant = .primary
+    var accentIndex: Int = 0
     var onEdit: (() -> Void)? = nil
     @Environment(\.modelContext) private var modelContext
-    
+
     var body: some View {
-        GlassCard {
+        GlassCard(variant: variant) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 13) {
                     LibraryBookCover(book: book)
@@ -20,7 +22,7 @@ struct LibraryBookRow: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(book.displayTitle)
                             .font(.system(size: 17, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .lineLimit(2)
                         
                         Text(book.displayAuthor)
@@ -144,14 +146,14 @@ private struct LibraryBookIconButtonImage: View {
             .resizable()
             .scaledToFit()
             .frame(width: 18, height: 18)
-            .foregroundStyle(LGradients.header)
+            .foregroundStyle(LColors.accents.primary)
             .frame(width: 34, height: 34)
             .background(
                 Circle()
-                    .fill(Color.white.opacity(0.06))
+                    .fill(LColors.iconContainer.primary)
                     .overlay(
                         Circle()
-                            .strokeBorder(LGradients.header, lineWidth: 1.2)
+                            .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                     )
             )
             .accessibilityLabel(accessibilityLabel ?? iconName)
@@ -177,20 +179,13 @@ struct LibrarySeriesBadge: View {
                 cornerRadius: 14
             )
             .stroke(
-                LinearGradient(
-                    colors: [
-                        LColors.gradientBlue,
-                        LColors.gradientPurple
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
+                LColors.gradientBlue,
                 style: StrokeStyle(lineWidth: 1.15, lineCap: .round, lineJoin: .round)
             )
 
             Text(seriesName)
                 .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .multilineTextAlignment(.leading)
                 .lineLimit(nil)
                 .fixedSize(horizontal: false, vertical: true)
@@ -208,13 +203,13 @@ struct LibrarySeriesBadge: View {
             if let bookLabel {
                 Text(bookLabel)
                     .font(.system(size: 10, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .offset(x: -16, y: 6)
             }
         }
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.018))
+                .fill(LColors.surface.nestedSoft)
         )
     }
 }
@@ -313,15 +308,15 @@ struct LibrarySeriesDropdownPicker: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 15, height: 15)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
                         .frame(width: 32, height: 32)
                         .background(
                             Circle()
-                                .fill(Color.white.opacity(0.06))
+                                .fill(LColors.iconContainer.primary)
                         )
                         .overlay(
                             Circle()
-                                .strokeBorder(LGradients.header, lineWidth: 0.9)
+                                .strokeBorder(LColors.accents.contrast, lineWidth: 0.9)
                         )
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -331,7 +326,7 @@ struct LibrarySeriesDropdownPicker: View {
                         
                         Text(seriesName)
                             .font(.system(size: 11, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .lineLimit(1)
                     }
                     
@@ -339,12 +334,12 @@ struct LibrarySeriesDropdownPicker: View {
                     
                     Text(displayValue)
                         .font(.system(size: 10, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(Color.white.opacity(0.06))
+                                .fill(LColors.iconContainer.primary)
                         )
                     
                     Image(isExpanded ? "chevup" : "chevdown")
@@ -352,7 +347,7 @@ struct LibrarySeriesDropdownPicker: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 11, height: 11)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.secondary)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
@@ -373,11 +368,11 @@ struct LibrarySeriesDropdownPicker: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.white.opacity(0.045))
+                        .fill(LColors.surface.nested)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                        .strokeBorder(LColors.border.nested, lineWidth: 1)
                 )
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
@@ -387,30 +382,14 @@ struct LibrarySeriesDropdownPicker: View {
     private var pickerBackground: some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
             .fill(
-                LinearGradient(
-                    colors: [
-                        LColors.gradientPurple.opacity(0.20),
-                        LColors.gradientBlue.opacity(0.10),
-                        Color.white.opacity(0.035)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                LColors.gradientPurple.opacity(0.20)
             )
     }
     
     private var pickerBorder: some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
             .strokeBorder(
-                LinearGradient(
-                    colors: [
-                        LColors.gradientPurple.opacity(0.92),
-                        LColors.gradientBlue.opacity(0.72),
-                        Color.white.opacity(0.24)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
+                LColors.gradientPurple.opacity(0.92),
                 lineWidth: 1
             )
     }
@@ -418,7 +397,7 @@ struct LibrarySeriesDropdownPicker: View {
     private func pickerDetailRow(label: String, value: String) -> some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(LGradients.header)
+                .fill(LGradients.blue)
                 .frame(width: 8, height: 8)
             
             Text(label)
@@ -429,7 +408,7 @@ struct LibrarySeriesDropdownPicker: View {
             
             Text(value)
                 .font(.system(size: 11, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .lineLimit(1)
         }
     }
@@ -445,28 +424,21 @@ struct GradientProgressBar: View {
 
     private var fill: LinearGradient {
         if isPaused {
-            return LinearGradient(
-                colors: [
-                    Color.white.opacity(0.42),
-                    Color.white.opacity(0.24)
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
+            return LumeyProgressStyle.pausedFill
         }
 
-        return LinearGradient(
-            colors: [LColors.gradientBlue, LColors.gradientPurple],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
+        return LumeyProgressStyle.fill
+    }
+
+    private var track: Color {
+        isPaused ? LumeyProgressStyle.pausedTrack : LumeyProgressStyle.track
     }
     
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 Capsule(style: .continuous)
-                    .fill(isPaused ? Color.white.opacity(0.07) : Color.white.opacity(0.10))
+                    .fill(track)
                 
                 Capsule(style: .continuous)
                     .fill(fill)
@@ -484,14 +456,7 @@ struct LibraryBookCover: View {
         ZStack {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(
-                    LinearGradient(
-                        colors: [
-                            LColors.gradientBlue.opacity(0.55),
-                            LColors.gradientPurple.opacity(0.70)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    LColors.gradientBlue.opacity(0.55)
                 )
             
             if let data = book.coverImageData,
@@ -504,13 +469,13 @@ struct LibraryBookCover: View {
             } else {
                 Text(book.displayTitle.prefix(1).uppercased())
                     .font(.system(size: 25, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
             }
         }
         .frame(width: 58, height: 84)
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.20), lineWidth: 1)
+                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
         )
     }
 }

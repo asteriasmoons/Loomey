@@ -29,7 +29,7 @@ struct SprintJoinSheet: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        GlassCard {
+                        GlassCard(variant: .featured) {
                             HStack(spacing: 8) {
                                 Image("sparkbolt")
                                     .renderingMode(.template)
@@ -37,11 +37,7 @@ struct SprintJoinSheet: View {
                                     .scaledToFit()
                                     .frame(width: 24, height: 24)
                                     .foregroundStyle(
-                                        LinearGradient(
-                                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
+                                        LColors.accents.secondary
                                     )
                                     .frame(width: 46, height: 46)
                                     .background(
@@ -50,11 +46,7 @@ struct SprintJoinSheet: View {
                                             .overlay(
                                                 Circle()
                                                     .strokeBorder(
-                                                        LinearGradient(
-                                                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                            startPoint: .topLeading,
-                                                            endPoint: .bottomTrailing
-                                                        ),
+                                                        LColors.accents.secondary,
                                                         lineWidth: 1.35
                                                     )
                                             )
@@ -69,7 +61,7 @@ struct SprintJoinSheet: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
-                        GlassCard {
+                        GlassCard(variant: .primary) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Your Start Page")
 
@@ -81,11 +73,11 @@ struct SprintJoinSheet: View {
                                     .padding(.vertical, 12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .fill(Color.white.opacity(0.055))
+                                            .fill(LColors.surface.nestedSoft)
                                     )
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                            .strokeBorder(LColors.border.nested, lineWidth: 1)
                                     )
                             }
                         }
@@ -111,7 +103,7 @@ struct SprintJoinSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Join Sprint")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Set your starting page before joining.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -129,11 +121,7 @@ struct SprintJoinSheet: View {
                     .scaledToFit()
                     .frame(width: 24, height: 24)
                     .foregroundStyle(
-                        LinearGradient(
-                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        LColors.accents.secondary
                     )
                     .frame(width: 46, height: 46)
                     .background(
@@ -142,11 +130,7 @@ struct SprintJoinSheet: View {
                             .overlay(
                                 Circle()
                                     .strokeBorder(
-                                        LinearGradient(
-                                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
+                                        LColors.accents.secondary,
                                         lineWidth: 1.35
                                     )
                             )
@@ -161,7 +145,7 @@ struct SprintJoinSheet: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
@@ -178,7 +162,7 @@ struct SprintJoinSheet: View {
                 } else {
                     Text("Join Sprint")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .frame(maxWidth: .infinity)

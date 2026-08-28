@@ -115,7 +115,7 @@ struct BuddyGroupView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(currentGroup.bookTitle)
                     .font(.system(size: 18, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
                     .allowsTightening(true)
@@ -135,7 +135,7 @@ struct BuddyGroupView: View {
                 if let owner = currentGroup.ownerLabel(currentUserId: userId) {
                     Text(owner)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                         .lineLimit(1)
                 }
             }
@@ -179,11 +179,7 @@ struct BuddyGroupView: View {
             .scaledToFit()
             .frame(width: 18, height: 18)
             .foregroundStyle(
-                LinearGradient(
-                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                LColors.accents.contrast
             )
             .frame(width: 36, height: 36)
             .background(
@@ -192,11 +188,7 @@ struct BuddyGroupView: View {
                     .overlay(
                         Circle()
                             .strokeBorder(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
+                                LColors.accents.contrast,
                                 lineWidth: 1.35
                             )
                     )
@@ -237,7 +229,7 @@ struct BuddyGroupView: View {
 
             HStack(spacing: 12) {
 
-                GlassCard {
+                GlassCard(variant: .featured) {
                     TextField("Message...", text: $messageText)
                         .textFieldStyle(.plain)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -257,11 +249,7 @@ struct BuddyGroupView: View {
                             messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                             ? AnyShapeStyle(LColors.textSecondary)
                             : AnyShapeStyle(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                                LColors.accents.contrast
                             )
                         )
                         .frame(width: 46, height: 46)
@@ -271,11 +259,7 @@ struct BuddyGroupView: View {
                                 .overlay(
                                     Circle()
                                         .strokeBorder(
-                                            LinearGradient(
-                                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
+                                            LColors.accents.contrast,
                                             lineWidth: 1.35
                                         )
                                 )
@@ -401,7 +385,7 @@ struct BuddyMessageBubble: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(isMe ? LColors.accent : Color.white.opacity(0.12))
+                    .background(isMe ? LColors.accent : LColors.border.subtle)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
             }
 
@@ -426,7 +410,7 @@ struct BuddyMessageBubble: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12, height: 12)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
                     Text(message.text)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(LColors.textPrimary)

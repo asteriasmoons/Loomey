@@ -4,13 +4,14 @@
 //
 
 import SwiftUI
+import UIKit
 
 // MARK: - Alternative Lumey Background
 
 struct LumeyBackgroundAlt: View {
     var body: some View {
         ZStack {
-            LColors.bgSoft
+            LColors.appBackground
                 .ignoresSafeArea()
             
             LGradients.bgPurple
@@ -27,9 +28,9 @@ struct LumeyBackgroundAlt: View {
             
             LinearGradient(
                 colors: [
-                    Color.black.opacity(0.22),
+                    Color.black.opacity(0.12),
                     Color.clear,
-                    Color.black.opacity(0.34)
+                    Color.black.opacity(0.18)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -37,8 +38,7 @@ struct LumeyBackgroundAlt: View {
             .ignoresSafeArea()
             
             Rectangle()
-                .fill(Color.white.opacity(0.015))
-                .blendMode(.softLight)
+                .fill(Color.white.opacity(0.01))
                 .ignoresSafeArea()
         }
     }
@@ -100,21 +100,7 @@ struct GradientTitle: View {
     var body: some View {
         Text(text)
             .font(.custom(fontName, size: size))
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [
-                        LColors.gradientBlue,
-                        LColors.gradientPurple
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .shadow(
-                color: LColors.gradientPurple.opacity(0.18),
-                radius: 8,
-                y: 4
-            )
+            .foregroundStyle(LGradients.header)
     }
 }
 
@@ -172,49 +158,18 @@ struct LumeyPopup<Header: View, Content: View, Footer: View>: View {
                     alignment: .topLeading
                 )
                 .background(
-                    ZStack {
-                        LumeyBackground()
-
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(Color.black.opacity(0.28))
-
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        LColors.gradientPurple.opacity(0.10),
-                                        LColors.gradientBlue.opacity(0.06)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(LTheme.palette.cardFill)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 24))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue,
-                                    LColors.gradientPurple
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.25
-                        )
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(LColors.border.primary, lineWidth: 1)
                 )
                 .shadow(
-                    color: LColors.gradientPurple.opacity(0.18),
+                    color: Color.black.opacity(0.30),
                     radius: 18,
-                    y: 8
-                )
-                .shadow(
-                    color: .black.opacity(0.35),
-                    radius: 24,
-                    y: 12
+                    y: 10
                 )
                 .transition(
                     .opacity.combined(with: .scale(scale: 0.96))
@@ -229,8 +184,7 @@ struct LumeyPopup<Header: View, Content: View, Footer: View>: View {
 
 struct LumeyBackground: View {
     var body: some View {
-        LColors.bg
-            .ignoresSafeArea()
+        LumeyBackgroundAlt()
     }
 }
 
@@ -253,8 +207,11 @@ struct LumeyGradientTimeDrumPicker: View {
     var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 8) {
-                Image(systemName: "clock.fill")
-                    .font(.system(size: 13, weight: .bold))
+                Image("clockfill")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 13, height: 13)
                     .foregroundStyle(LGradients.header)
                 
                 Text(formattedPreview)
@@ -265,75 +222,28 @@ struct LumeyGradientTimeDrumPicker: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(LColors.glassSurface2, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(LColors.secondarySurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                    .strokeBorder(LColors.border.primary, lineWidth: 1)
             )
             
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(LColors.glassSurface)
+                    .fill(LColors.primarySurface)
                     .overlay(
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        LColors.gradientBlue.opacity(0.10),
-                                        LColors.gradientPurple.opacity(0.14),
-                                        Color.white.opacity(0.03)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+                            .strokeBorder(LColors.border.primary, lineWidth: 1)
                     )
                 
                 VStack(spacing: 0) {
                     Spacer()
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue.opacity(0.20),
-                                    LColors.gradientPurple.opacity(0.20)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(LColors.selectedSurface)
                         .frame(height: 38)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [
-                                            LColors.gradientBlue.opacity(0.55),
-                                            LColors.gradientPurple.opacity(0.55)
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .strokeBorder(LColors.strongBorder, lineWidth: 1)
                         )
                     Spacer()
                 }
@@ -418,6 +328,219 @@ struct LumeyGradientTimeDrumPicker: View {
     }
 }
 
+// MARK: - Gradient Date Drum Picker
+
+struct LumeyGradientDateDrumPicker: View {
+    @Binding var date: Date
+
+    var yearRange: ClosedRange<Int> = {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        return (currentYear - 20)...(currentYear + 1)
+    }()
+
+    @State private var selectedMonth = 1
+    @State private var selectedDay = 1
+    @State private var selectedYear = Calendar.current.component(.year, from: Date())
+    @State private var isSyncingFromDate = false
+
+    private let calendar = Calendar.current
+    private let monthSymbols = Calendar.current.monthSymbols
+
+    private var formattedPreview: String {
+        var components = DateComponents()
+        components.year = selectedYear
+        components.month = selectedMonth
+        components.day = selectedDay
+
+        guard let selectedDate = calendar.date(from: components) else {
+            return "\(monthSymbols[max(0, selectedMonth - 1)]) \(selectedDay), \(selectedYear)"
+        }
+
+        return selectedDate.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    private var daysInSelectedMonth: Int {
+        var components = DateComponents()
+        components.year = selectedYear
+        components.month = selectedMonth
+
+        guard
+            let monthDate = calendar.date(from: components),
+            let range = calendar.range(of: .day, in: .month, for: monthDate)
+        else {
+            return 31
+        }
+
+        return range.count
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 8) {
+                Image("starcal")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
+                    .foregroundStyle(LGradients.header)
+
+                Text(formattedPreview)
+                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.textPrimary)
+
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(LColors.secondarySurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(LColors.border.primary, lineWidth: 1)
+            )
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(LColors.primarySurface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .strokeBorder(LColors.border.primary, lineWidth: 1)
+                    )
+
+                VStack(spacing: 0) {
+                    Spacer()
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(LColors.selectedSurface)
+                        .frame(height: 38)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(LColors.strongBorder, lineWidth: 1)
+                        )
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+
+                HStack(spacing: 6) {
+                    Picker("Month", selection: $selectedMonth) {
+                        ForEach(1...12, id: \.self) { value in
+                            Text(monthSymbols[value - 1])
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundStyle(LColors.textPrimary)
+                                .tag(value)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 120)
+                    .clipped()
+
+                    Picker("Day", selection: $selectedDay) {
+                        ForEach(1...daysInSelectedMonth, id: \.self) { value in
+                            Text("\(value)")
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundStyle(LColors.textPrimary)
+                                .tag(value)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 120)
+                    .clipped()
+
+                    Picker("Year", selection: $selectedYear) {
+                        ForEach(Array(yearRange), id: \.self) { value in
+                            Text(String(value))
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundStyle(LColors.textPrimary)
+                                .tag(value)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 120)
+                    .clipped()
+                }
+                .padding(.horizontal, 8)
+            }
+            .frame(height: 138)
+        }
+        .onAppear { syncPickersFromDate() }
+        .onChange(of: selectedMonth) { syncDateFromPickers() }
+        .onChange(of: selectedDay) { syncDateFromPickers() }
+        .onChange(of: selectedYear) { syncDateFromPickers() }
+        .onChange(of: date) { syncPickersFromDate() }
+    }
+
+    private func syncPickersFromDate() {
+        isSyncingFromDate = true
+        selectedMonth = calendar.component(.month, from: date)
+        selectedDay = calendar.component(.day, from: date)
+        selectedYear = min(max(calendar.component(.year, from: date), yearRange.lowerBound), yearRange.upperBound)
+        selectedDay = min(selectedDay, daysInSelectedMonth)
+        isSyncingFromDate = false
+    }
+
+    private func syncDateFromPickers() {
+        guard !isSyncingFromDate else { return }
+
+        if selectedDay > daysInSelectedMonth {
+            selectedDay = daysInSelectedMonth
+            return
+        }
+
+        var components = calendar.dateComponents([.hour, .minute, .second], from: date)
+        components.year = selectedYear
+        components.month = selectedMonth
+        components.day = selectedDay
+
+        if let updatedDate = calendar.date(from: components) {
+            date = updatedDate
+        }
+    }
+}
+
+// MARK: - Gradient Date Time Drum Picker
+
+struct LumeyGradientDateTimeDrumPicker: View {
+    @Binding var date: Date
+
+    @State private var hour = Calendar.current.component(.hour, from: Date())
+    @State private var minute = Calendar.current.component(.minute, from: Date())
+    @State private var isSyncingFromDate = false
+
+    private let calendar = Calendar.current
+
+    var body: some View {
+        VStack(spacing: 14) {
+            LumeyGradientDateDrumPicker(date: $date)
+
+            LumeyGradientTimeDrumPicker(hour: $hour, minute: $minute)
+        }
+        .onAppear { syncTimeFromDate() }
+        .onChange(of: hour) { syncDateFromTime() }
+        .onChange(of: minute) { syncDateFromTime() }
+        .onChange(of: date) { syncTimeFromDate() }
+    }
+
+    private func syncTimeFromDate() {
+        isSyncingFromDate = true
+        hour = calendar.component(.hour, from: date)
+        minute = calendar.component(.minute, from: date)
+        isSyncingFromDate = false
+    }
+
+    private func syncDateFromTime() {
+        guard !isSyncingFromDate else { return }
+
+        var components = calendar.dateComponents([.year, .month, .day, .second], from: date)
+        components.hour = hour
+        components.minute = minute
+
+        if let updatedDate = calendar.date(from: components) {
+            date = updatedDate
+        }
+    }
+}
+
 // MARK: - Dotted Gradient Spinner
 
 struct LumeyDottedGradientSpinner: View {
@@ -438,10 +561,9 @@ struct LumeyDottedGradientSpinner: View {
         ZStack {
             ForEach(0..<dotCount, id: \.self) { index in
                 Circle()
-                    .fill(LGradients.header)
+                    .fill(LGradients.progress)
                     .frame(width: dotSize, height: dotSize)
                     .opacity(dotOpacity(for: index))
-                    .shadow(color: LColors.gradientBlue.opacity(0.22), radius: 5)
                     .offset(y: -radius)
                     .rotationEffect(.degrees(Double(index) / Double(dotCount) * 360))
             }
@@ -466,49 +588,93 @@ struct LumeyDottedGradientSpinner: View {
 
 // MARK: - Glass Card
 
+/// Surface variants exposed by GlassCard. Each maps to a distinct palette-derived
+/// surface color so adjacent cards on the same screen can visibly differ while
+/// remaining in the same theme.
+enum GlassCardVariant {
+    case primary    // structure — main card surface
+    case secondary  // support-tinted dark surface
+    case tertiary   // accent-tinted dark surface
+    case elevated   // slightly lifted primary
+    case featured   // contrast-tinted dark surface (special / hero cards)
+    case subtle     // near-background, lowest emphasis
+}
+
+extension GlassCardVariant {
+    /// All variants render as DARK surfaces. Cards never take on a saturated
+    /// palette color. Visual variety comes from the border, not the fill.
+    fileprivate var fill: Color {
+        switch self {
+        case .primary:   return LColors.surface.primary
+        case .secondary: return LColors.surface.secondary
+        case .tertiary:  return LColors.surface.tertiary
+        case .elevated:  return LColors.surface.elevated
+        case .featured:  return LColors.surface.featured
+        case .subtle:    return LColors.surface.subtle
+        }
+    }
+
+    /// Palette-aware borders that carry the theme personality across variants
+    /// while surfaces stay uniformly dark.
+    fileprivate var borderColor: Color {
+        LColors.accents.primary
+    }
+}
+
+/// Deterministic surface rotation for enumerated lists so ForEach-driven
+/// screens automatically distribute across surface variants without the caller
+/// having to hand-assign each card.
+enum GlassCardRotation {
+    /// The canonical rotation order — chosen so adjacent cards visibly differ.
+    static let ordered: [GlassCardVariant] = [
+        .primary, .secondary, .featured, .tertiary, .primary, .elevated
+    ]
+
+    static func variant(for index: Int) -> GlassCardVariant {
+        let count = ordered.count
+        guard count > 0 else { return .primary }
+        let i = ((index % count) + count) % count
+        return ordered[i]
+    }
+}
+
 struct GlassCard<Content: View>: View {
     var cornerRadius: CGFloat = 24
     var padding: CGFloat = LSpacing.cardPadding
+    var selected: Bool = false
+    var contentAlignment: Alignment? = nil
+    var variant: GlassCardVariant = .primary
     @ViewBuilder let content: Content
 
     var body: some View {
-        content
-            .padding(padding)
-            .background {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(LColors.glassSurface2)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        LColors.gradientBlue.opacity(0.18),
-                                        LColors.gradientPurple.opacity(0.22),
-                                        Color.white.opacity(0.03)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        LColors.gradientBlue.opacity(0.92),
-                                        LColors.gradientPurple.opacity(0.92),
-                                        Color.white.opacity(0.38)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1.05
-                            )
-                    }
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        let baseFill = variant.fill
+        let baseBorder = variant.borderColor
+
+        Group {
+            if let contentAlignment {
+                content
+                    .frame(maxWidth: .infinity, alignment: contentAlignment)
+            } else {
+                content
             }
-            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 16, y: 8)
-            .shadow(color: LColors.gradientPurple.opacity(0.14), radius: 18, y: 10)
+        }
+        .padding(padding)
+        .background(
+            shape
+                .fill(selected ? LColors.state.selectedFill : baseFill)
+                .overlay(
+                    shape.strokeBorder(
+                        selected ? LColors.state.selectedBorder : baseBorder,
+                        lineWidth: selected ? 1.4 : 1
+                    )
+                )
+        )
+        .shadow(
+            color: Color.black.opacity(selected ? 0.24 : 0.18),
+            radius: selected ? 14 : 10,
+            y: selected ? 8 : 5
+        )
     }
 }
 
@@ -529,14 +695,13 @@ struct LumeyCompletionBanner: View {
 
             Text(message)
                 .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
         .background(
             Capsule()
-                .fill(LGradients.header)
-                .shadow(color: LColors.gradientPurple.opacity(0.4), radius: 16, y: 6)
+                .fill(LGradients.completion)
         )
         .opacity(isShowing ? 1 : 0)
         .offset(y: isShowing ? 0 : -20)
@@ -551,6 +716,87 @@ extension View {
                 .padding(.top, 16)
                 .zIndex(999)
         }
+    }
+
+    func lumeyDismissKeyboardOnTap() -> some View {
+        background(LumeyKeyboardDismissTapInstaller())
+    }
+}
+
+private struct LumeyKeyboardDismissTapInstaller: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        let view = LumeyKeyboardDismissHostView()
+        view.configure(coordinator: context.coordinator)
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        (uiView as? LumeyKeyboardDismissHostView)?.configure(coordinator: context.coordinator)
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        @objc func dismissKeyboard(_ recognizer: UITapGestureRecognizer) {
+            recognizer.view?.endEditing(true)
+        }
+
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            var touchedView: UIView? = touch.view
+
+            while let currentView = touchedView {
+                if currentView is UIControl || currentView is UITextField || currentView is UITextView {
+                    return false
+                }
+                touchedView = currentView.superview
+            }
+
+            return true
+        }
+    }
+}
+
+private final class LumeyKeyboardDismissHostView: UIView {
+    private weak var coordinator: LumeyKeyboardDismissTapInstaller.Coordinator?
+    private weak var installedWindow: UIWindow?
+    private weak var tapRecognizer: UITapGestureRecognizer?
+
+    func configure(coordinator: LumeyKeyboardDismissTapInstaller.Coordinator) {
+        self.coordinator = coordinator
+        installRecognizerIfNeeded()
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        installRecognizerIfNeeded()
+    }
+
+    deinit {
+        if let tapRecognizer {
+            installedWindow?.removeGestureRecognizer(tapRecognizer)
+        }
+    }
+
+    private func installRecognizerIfNeeded() {
+        guard let window, let coordinator else { return }
+
+        if installedWindow === window, tapRecognizer != nil {
+            return
+        }
+
+        if let tapRecognizer {
+            installedWindow?.removeGestureRecognizer(tapRecognizer)
+        }
+
+        let recognizer = UITapGestureRecognizer(target: coordinator, action: #selector(LumeyKeyboardDismissTapInstaller.Coordinator.dismissKeyboard(_:)))
+        recognizer.cancelsTouchesInView = false
+        recognizer.delegate = coordinator
+        window.addGestureRecognizer(recognizer)
+
+        installedWindow = window
+        tapRecognizer = recognizer
     }
 }
 

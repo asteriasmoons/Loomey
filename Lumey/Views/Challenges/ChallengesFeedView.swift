@@ -232,7 +232,7 @@ struct ChallengesFeedView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Challenge Feed")
                     .font(.system(size: 32, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("See what readers are submitting")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -249,14 +249,14 @@ struct ChallengesFeedView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                     )
             }
@@ -272,7 +272,7 @@ struct ChallengesFeedView: View {
     // MARK: - Announcement Composer (Admin Only)
 
     private var announcementComposerCard: some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .secondary) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
                     Image("megaphone")
@@ -280,11 +280,11 @@ struct ChallengesFeedView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
 
                     Text("Post Announcement")
                         .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Spacer()
 
@@ -298,14 +298,14 @@ struct ChallengesFeedView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.secondary)
                             .frame(width: 30, height: 30)
                             .background(
                                 Circle()
                                     .fill(LColors.glassSurface)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LGradients.header, lineWidth: 1)
+                                            .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                                     )
                             )
                     }
@@ -350,14 +350,14 @@ struct ChallengesFeedView: View {
                     } label: {
                         Text(isPostingAnnouncement ? "Posting..." : "Publish Announcement")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
                             .background(
                                 Capsule(style: .continuous)
                                     .fill(
                                         canPostAnnouncement && !isPostingAnnouncement
-                                        ? AnyShapeStyle(LGradients.header)
+                                        ? AnyShapeStyle(LColors.accents.contrast)
                                         : AnyShapeStyle(LColors.glassSurface)
                                     )
                             )
@@ -410,28 +410,28 @@ struct ChallengesFeedView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(spacing: 14) {
                 Image("bookchat")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 34, height: 34)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.special)
                     .frame(width: 72, height: 72)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.secondary, lineWidth: 1)
                             )
                     )
 
                 VStack(spacing: 6) {
                     Text("No Feed Entries Yet")
                         .font(.system(size: 18, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("Challenge submissions will appear here once readers submit entries.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -523,14 +523,14 @@ struct ChallengesFeedView: View {
     // MARK: - Loading State
 
     private var loadingState: some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             HStack(spacing: 12) {
                 ProgressView()
                     .tint(.white)
 
                 Text("Loading feed...")
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Spacer()
             }
@@ -1010,7 +1010,7 @@ private struct InlineChallengeFeedPostComposer: View {
     }
 
     var body: some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .tertiary) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image("starchat")
@@ -1018,20 +1018,20 @@ private struct InlineChallengeFeedPostComposer: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 17, height: 17)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                         .frame(width: 38, height: 38)
                         .background(
                             Circle()
                                 .fill(LColors.glassSurface)
                                 .overlay(
-                                    Circle().strokeBorder(LGradients.header, lineWidth: 1)
+                                    Circle().strokeBorder(LColors.accents.special, lineWidth: 1)
                                 )
                         )
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Post to the Feed")
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
 
                         Text("Share a thought, update, or reading moment.")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -1051,10 +1051,10 @@ private struct InlineChallengeFeedPostComposer: View {
                         .padding(10)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color.white.opacity(0.045))
+                                .fill(LColors.surface.nested)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                        .strokeBorder(LColors.border.nested, lineWidth: 1)
                                 )
                         )
 
@@ -1088,7 +1088,7 @@ private struct InlineChallengeFeedPostComposer: View {
                             .padding(.vertical, 10)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.white.opacity(0.045))
+                                    .fill(LColors.surface.nested)
                             )
                     }
                 }
@@ -1159,12 +1159,12 @@ private struct InlineChallengeFeedPostComposer: View {
                 } label: {
                     Text(isPosting ? "Posting..." : "Post")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 13)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(canPost && !isPosting ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassSurface))
+                                .fill(canPost && !isPosting ? AnyShapeStyle(LColors.accents.secondary) : AnyShapeStyle(LColors.glassSurface))
                         )
                 }
                 .buttonStyle(.plain)
@@ -1193,7 +1193,7 @@ private struct InlineChallengeFeedPostComposer: View {
                 } label: {
                     Text("Done")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
                 }
             }
         }
@@ -1223,7 +1223,7 @@ private struct InlineChallengeFeedPostComposer: View {
                 .fill(LColors.glassSurface)
                 .overlay(
                     Capsule(style: .continuous)
-                        .strokeBorder(LGradients.header, lineWidth: 1)
+                        .strokeBorder(LColors.accents.primary, lineWidth: 1)
                 )
         )
     }

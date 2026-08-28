@@ -104,7 +104,9 @@ struct HomeRecommendationCollectionsSection: View {
                             } label: {
                                 HomeRecommendationCollectionCard(
                                     collection: collection,
-                                    coverAssetName: collectionCoverAssetName(for: index)
+                                    coverAssetName: collectionCoverAssetName(for: index),
+                                    variant: GlassCardRotation.variant(for: index),
+                                    accentIndex: index
                                 )
                             }
                             .buttonStyle(.plain)
@@ -130,7 +132,7 @@ struct HomeRecommendationCollectionsSection: View {
         HStack {
             Text(title)
                 .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Spacer()
         }
@@ -141,18 +143,18 @@ struct HomeRecommendationCollectionsSection: View {
     }
 
     private var recommendationLoadingCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             HStack(spacing: 14) {
                 LumeyDottedGradientSpinner(size: 42)
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Books You Might Love")
                         .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.text.primary)
 
                     Text("Finding personalized shelves for your next read.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                        .foregroundStyle(LColors.text.secondary)
                 }
 
                 Spacer(minLength: 0)
@@ -184,15 +186,15 @@ struct HomeRecommendationCollectionsSection: View {
     }
 
     private func emptyCard(title: String, message: String) -> some View {
-        GlassCard {
+        GlassCard(variant: .subtle) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.text.primary)
 
                 Text(message)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(LColors.text.secondary)
             }
         }
     }

@@ -95,7 +95,7 @@ struct MessagesListView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Messages")
                     .font(.system(size: 32, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Direct messages with readers you follow")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -112,14 +112,14 @@ struct MessagesListView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                     )
             }
@@ -133,14 +133,14 @@ struct MessagesListView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                             )
                     )
             }
@@ -163,7 +163,7 @@ struct MessagesListView: View {
             selectedConversationUser = messageableUser(for: conversation)
             selectedConversation = conversation
         } label: {
-            GlassCard(padding: 14) {
+            GlassCard(padding: 14, variant: .secondary) {
                 HStack(spacing: 12) {
                     UserAvatarView(
                         avatarURL: messageableUser(for: conversation)?.avatarURL,
@@ -176,7 +176,7 @@ struct MessagesListView: View {
                         HStack {
                             Text(otherUsername)
                                 .font(.system(size: 15, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
                                 .lineLimit(1)
 
                             Spacer()
@@ -199,10 +199,10 @@ struct MessagesListView: View {
                             if unread > 0 {
                                 Text("\(unread)")
                                     .font(.system(size: 10, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
                                     .padding(.horizontal, 7)
                                     .padding(.vertical, 3)
-                                    .background(Capsule().fill(LGradients.header))
+                                    .background(Capsule().fill(LGradients.completion))
                             }
                         }
                     }
@@ -223,14 +223,14 @@ struct MessagesListView: View {
     // MARK: - States
 
     private var loadingCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             HStack(spacing: 12) {
                 ProgressView()
                     .tint(.white)
 
                 Text("Loading messages...")
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Spacer()
             }
@@ -238,28 +238,28 @@ struct MessagesListView: View {
     }
 
     private var emptyCard: some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             VStack(spacing: 14) {
                 Image("starchat")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 34, height: 34)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.secondary)
                     .frame(width: 72, height: 72)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.secondary, lineWidth: 1)
                             )
                     )
 
                 VStack(spacing: 6) {
                     Text("No Conversations Yet")
                         .font(.system(size: 18, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("Start a conversation with readers you follow.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -352,7 +352,7 @@ private struct NewConversationSheet: View {
                 HStack {
                     Text("New Message")
                         .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.headingPrimary)
 
                     Spacer()
 
@@ -364,14 +364,14 @@ private struct NewConversationSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18, height: 18)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.special)
                             .frame(width: 40, height: 40)
                             .background(
                                 Circle()
                                     .fill(LColors.bg)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                            .strokeBorder(LColors.accents.special, lineWidth: 1.2)
                                     )
                             )
                     }
@@ -410,7 +410,7 @@ private struct NewConversationSheet: View {
                             Button {
                                 Task { await startConversation(with: user) }
                             } label: {
-                                GlassCard(padding: 12) {
+                                GlassCard(padding: 12, variant: .tertiary) {
                                     HStack(spacing: 12) {
                                         UserAvatarView(
                                             avatarURL: user.avatarURL,
@@ -422,7 +422,7 @@ private struct NewConversationSheet: View {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(user.username)
                                                 .font(.system(size: 14, weight: .black, design: .rounded))
-                                                .foregroundStyle(.white)
+                                                .foregroundStyle(LColors.cardTitle)
 
                                             if let bio = user.bio, !bio.isEmpty {
                                                 Text(bio)

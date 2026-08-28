@@ -84,7 +84,7 @@ struct SprintRoomView: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 14, height: 14)
-                                    .foregroundStyle(LGradients.header)
+                                    .foregroundStyle(LColors.accents.primary)
                                 Text("Submit Pages")
                                     .font(.system(size: 14, weight: .bold))
                             }
@@ -228,7 +228,7 @@ struct SprintRoomView: View {
         HStack {
             Text("Sprint Room")
                 .font(.system(size: 26, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
             Spacer()
 
             Menu {
@@ -287,7 +287,7 @@ struct SprintRoomView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.08))
+                        .fill(LColors.border.nested)
                         .overlay(Circle().stroke(LColors.glassBorder, lineWidth: 1))
                         .frame(width: 34, height: 34)
                     Image("dotswavy")
@@ -296,11 +296,7 @@ struct SprintRoomView: View {
                         .scaledToFit()
                         .frame(width: 20, height: 20)
                         .foregroundStyle(
-                            LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.accents.special
                         )
                         .frame(width: 40, height: 40)
                         .background(
@@ -309,11 +305,7 @@ struct SprintRoomView: View {
                                 .overlay(
                                     Circle()
                                         .strokeBorder(
-                                            LinearGradient(
-                                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
+                                            LColors.accents.special,
                                             lineWidth: 1.35
                                         )
                                 )
@@ -432,7 +424,7 @@ struct SprintRoomView: View {
                     Button { showStartSheet = true } label: {
                         ZStack {
                             Circle()
-                                .fill(Color.white.opacity(0.08))
+                                .fill(LColors.border.nested)
                                 .overlay(Circle().stroke(LColors.glassBorder, lineWidth: 1))
                                 .frame(width: 40, height: 40)
                             Image("sparkbolt")
@@ -441,11 +433,7 @@ struct SprintRoomView: View {
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
                                 .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
+                                    LColors.accents.special
                                 )
                                 .frame(width: 40, height: 40)
                                 .background(
@@ -454,11 +442,7 @@ struct SprintRoomView: View {
                                         .overlay(
                                             Circle()
                                                 .strokeBorder(
-                                                    LinearGradient(
-                                                        colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                        startPoint: .topLeading,
-                                                        endPoint: .bottomTrailing
-                                                    ),
+                                                    LColors.accents.special,
                                                     lineWidth: 1.35
                                                 )
                                         )
@@ -469,7 +453,7 @@ struct SprintRoomView: View {
                     }
                 }
                 
-                GlassCard {
+                GlassCard(variant: .featured) {
                     TextField("Message...", text: $messageText)
                         .textFieldStyle(.plain)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -484,11 +468,7 @@ struct SprintRoomView: View {
                         .scaledToFit()
                         .frame(width: 20, height: 20)
                         .foregroundStyle(
-                            LinearGradient(
-                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.accents.special
                         )
                         .frame(width: 40, height: 40)
                         .background(
@@ -497,11 +477,7 @@ struct SprintRoomView: View {
                                 .overlay(
                                     Circle()
                                         .strokeBorder(
-                                            LinearGradient(
-                                                colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
+                                            LColors.accents.special,
                                             lineWidth: 1.35
                                         )
                                 )
@@ -805,14 +781,14 @@ struct SprintMyPointsSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 17, height: 17)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.contrast)
                             .frame(width: 40, height: 40)
                             .background(
                                 Circle()
                                     .fill(LColors.bg)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LGradients.header, lineWidth: 1.35)
+                                            .strokeBorder(LColors.accents.primary, lineWidth: 1.35)
                                     )
                                     .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
                             )
@@ -824,7 +800,7 @@ struct SprintMyPointsSheet: View {
 
                 Text("My Sprint Points")
                     .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 if isLoading {
                     ProgressView()
@@ -874,7 +850,7 @@ struct SprintMyPointsSheet: View {
     }
 
     private func pointsStat(value: String, label: String, icon: String, color: Color) -> some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .secondary) {
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
@@ -886,12 +862,12 @@ struct SprintMyPointsSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 22, height: 22)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.secondary)
                 }
 
                 Text(value)
                     .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text(label)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -945,7 +921,7 @@ struct SprintMessageBubble: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(isMe ? LColors.accent : Color.white.opacity(0.12))
+                    .background(isMe ? LColors.accent : LColors.border.subtle)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
             }
 
@@ -967,7 +943,7 @@ struct SprintResultCard: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 14, height: 14)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.special)
                 Text("Sprint Results — \(payload.durationMinutes) min")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(LColors.textPrimary)
@@ -979,7 +955,7 @@ struct SprintResultCard: View {
                     .foregroundStyle(LColors.textSecondary)
             } else {
                 ForEach(Array(payload.ranked.enumerated()), id: \.element.id) { index, entry in
-                    GlassCard {
+                    GlassCard(variant: .primary) {
                         HStack(spacing: 10) {
                             rankIcon(for: index)
 
@@ -1020,28 +996,28 @@ struct SprintResultCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
         case 1:
             Image("startrophyfill")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.contrast)
         case 2:
             Image("startrophyfill")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.secondary)
         default:
             Image("sparklybook")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.special)
         }
     }
 }

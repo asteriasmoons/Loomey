@@ -87,7 +87,7 @@ struct ConversationView: View {
 
             Text(otherUsername)
                 .font(.system(size: 22, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Spacer()
 
@@ -99,14 +99,14 @@ struct ConversationView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                     )
             }
@@ -118,7 +118,7 @@ struct ConversationView: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
@@ -142,7 +142,7 @@ struct ConversationView: View {
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .fill(
                                 isMine
-                                ? AnyShapeStyle(LGradients.header)
+                                ? AnyShapeStyle(LColors.accents.contrast)
                                 : AnyShapeStyle(LColors.glassSurface2)
                             )
                     )
@@ -161,7 +161,7 @@ struct ConversationView: View {
     // MARK: - Input Bar
 
     private var inputBar: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             HStack(alignment: .bottom, spacing: 10) {
                 TextField("Message...", text: $messageText, axis: .vertical)
                     .focused($isInputFocused)
@@ -173,10 +173,10 @@ struct ConversationView: View {
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.white.opacity(0.045))
+                            .fill(LColors.surface.nested)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                    .strokeBorder(LColors.border.nested, lineWidth: 1)
                             )
                     )
                     .toolbar {
@@ -188,7 +188,7 @@ struct ConversationView: View {
                             } label: {
                                 Text("Done")
                                     .font(.system(size: 15, weight: .black, design: .rounded))
-                                    .foregroundStyle(LGradients.header)
+                                    .foregroundStyle(LColors.accents.contrast)
                             }
                         }
                     }
@@ -205,7 +205,7 @@ struct ConversationView: View {
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
-                                .fill(canSend ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassSurface))
+                                .fill(canSend ? AnyShapeStyle(LColors.accents.secondary) : AnyShapeStyle(LColors.glassSurface))
                         )
                 }
                 .buttonStyle(.plain)

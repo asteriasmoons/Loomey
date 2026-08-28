@@ -46,6 +46,9 @@ struct AddEditBookSheet: View {
     @State private var selectedCustomFilterIDs: Set<UUID> = []
     @State private var ebookTotalPagesText = ""
     @State private var ebookCurrentPageText = ""
+    @State private var isFetchingBookDetails = false
+    @State private var bookDetailsMessage: String? = nil
+    @State private var bookDetailsError: String? = nil
     
     private var isEditing: Bool {
         book != nil
@@ -61,9 +64,9 @@ struct AddEditBookSheet: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
+                        bookIdentityCard
+
                         sectionCard(title: "Basic Info") {
-                            LumeyTextField(title: "Title", text: $title)
-                            LumeyTextField(title: "Author", text: $author)
                             LumeyTextField(title: "Subtitle", text: $subtitle)
                             LumeyTextField(title: "Series Name", text: $seriesName)
                             LumeyTextField(title: "Series Number", text: $seriesNumber)
@@ -114,8 +117,10 @@ struct AddEditBookSheet: View {
                     .padding(.top, 18)
                     .padding(.bottom, 38)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
         }
+        .lumeyDismissKeyboardOnTap()
         .onAppear {
             loadBook()
         }
@@ -123,13 +128,120 @@ struct AddEditBookSheet: View {
             loadBook()
         }
     }
+
+    private var canGetBookDetails: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        && !author.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        && !isFetchingBookDetails
+    }
+
+    private var bookIdentityCard: some View {
+        sectionCard(title: "Book Identity") {
+            LumeyTextField(title: "Title", text: $title)
+            LumeyTextField(title: "Author", text: $author)
+
+            Button {
+                getBookDetails()
+            } label: {
+                HStack(spacing: 10) {
+                    if isFetchingBookDetails {
+                        ProgressView()
+                            .tint(.white)
+                            .scaleEffect(0.82)
+                    } else {
+                        Image("sparklesearch")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 18, height: 18)
+                            .foregroundStyle(.white)
+                    }
+
+                    Text(isFetchingBookDetails ? "Getting Details..." : "Get Details")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(LColors.cardTitle)
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 15)
+                .padding(.vertical, 13)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: canGetBookDetails || isFetchingBookDetails
+                                ? [LColors.accents.secondary, LColors.accents.special]
+                                : [LColors.border.nestedStrong, LColors.iconContainer.primary],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(LColors.border.subtle, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!canGetBookDetails)
+
+            if let bookDetailsMessage {
+                bookDetailsStatusCard(
+                    message: bookDetailsMessage,
+                    assetName: "checkwavy",
+                    tint: LColors.gradientBlue
+                )
+            }
+
+            if let bookDetailsError {
+                bookDetailsStatusCard(
+                    message: bookDetailsError,
+                    assetName: "infowavy",
+                    tint: LColors.gradientPink
+                )
+            }
+        }
+    }
+
+    private func bookDetailsStatusCard(
+        message: String,
+        assetName: String,
+        tint: Color
+    ) -> some View {
+        HStack(alignment: .top, spacing: 9) {
+            Image(assetName)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 15, height: 15)
+                .foregroundStyle(tint)
+                .padding(.top, 1)
+
+            Text(message)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundStyle(LColors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(LColors.surface.nestedSoft)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
+        )
+    }
     
     private var sheetHeader: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(isEditing ? "Edit Book" : "Add Book")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
                 
                 Text(isEditing ? "Update this book in your library" : "Add a new book to your library")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -143,17 +255,13 @@ struct AddEditBookSheet: View {
             } label: {
                 Text("Save")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 9)
                     .background(
                         Capsule(style: .continuous)
                             .fill(
-                                LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                                LColors.accents.secondary
                             )
                     )
             }
@@ -167,14 +275,14 @@ struct AddEditBookSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -187,18 +295,18 @@ struct AddEditBookSheet: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
     }
     
     private func sectionCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 13) {
                 Text(title)
                     .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                 
                 VStack(spacing: 12) {
                     content()
@@ -222,11 +330,11 @@ struct AddEditBookSheet: View {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.left.arrow.right")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
 
                 Text("Ebook pg \(ebookCurrent) ≈ Physical pg \(physicalEquiv) / \(physicalTotal)")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.65))
+                    .foregroundStyle(LColors.text.secondary)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -234,28 +342,20 @@ struct AddEditBookSheet: View {
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(
-                        LinearGradient(
-                            colors: [LColors.gradientBlue.opacity(0.08), LColors.gradientPurple.opacity(0.08)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        LColors.gradientBlue.opacity(0.08)
                     )
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(
-                        LinearGradient(
-                            colors: [LColors.gradientBlue.opacity(0.25), LColors.gradientPurple.opacity(0.25)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
+                        LColors.gradientBlue.opacity(0.25),
                         lineWidth: 1
                     )
             )
         } else if ebookTotal > 0 && physicalTotal == 0 {
             Text("Enter Total Pages (physical) to enable conversion")
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(LColors.text.muted)
                 .italic()
         }
     }
@@ -295,12 +395,12 @@ struct AddEditBookSheet: View {
                 .padding(.vertical, 8)
                 .background(
                     Capsule(style: .continuous)
-                        .fill(isSelected ? LColors.gradientPurple : Color.white.opacity(0.06))
+                        .fill(isSelected ? LColors.gradientPurple : LColors.surface.subtle.opacity(0.6))
                 )
                 .overlay(
                     Capsule(style: .continuous)
                         .strokeBorder(
-                            isSelected ? LColors.gradientPurple : Color.white.opacity(0.11),
+                            isSelected ? LColors.gradientPurple : LColors.border.subtle,
                             lineWidth: 1
                         )
                 )
@@ -341,6 +441,68 @@ struct AddEditBookSheet: View {
         selectedCustomFilterIDs = Set(book.customFilterIDs)
         ebookTotalPagesText = book.ebookTotalPages == 0 ? "" : String(book.ebookTotalPages)
         ebookCurrentPageText = book.ebookCurrentPage == 0 ? "" : String(book.ebookCurrentPage)
+        bookDetailsMessage = nil
+        bookDetailsError = nil
+    }
+
+    private func getBookDetails() {
+        guard canGetBookDetails else { return }
+
+        isFetchingBookDetails = true
+        bookDetailsMessage = nil
+        bookDetailsError = nil
+
+        Task {
+            do {
+                let details = try await BookDetailsEnrichmentService.shared.enrich(
+                    title: title,
+                    author: author
+                )
+                applyBookDetails(details)
+                bookDetailsMessage = "Details added from \(details.source). Categories were refreshed."
+            } catch {
+                bookDetailsError = error.localizedDescription
+            }
+
+            isFetchingBookDetails = false
+        }
+    }
+
+    private func applyBookDetails(_ details: BookDetailsEnrichmentResponse) {
+        subtitle = fillBlank(subtitle, with: details.subtitle)
+        seriesName = fillBlank(seriesName, with: details.seriesName)
+        seriesNumber = fillBlank(seriesNumber, with: details.seriesNumber)
+        publisher = fillBlank(publisher, with: details.publisher)
+        publicationYear = fillBlank(publicationYear, with: details.publicationYear)
+        isbn = fillBlank(isbn, with: details.isbn)
+        summary = fillBlank(summary, with: details.summary)
+        totalPages = fillBlank(totalPages, with: details.totalPages)
+        ebookTotalPagesText = fillBlank(ebookTotalPagesText, with: details.ebookTotalPages)
+        totalChapters = fillBlank(totalChapters, with: details.totalChapters)
+
+        genre = details.genres.joined(separator: ", ")
+        mood = details.moods.joined(separator: ", ")
+        topicsText = details.topics.joined(separator: ", ")
+        tagsText = details.tags.joined(separator: ", ")
+        tropesText = details.tropes.joined(separator: ", ")
+    }
+
+    private func fillBlank(_ currentValue: String, with value: String?) -> String {
+        guard currentValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let value,
+              !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return currentValue }
+
+        return value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func fillBlank(_ currentValue: String, with value: Int?) -> String {
+        guard currentValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let value,
+              value > 0
+        else { return currentValue }
+
+        return String(value)
     }
     
     private func commaSeparatedValues(_ text: String) -> [String] {
@@ -423,8 +585,8 @@ struct LumeyTextField: View {
                 .tint(LColors.accent)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 11)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white.opacity(0.06)))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
         }
     }
 }
@@ -455,10 +617,11 @@ struct LumeyTextEditor: View {
                 .foregroundStyle(.white)
                 .tint(LColors.accent)
                 .scrollContentBackground(.hidden)
+                .scrollDismissesKeyboard(.interactively)
                 .frame(minHeight: minHeight)
                 .padding(10)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white.opacity(0.06)))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
         }
     }
 }
@@ -497,8 +660,8 @@ struct LumeyEnumPicker<Value: RawRepresentable & CaseIterable & Hashable & Ident
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 11)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white.opacity(0.06)))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
             }
         }
     }
@@ -530,16 +693,8 @@ struct LumeyRatingPicker: View {
                             .frame(width: 22, height: 22)
                             .foregroundStyle(
                                 number <= Int(value)
-                                ? LinearGradient(
-                                    colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                                : LinearGradient(
-                                    colors: [Color.white.opacity(0.18), Color.white.opacity(0.18)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                                ? LColors.accents.secondary
+                                : LColors.border.nestedStrong
                             )
                     }
                     .buttonStyle(.plain)
@@ -553,8 +708,8 @@ struct LumeyRatingPicker: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 11)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white.opacity(0.06)))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
         }
     }
 }
@@ -573,14 +728,7 @@ struct LumeyCoverPicker: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue.opacity(0.28),
-                                    LColors.gradientPurple.opacity(0.36)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.gradientBlue.opacity(0.28)
                         )
                     
                     if let coverImageData,
@@ -596,30 +744,26 @@ struct LumeyCoverPicker: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 30, height: 30)
-                            .foregroundStyle(.white.opacity(0.82))
+                            .foregroundStyle(LColors.text.primary)
                     }
                 }
                 .frame(width: 72, height: 104)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
+                        .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
                 )
                 
                 VStack(alignment: .leading, spacing: 10) {
                     PhotosPicker(selection: $selectedItem, matching: .images) {
                         Text(coverImageData == nil ? "Upload Cover" : "Replace Cover")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
                             .background(
                                 Capsule(style: .continuous)
                                     .fill(
-                                        LinearGradient(
-                                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
+                                        LColors.accents.secondary
                                     )
                             )
                     }

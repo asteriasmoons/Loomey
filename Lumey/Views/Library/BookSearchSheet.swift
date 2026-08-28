@@ -38,7 +38,7 @@ struct BookSearchSheet: View {
                         } else if let errorMessage {
                             Text(errorMessage)
                                 .font(.callout)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(LColors.text.secondary)
                                 .multilineTextAlignment(.center)
                                 .padding(.top, 20)
                         } else if results.isEmpty {
@@ -79,11 +79,11 @@ struct BookSearchSheet: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Book Search")
                     .font(.system(size: 30, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text("Search for a book, view its details, then add it directly to your library.")
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(LColors.text.secondary)
                     .multilineTextAlignment(.leading)
             }
 
@@ -97,14 +97,14 @@ struct BookSearchSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -116,7 +116,7 @@ struct BookSearchSheet: View {
     }
 
     private var searchCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 14) {
                 TextField("Fourth Wing, Rebecca Yarros, ISBN...", text: $query)
                     .textInputAutocapitalization(.words)
@@ -135,16 +135,9 @@ struct BookSearchSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue,
-                                    LColors.gradientPurple,
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.gradientBlue
                         )
-                        .foregroundStyle(.black)
+                        .foregroundStyle(LColors.appBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
                 .disabled(isLoading || query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -161,14 +154,14 @@ struct BookSearchSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 34, height: 34)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(LColors.text.secondary)
 
             Text("No search results yet")
                 .font(.headline)
 
             Text("Search by title, author, or ISBN to find books from Open Library and Google Books.")
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(LColors.text.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 40)
@@ -195,7 +188,7 @@ struct BookSearchSheet: View {
                     if !book.author.isEmpty {
                         Text(book.author)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(LColors.text.secondary)
                     }
 
                     HStack(spacing: 8) {
@@ -219,7 +212,7 @@ struct BookSearchSheet: View {
             if !book.summary.isEmpty {
                 Text(book.summary)
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(LColors.text.secondary)
                     .lineLimit(5)
             }
 
@@ -267,22 +260,8 @@ struct BookSearchSheet: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(
                         alreadyAdded
-                            ? LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.10),
-                                    Color.white.opacity(0.06),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            : LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue,
-                                    LColors.gradientPurple,
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            ? LColors.border.nestedStrong
+                            : LColors.gradientBlue
                     )
             )
             .overlay(
@@ -390,13 +369,13 @@ struct BookSearchSheet: View {
                     default:
                         Image(systemName: "book.closed.fill")
                             .font(.title2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(LColors.text.secondary)
                     }
                 }
             } else {
                 Image(systemName: "book.closed.fill")
                     .font(.title2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(LColors.text.secondary)
             }
         }
         .frame(width: 62, height: 92)
@@ -407,7 +386,7 @@ struct BookSearchSheet: View {
     private func metadataPill(_ text: String) -> some View {
         Text(text)
             .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(LColors.text.secondary)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(.white.opacity(0.12))

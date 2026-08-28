@@ -93,6 +93,9 @@ final class Book {
     @Relationship(deleteRule: .cascade, inverse: \BookReview.book)
     var bookReviews: [BookReview]? = []
 
+    @Relationship(deleteRule: .cascade, inverse: \ReadingInsight.book)
+    var insights: [ReadingInsight]? = []
+
     // Flags
     var isFavorite: Bool = false
     var isArchived: Bool = false

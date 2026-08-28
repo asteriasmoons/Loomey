@@ -8,6 +8,7 @@ import SwiftUI
 enum LumeyTab: CaseIterable {
     case home
     case library
+    case bingos
     case stats
     case goals
     case history
@@ -26,6 +27,7 @@ enum LumeyTab: CaseIterable {
     ]
 
     static let overflowTabs: [LumeyTab] = [
+        .bingos,
         .history,
         .epubLibrary,
         .sprints,
@@ -41,6 +43,8 @@ enum LumeyTab: CaseIterable {
             return "houseoutline"
         case .library:
             return "searchwavy"
+        case .bingos:
+            return "starbook"
         case .stats:
             return "levelup"
         case .goals:
@@ -68,6 +72,8 @@ enum LumeyTab: CaseIterable {
             return "Home"
         case .library:
             return "Books"
+        case .bingos:
+            return "Bingos"
         case .stats:
             return "Stats"
         case .goals:
@@ -93,6 +99,7 @@ enum LumeyTab: CaseIterable {
 struct MainTabView: View {
     @State private var selectedTab: LumeyTab = .home
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var themeController: LumeyThemeController
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -100,6 +107,7 @@ struct MainTabView: View {
                 .ignoresSafeArea()
 
             selectedTabView
+                .id("\(selectedTab.title)-\(themeController.selectedTheme.rawValue)")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .safeAreaInset(edge: .bottom) {
                     Color.clear.frame(height: appState.hideTabBar ? 0 : 120)
@@ -107,6 +115,7 @@ struct MainTabView: View {
 
             if !appState.hideTabBar {
                 LumeyTabBar(selectedTab: $selectedTab)
+                    .id("tabbar-\(themeController.selectedTheme.rawValue)")
             }
         }
         .ignoresSafeArea(edges: .bottom)
@@ -120,6 +129,8 @@ struct MainTabView: View {
             ReadingHomeView()
         case .library:
             ReadingLibraryView()
+        case .bingos:
+            ReadingBingosHubView()
         case .stats:
             ReadingStatsView()
         case .goals:
@@ -193,7 +204,7 @@ struct LumeyTabBar: View {
                     Capsule(style: .continuous)
                         .fill(LColors.bg.opacity(0.88))
 
-                    GlassCard(cornerRadius: 999, padding: 0) {
+                    GlassCard(cornerRadius: 999, padding: 0, variant: .featured) {
                         Color.clear
                     }
                 }
@@ -204,8 +215,21 @@ struct LumeyTabBar: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.82), value: showMoreTabs)
     }
 
+    /// Each primary tab gets its own palette accent so the nav bar isn't a
+    /// single-accent block — home reads as primary, library as contrast, etc.
+    private func tabAccent(_ tab: LumeyTab) -> Color {
+        switch tab {
+        case .home:     return LColors.accents.primary
+        case .library:  return LColors.accents.contrast
+        case .stats:    return LColors.accents.secondary
+        case .goals:    return LColors.accents.special
+        default:        return LColors.accents.tertiary
+        }
+    }
+
     private func tabButton(_ tab: LumeyTab) -> some View {
         let isSelected = selectedTab == tab
+        let accent = tabAccent(tab)
 
         return Button {
             withAnimation(.spring(duration: 0.3, bounce: 0.2)) {
@@ -216,7 +240,7 @@ struct LumeyTabBar: View {
             ZStack {
                 if isSelected {
                     Circle()
-                        .fill(LGradients.header.opacity(0.22))
+                        .fill(LColors.iconContainer.primary)
                         .frame(width: 34, height: 34)
                 }
 
@@ -227,8 +251,8 @@ struct LumeyTabBar: View {
                     .frame(width: 22, height: 22)
                     .foregroundStyle(
                         isSelected
-                        ? AnyShapeStyle(LGradients.header)
-                        : AnyShapeStyle(Color.white.opacity(0.4))
+                        ? AnyShapeStyle(accent)
+                        : AnyShapeStyle(LColors.text.muted)
                     )
             }
             .frame(width: 42, height: 34)
@@ -245,16 +269,16 @@ struct LumeyTabBar: View {
         } label: {
             ZStack {
                 Circle()
-                    .fill(LGradients.header)
+                    .fill(LColors.accents.primary)
                     .frame(width: 44, height: 44)
-                    .shadow(color: LColors.gradientBlue.opacity(0.35), radius: 10, x: 0, y: 5)
+                    .shadow(color: LColors.accents.contrast.opacity(0.35), radius: 10, x: 0, y: 5)
 
                 Image("addwavy")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 24, height: 24)
-                    .foregroundStyle(LColors.bg)
+                    .foregroundStyle(LColors.appBackground)
                     .rotationEffect(.degrees(showMoreTabs ? 45 : 0))
             }
             .frame(width: 54, height: 42)
@@ -292,7 +316,7 @@ private struct CurvedDock: View {
     var body: some View {
         ZStack {
             ForEach(Array(tabs.enumerated()), id: \.element) { index, tab in
-                dockButton(tab)
+                dockButton(tab, index: index)
                     .position(position(for: index))
                     .opacity(index < revealedCount ? 1 : 0)
                     .scaleEffect(index < revealedCount ? 1 : 0.5)
@@ -344,8 +368,20 @@ private struct CurvedDock: View {
 
     // MARK: - Dock Button
 
-    private func dockButton(_ tab: LumeyTab) -> some View {
+    /// Dock tabs distribute across palette accents by index so the overflow
+    /// menu shows the full theme, not one repeated accent.
+    private func dockAccent(for index: Int) -> Color {
+        switch index % 4 {
+        case 0:  return LColors.accents.primary
+        case 1:  return LColors.accents.contrast
+        case 2:  return LColors.accents.secondary
+        default: return LColors.accents.special
+        }
+    }
+
+    private func dockButton(_ tab: LumeyTab, index: Int) -> some View {
         let isSelected = selectedTab == tab
+        let accent = dockAccent(for: index)
 
         return Button {
             withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
@@ -360,8 +396,8 @@ private struct CurvedDock: View {
                 .frame(width: 19, height: 19)
                 .foregroundStyle(
                     isSelected
-                    ? AnyShapeStyle(LGradients.header)
-                    : AnyShapeStyle(LColors.textSecondary)
+                    ? AnyShapeStyle(accent)
+                    : AnyShapeStyle(LColors.text.tertiary)
                 )
                 .frame(width: itemSize, height: itemSize)
                 .background {
@@ -369,22 +405,18 @@ private struct CurvedDock: View {
                         .fill(LColors.bg)
                         .overlay(
                             Circle()
-                                .fill(isSelected ? LColors.glassSurface2 : LColors.glassSurface)
+                                .fill(isSelected ? LColors.surface.elevated : LColors.surface.primary)
                         )
                 }
                 .overlay(
                     Circle()
                         .strokeBorder(
-                            isSelected
-                            ? AnyShapeStyle(LGradients.header)
-                            : AnyShapeStyle(LColors.glassBorder),
+                            isSelected ? accent : LColors.border.primary,
                             lineWidth: isSelected ? 1.4 : 1
                         )
                 )
                 .shadow(
-                    color: isSelected
-                    ? LColors.gradientBlue.opacity(0.4)
-                    : .black.opacity(0.25),
+                    color: isSelected ? accent.opacity(0.35) : .black.opacity(0.25),
                     radius: isSelected ? 10 : 6,
                     y: 4
                 )
@@ -410,14 +442,7 @@ struct PlaceholderTabView: View {
                     Image(systemName: icon)
                         .font(.system(size: 50))
                         .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue,
-                                    LColors.gradientPurple
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.gradientBlue
                         )
                 } else {
                     Image(icon)
@@ -426,24 +451,17 @@ struct PlaceholderTabView: View {
                         .scaledToFit()
                         .frame(width: 60, height: 60)
                         .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    LColors.gradientBlue,
-                                    LColors.gradientPurple
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LColors.gradientBlue
                         )
                 }
                 
                 Text(title)
                     .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
                 
                 Text("Coming soon")
                     .font(.system(size: 14, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(LColors.text.muted)
             }
         }
     }

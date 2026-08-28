@@ -21,11 +21,11 @@ struct GoalIconPickerRow: View {
                         iconId: iconName,
                         size: 24
                     )
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
-                            .fill(Color.white.opacity(0.06))
+                            .fill(LColors.iconContainer.primary)
                     )
                     .overlay(
                         Circle()
@@ -38,7 +38,7 @@ struct GoalIconPickerRow: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Choose Icon")
                             .font(.system(size: 14, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                         
                         Text(iconName)
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -62,7 +62,7 @@ struct GoalIconPickerRow: View {
                         cornerRadius: 16,
                         style: .continuous
                     )
-                    .fill(Color.white.opacity(0.04))
+                    .fill(LColors.surface.nested)
                 )
                 .overlay(
                     RoundedRectangle(
@@ -70,7 +70,7 @@ struct GoalIconPickerRow: View {
                         style: .continuous
                     )
                     .strokeBorder(
-                        Color.white.opacity(0.08),
+                        LColors.border.nested,
                         lineWidth: 1
                     )
                 )

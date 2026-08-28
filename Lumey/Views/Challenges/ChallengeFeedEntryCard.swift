@@ -58,7 +58,7 @@ struct ChallengeFeedEntryCard: View {
     }
 
     var body: some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .featured) {
             VStack(alignment: .leading, spacing: 12) {
                 header
 
@@ -75,6 +75,11 @@ struct ChallengeFeedEntryCard: View {
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                         .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if let photoURL = submission.photoURL,
+                   !photoURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    proofPhoto(urlString: photoURL)
                 }
 
                 if !submission.proofSummary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -104,7 +109,7 @@ struct ChallengeFeedEntryCard: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(displayUsername)
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 HStack(spacing: 6) {
                     Text((submission.submittedDate ?? .now).formatted(date: .abbreviated, time: .omitted))
@@ -131,7 +136,7 @@ struct ChallengeFeedEntryCard: View {
     private var statusBadge: some View {
         Text(submission.validationStatus.uppercased())
             .font(.system(size: 8, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(LColors.cardTitle)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
             .background(
@@ -164,11 +169,11 @@ struct ChallengeFeedEntryCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 11, height: 11)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
 
             Text(title)
                 .font(.system(size: 11, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .lineLimit(1)
         }
         .padding(.horizontal, 10)
@@ -200,11 +205,52 @@ struct ChallengeFeedEntryCard: View {
         }
     }
 
+    private func proofPhoto(urlString: String) -> some View {
+        AsyncImage(url: URL(string: urlString)) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .scaledToFill()
+            case .failure:
+                proofPhotoPlaceholder
+            case .empty:
+                ZStack {
+                    proofPhotoPlaceholder
+                    ProgressView()
+                        .tint(.white)
+                }
+            @unknown default:
+                proofPhotoPlaceholder
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 190)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
+        )
+    }
+
+    private var proofPhotoPlaceholder: some View {
+        Rectangle()
+            .fill(LColors.glassSurface)
+            .overlay {
+                Image("image")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 24)
+                    .foregroundStyle(LColors.accents.contrast)
+            }
+    }
+
     private var proofPreview: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Proof")
                 .font(.system(size: 10, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Text(displayProofSummary)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -215,7 +261,7 @@ struct ChallengeFeedEntryCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.045))
+                .fill(LColors.surface.nested)
         )
     }
 
@@ -240,7 +286,7 @@ struct ChallengeFeedEntryCard: View {
 
                     Text("\(displayLikeCount)")
                         .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .buttonStyle(.plain)
@@ -263,7 +309,7 @@ struct ChallengeFeedEntryCard: View {
 
                     Text("\(displayCommentCount)")
                         .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
             }
             .buttonStyle(.plain)
@@ -300,10 +346,10 @@ struct ChallengeFeedEntryCard: View {
                 .padding(.vertical, 11)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.white.opacity(0.045))
+                        .fill(LColors.surface.nested)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                                .strokeBorder(LColors.border.nested, lineWidth: 1)
                         )
                 )
 
@@ -324,7 +370,7 @@ struct ChallengeFeedEntryCard: View {
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
-                            .fill(LGradients.header)
+                            .fill(LGradients.blue)
                     )
             }
             .buttonStyle(.plain)

@@ -42,11 +42,11 @@ struct ReadingGoalDetailView: View {
     private var linkedSessions: [ReadingSession] {
         allReadingSessions
             .filter { session in
-                if session.linkedGoalID == goal.id {
+                if session.allLinkedGoalIDs.contains(goal.id) {
                     return true
                 }
 
-                if session.linkedGoalTitle == goal.displayTitle {
+                if session.allLinkedGoalTitles.contains(where: { $0.caseInsensitiveCompare(goal.displayTitle) == .orderedSame }) {
                     return true
                 }
 
@@ -114,7 +114,7 @@ struct ReadingGoalDetailView: View {
                             detailCard(title: "Description") {
                                 Text(goal.goalDescription)
                                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.white.opacity(0.84))
+                                    .foregroundStyle(LColors.text.primary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
@@ -123,7 +123,7 @@ struct ReadingGoalDetailView: View {
                             detailCard(title: "Why This Matters") {
                                 Text(goal.goalReason)
                                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.white.opacity(0.84))
+                                    .foregroundStyle(LColors.text.primary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
@@ -136,11 +136,11 @@ struct ReadingGoalDetailView: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 18, height: 18)
-                                        .foregroundStyle(LGradients.header)
+                                        .foregroundStyle(LColors.accents.primary)
 
                                     Text(goal.rewardIdea)
                                         .font(.system(size: 14, weight: .bold, design: .rounded))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(LColors.cardTitle)
                                         .multilineTextAlignment(.leading)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
@@ -149,10 +149,10 @@ struct ReadingGoalDetailView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(
                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(Color.white.opacity(0.10))
+                                        .fill(LColors.border.nestedStrong)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                .strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
+                                                .strokeBorder(LColors.border.subtle, lineWidth: 1)
                                         )
                                     )
                                 }
@@ -208,7 +208,7 @@ struct ReadingGoalDetailView: View {
             HStack(alignment: .top, spacing: 12) {
                 Text(goal.displayTitle)
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -220,14 +220,14 @@ struct ReadingGoalDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
                                 .fill(LColors.bg)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                        .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                                 )
                                 .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                         )
@@ -243,14 +243,14 @@ struct ReadingGoalDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.secondary)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
                                 .fill(LColors.bg)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                        .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                                 )
                                 .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                         )
@@ -274,7 +274,7 @@ struct ReadingGoalDetailView: View {
     // MARK: - Overview Card
 
     private var overviewCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(alignment: .center, spacing: 14) {
                     Image(goal.iconName)
@@ -282,15 +282,15 @@ struct ReadingGoalDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 28, height: 28)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.special)
                         .frame(width: 52, height: 52)
-                        .background(Circle().fill(Color.white.opacity(0.06)))
-                        .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1.15))
+                        .background(Circle().fill(LColors.iconContainer.primary))
+                        .overlay(Circle().strokeBorder(LColors.accents.secondary, lineWidth: 1.15))
 
                     VStack(alignment: .leading, spacing: 5) {
                         Text(goal.displayTitle)
                             .font(.system(size: 18, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .lineLimit(2)
 
                         Text(goal.mode.rawValue + " • " + goal.cadence.rawValue)
@@ -315,7 +315,7 @@ struct ReadingGoalDetailView: View {
 
                         Text("\(goal.progressPercentage)%")
                             .font(.system(size: 12, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                     }
                 }
 
@@ -380,22 +380,22 @@ struct ReadingGoalDetailView: View {
         NavigationLink {
             GoalNotesTimelinePage(goal: goal)
         } label: {
-            GlassCard {
+            GlassCard(variant: .primary) {
                 HStack(spacing: 12) {
                     Image("lovepage")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                         .frame(width: 42, height: 42)
-                        .background(Circle().fill(Color.white.opacity(0.06)))
-                        .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1))
+                        .background(Circle().fill(LColors.iconContainer.primary))
+                        .overlay(Circle().strokeBorder(LColors.accents.special, lineWidth: 1))
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Notes")
                             .font(.system(size: 16, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
 
                         if goalNotes.isEmpty {
                             Text("No notes yet")
@@ -415,7 +415,7 @@ struct ReadingGoalDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(LColors.text.secondary)
                 }
             }
         }
@@ -447,12 +447,12 @@ struct ReadingGoalDetailView: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 15, height: 15)
-                                        .foregroundStyle(LGradients.header)
+                                        .foregroundStyle(LColors.accents.contrast)
 
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(book.title)
                                             .font(.system(size: 14, weight: .bold, design: .rounded))
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(LColors.cardTitle)
                                             .lineLimit(1)
 
                                         Text(book.author)
@@ -468,7 +468,7 @@ struct ReadingGoalDetailView: View {
                                         .foregroundStyle(LColors.textSecondary)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
-                                        .background(Capsule().fill(Color.white.opacity(0.06)))
+                                        .background(Capsule().fill(LColors.iconContainer.primary))
                                 }
                             }
                         }
@@ -480,7 +480,7 @@ struct ReadingGoalDetailView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(linkedSeriesName)
                                 .font(.system(size: 16, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
 
                             if !seriesBooks.isEmpty {
                                 Text("\(seriesBooks.count) books in library")
@@ -497,11 +497,11 @@ struct ReadingGoalDetailView: View {
     // MARK: - Session History
 
     private var sessionHistoryCard: some View {
-        GlassCard {
+        GlassCard(variant: .secondary) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Session History")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 VStack(spacing: 0) {
                     ForEach(Array(visibleLinkedSessions.enumerated()), id: \.element.id) { index, session in
@@ -552,15 +552,15 @@ struct ReadingGoalDetailView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.secondary)
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(Color.white.opacity(0.06)))
-                .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1))
+                .background(Circle().fill(LColors.iconContainer.primary))
+                .overlay(Circle().strokeBorder(LColors.accents.primary, lineWidth: 1))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(session.linkedBookTitle.isEmpty ? "Reading Session" : session.linkedBookTitle)
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .lineLimit(1)
 
                 Text(session.date.formatted(date: .abbreviated, time: .omitted))
@@ -579,15 +579,15 @@ struct ReadingGoalDetailView: View {
     private func sessionHistoryButtonLabel(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 12, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(LColors.cardTitle)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
                 Capsule(style: .continuous)
-                    .fill(Color.white.opacity(0.07))
+                    .fill(LColors.iconContainer.primary)
                     .overlay(
                         Capsule(style: .continuous)
-                            .strokeBorder(LGradients.header, lineWidth: 1)
+                            .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                     )
             )
     }
@@ -596,7 +596,7 @@ struct ReadingGoalDetailView: View {
         HStack(spacing: 4) {
             ForEach(0..<51, id: \.self) { _ in
                 Circle()
-                    .fill(Color.white.opacity(0.16))
+                    .fill(LColors.border.subtle)
                     .frame(width: 3, height: 3)
             }
         }
@@ -617,7 +617,7 @@ struct ReadingGoalDetailView: View {
         return VStack(alignment: .leading, spacing: 14) {
             Text("Milestones")
                 .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             VStack(spacing: 10) {
                 ForEach(milestones, id: \.label) { milestone in
@@ -630,15 +630,15 @@ struct ReadingGoalDetailView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 16, height: 16)
-                            .foregroundStyle(reached ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(Color.white.opacity(0.35)))
+                            .foregroundStyle(reached ? AnyShapeStyle(LColors.accents.primary) : AnyShapeStyle(LColors.text.muted))
                             .frame(width: 36, height: 36)
                             .background(Circle().fill(Color(lumeyHex: "#1a1a1e")))
                             .overlay(
                                 Circle()
                                     .strokeBorder(
                                         reached
-                                            ? AnyShapeStyle(LGradients.header)
-                                            : AnyShapeStyle(Color.white.opacity(0.12)),
+                                            ? AnyShapeStyle(LColors.accents.contrast)
+                                            : AnyShapeStyle(LColors.border.subtle),
                                         lineWidth: 1
                                     )
                             )
@@ -666,13 +666,9 @@ struct ReadingGoalDetailView: View {
                             .strokeBorder(
                                 reached
                                     ? AnyShapeStyle(
-                                        LinearGradient(
-                                            colors: [LColors.gradientBlue, LColors.gradientPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
+                                        LColors.accents.special
                                     )
-                                    : AnyShapeStyle(Color.white.opacity(0.08)),
+                                    : AnyShapeStyle(LColors.border.nested),
                                 lineWidth: reached ? 1.2 : 0.8
                             )
                     )
@@ -687,7 +683,7 @@ struct ReadingGoalDetailView: View {
         title: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        GlassCard {
+        GlassCard(variant: .tertiary) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(title)
                     .font(.system(size: 14, weight: .black, design: .rounded))
@@ -738,7 +734,7 @@ private struct GoalCompletionHistorySheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Completion History")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.headingPrimary)
 
                 Text(goalTitle)
                     .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -756,14 +752,14 @@ private struct GoalCompletionHistorySheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.special)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.secondary, lineWidth: 1.2)
                             )
                     )
             }
@@ -776,18 +772,18 @@ private struct GoalCompletionHistorySheet: View {
     }
 
     private var emptyHistoryCard: some View {
-        GlassCard {
+        GlassCard(variant: .elevated) {
             VStack(spacing: 10) {
                 Image("startrophyfill")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 28, height: 28)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
 
                 Text("No Completion History Yet")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text("Completed weekly goals will show here.")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -799,22 +795,22 @@ private struct GoalCompletionHistorySheet: View {
     }
 
     private func historyCard(_ entry: ReadingGoalHistory) -> some View {
-        GlassCard {
+        GlassCard(variant: .subtle) {
             HStack(alignment: .top, spacing: 12) {
                 Image("startrophyfill")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 38, height: 38)
-                    .background(Circle().fill(Color.white.opacity(0.06)))
-                    .overlay(Circle().strokeBorder(LGradients.header, lineWidth: 1))
+                    .background(Circle().fill(LColors.iconContainer.primary))
+                    .overlay(Circle().strokeBorder(LColors.accents.special, lineWidth: 1))
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Completed")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("\(ReadingGoals.cleanNumber(entry.newValue)) / \(ReadingGoals.cleanNumber(entry.targetValue))")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -823,7 +819,7 @@ private struct GoalCompletionHistorySheet: View {
                     if !entry.rewardEarned.isEmpty {
                         Text(entry.rewardEarned)
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                     }
 
                     Text(entry.createdAt.formatted(date: .abbreviated, time: .omitted))
@@ -847,7 +843,7 @@ struct GoalDetailMiniStat: View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
@@ -859,11 +855,11 @@ struct GoalDetailMiniStat: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.05))
+                .fill(LColors.surface.nested)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                .strokeBorder(LColors.border.nested, lineWidth: 1)
         )
     }
 }

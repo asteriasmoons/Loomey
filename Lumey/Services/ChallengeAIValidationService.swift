@@ -28,6 +28,27 @@ struct ChallengeAIValidationResponse: Codable {
     let message: String
 }
 
+// MARK: - Photo Validation
+
+struct ChallengePhotoValidationPacket: Codable {
+    let challengeTitle: String
+    let requirementText: String
+    let validationType: String
+    let requiredThemes: [String]
+    let bookTitles: [String]
+    let submissionNote: String
+    let proofSummary: String
+    let photoURL: String
+}
+
+struct ChallengePhotoValidationResponse: Codable {
+    let status: String
+    let message: String
+    let confidence: Double
+    let visibleEvidence: [String]
+    let missingEvidence: [String]
+}
+
 // MARK: - Challenge AI Validation Service
 
 final class ChallengeAIValidationService {
@@ -41,7 +62,7 @@ final class ChallengeAIValidationService {
     /// Sends a compact validation packet to the backend AI endpoint.
     /// Returns a ChallengeValidationResult.
     func validate(packet: ChallengeAIValidationPacket) async throws -> ChallengeValidationResult {
-        guard let url = URL(string: "\(baseURL)/api/challenge/validate-theme") else {
+        guard let url = URL(string: "\(baseURL)/api/lumey/challenges/validate-theme") else {
             throw ChallengeAIError.invalidURL
         }
 
@@ -78,6 +99,32 @@ final class ChallengeAIValidationService {
         }
     }
 
+    /// Sends a hosted proof photo and challenge context to the backend Puter validator.
+    func validatePhoto(packet: ChallengePhotoValidationPacket) async throws -> ChallengePhotoValidationResponse {
+        guard let url = URL(string: "\(baseURL)/api/lumey/challenges/validate-photo") else {
+            throw ChallengeAIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 90
+        request.httpBody = try JSONEncoder().encode(packet)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw ChallengeAIError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw ChallengeAIError.serverError(statusCode: httpResponse.statusCode, message: errorBody)
+        }
+
+        return try JSONDecoder().decode(ChallengePhotoValidationResponse.self, from: data)
+    }
+
     /// Builds a compact validation packet from challenge and book data.
     static func buildPacket(
         challenge: ReadingChallenge,
@@ -97,6 +144,23 @@ final class ChallengeAIValidationService {
             bookTropes: books.map(\.tropes),
             submissionNote: submissionNote,
             linkedReviewText: reviewText
+        )
+    }
+
+    static func buildPhotoPacket(
+        challenge: ReadingChallenge,
+        books: [Book],
+        submission: ChallengeSubmission
+    ) -> ChallengePhotoValidationPacket {
+        ChallengePhotoValidationPacket(
+            challengeTitle: challenge.title,
+            requirementText: challenge.requirementText,
+            validationType: challenge.validationType.rawValue,
+            requiredThemes: challenge.requiredThemes,
+            bookTitles: books.map(\.title),
+            submissionNote: submission.submissionNote,
+            proofSummary: submission.proofSummary,
+            photoURL: submission.photoURL
         )
     }
 }

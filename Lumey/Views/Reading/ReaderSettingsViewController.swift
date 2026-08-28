@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import SwiftUI
 import SwiftData
 
 final class ReaderSettingsViewController: UIViewController {
@@ -749,6 +750,6 @@ final class ReaderSettingsViewController: UIViewController {
     }
     
     private func tintGradientColor() -> UIColor {
-        UIColor(red: 0.25, green: 0.48, blue: 0.98, alpha: 1.0)
+        UIColor(LColors.accents.primary)
     }
 }

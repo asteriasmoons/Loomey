@@ -60,7 +60,7 @@ struct BookQuotesView: View {
         HStack {
             Text("Favorite Quotes")
                 .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Spacer()
 
@@ -72,14 +72,14 @@ struct BookQuotesView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -94,14 +94,14 @@ struct BookQuotesView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
@@ -125,7 +125,7 @@ struct BookQuotesView: View {
     }
 
     private var emptyState: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(spacing: 12) {
                 Image("starmark")
                     .renderingMode(.template)
@@ -148,7 +148,7 @@ struct BookQuotesView: View {
     }
 
     private func quoteCard(_ quote: BookQuote) -> some View {
-        GlassCard(cornerRadius: 18, padding: 16) {
+        GlassCard(cornerRadius: 18, padding: 16, variant: .secondary) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .top) {
                     Image("quote")
@@ -173,7 +173,7 @@ struct BookQuotesView: View {
                                 .frame(width: 30, height: 30)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.06))
+                                        .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
                                                 .strokeBorder(LGradients.blue, lineWidth: 1)
@@ -195,7 +195,7 @@ struct BookQuotesView: View {
                                 .frame(width: 30, height: 30)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.06))
+                                        .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
                                                 .strokeBorder(LGradients.blue, lineWidth: 1)
@@ -208,7 +208,7 @@ struct BookQuotesView: View {
 
                 Text(quote.text)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.88))
+                    .foregroundStyle(LColors.text.primary)
                     .italic()
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -281,7 +281,7 @@ struct BookQuoteEditorSheet: View {
                     HStack {
                         Text(isEditing ? "Edit Quote" : "New Quote")
                             .font(.system(size: 22, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.headingPrimary)
 
                         Spacer()
 
@@ -297,13 +297,13 @@ struct BookQuoteEditorSheet: View {
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.06))
+                                        .fill(LColors.iconContainer.primary)
                                 )
                         }
                         .buttonStyle(.plain)
                     }
 
-                    GlassCard {
+                    GlassCard(variant: .primary) {
                         VStack(alignment: .leading, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Quote")
@@ -318,7 +318,7 @@ struct BookQuoteEditorSheet: View {
                                     .padding(12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .fill(Color.white.opacity(0.04))
+                                            .fill(LColors.surface.nested)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                                                     .strokeBorder(LColors.glassBorder, lineWidth: 1)
@@ -338,7 +338,7 @@ struct BookQuoteEditorSheet: View {
                                     .padding(12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .fill(Color.white.opacity(0.04))
+                                            .fill(LColors.surface.nested)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                                                     .strokeBorder(LColors.glassBorder, lineWidth: 1)
@@ -353,7 +353,7 @@ struct BookQuoteEditorSheet: View {
                     } label: {
                         Text(isEditing ? "Save Changes" : "Add Quote")
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(

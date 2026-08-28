@@ -38,7 +38,7 @@ struct ChallengeProofSummaryView: View {
 
     var body: some View {
         if hasAnyProof {
-            GlassCard(padding: 14) {
+            GlassCard(padding: 14, variant: .featured) {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 8) {
                         Image("searchsparkle")
@@ -46,11 +46,11 @@ struct ChallengeProofSummaryView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.primary)
 
                         Text("Proof Summary")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
                     }
 
                     if !linkedBooks.isEmpty {
@@ -80,7 +80,19 @@ struct ChallengeProofSummaryView: View {
                                 icon: "checkwavy",
                                 label: "Finished",
                                 detail: "\(finishedCount) of \(linkedBooks.count)",
-                                color: LColors.success
+                                color: AnyShapeStyle(LColors.success)
+                            )
+                        }
+
+                        let ratedBooks = linkedBooks.filter { $0.rating > 0 }
+                        if !ratedBooks.isEmpty {
+                            proofRow(
+                                icon: "starfill",
+                                label: "Ratings",
+                                detail: ratedBooks.prefix(3)
+                                    .map { "\($0.displayTitle): \(formattedRating($0.rating))" }
+                                    .joined(separator: ", "),
+                                color: AnyShapeStyle(LColors.accents.primary)
                             )
                         }
                     }
@@ -119,7 +131,12 @@ struct ChallengeProofSummaryView: View {
 
     // MARK: - Proof Row
 
-    private func proofRow(icon: String, label: String, detail: String, color: Color = LColors.textSecondary) -> some View {
+    private func proofRow(
+        icon: String,
+        label: String,
+        detail: String,
+        color: AnyShapeStyle = AnyShapeStyle(LColors.textSecondary)
+    ) -> some View {
         HStack(spacing: 8) {
             Image(icon)
                 .renderingMode(.template)
@@ -130,7 +147,7 @@ struct ChallengeProofSummaryView: View {
 
             Text(label)
                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Spacer()
 
@@ -139,5 +156,13 @@ struct ChallengeProofSummaryView: View {
                 .foregroundStyle(LColors.textSecondary)
                 .lineLimit(1)
         }
+    }
+
+    private func formattedRating(_ rating: Double) -> String {
+        if rating.rounded(.down) == rating {
+            return "\(Int(rating)) stars"
+        }
+
+        return "\(String(format: "%.1f", rating)) stars"
     }
 }

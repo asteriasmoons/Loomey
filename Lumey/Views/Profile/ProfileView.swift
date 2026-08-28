@@ -34,14 +34,20 @@ struct ProfileView: View {
     @Query(sort: \ReadingChallenge.title)
     private var challenges: [ReadingChallenge]
 
+    @Query(sort: \ChallengeBookmark.createdAt, order: .reverse)
+    private var challengeBookmarks: [ChallengeBookmark]
+
     @State private var challengeAvatarItem: PhotosPickerItem?
     @State private var showingSignInSheet = false
+    @State private var showingBookmarkedChallenges = false
     @State private var editedChallengeUsername = ""
     @State private var isEditingChallengeUsername = false
     @State private var isFollowingChallengeProfile = false
     @State private var selectedConversation: ConversationDTO?
     @State private var isCreatingConversation = false
     @State private var showingMessagesList = false
+    @State private var visibleChallengeSubmissionCount = 4
+    @State private var completedChallengesRoute: CompletedChallengesRoute?
 
     let challengeProfile: ChallengeUserProfile?
     let currentChallengeTitle: String?
@@ -126,17 +132,60 @@ struct ProfileView: View {
         return challenges.first { $0.id == challengeID }?.title
     }
 
+    private var activeChallengeBookmarks: [ChallengeBookmark] {
+        challengeBookmarks.filter {
+            $0.userID == currentUserID && $0.isActive
+        }
+    }
+
+    private var visibleChallengeSubmissions: [ChallengeSubmission] {
+        Array(displayedChallengeSubmissions.prefix(visibleChallengeSubmissionCount))
+    }
+
+    private var hasMoreChallengeSubmissions: Bool {
+        displayedChallengeSubmissions.count > visibleChallengeSubmissionCount
+    }
+
     private var profileEmail: String {
         let trimmed = user?.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return trimmed.isEmpty ? "No email connected" : trimmed
     }
 
     private var readingDNABooks: [Book] {
-        books.filter { !$0.isArchived }
+        let linkedBookIDs = Set(weeklyReadingSessions.compactMap(\.linkedBookID))
+        let linkedTitles = Set(
+            weeklyReadingSessions
+                .map { normalizedKey($0.linkedBookTitle) }
+                .filter { !$0.isEmpty }
+        )
+
+        return activeReadingBooks.filter { book in
+            linkedBookIDs.contains(book.id)
+            || linkedTitles.contains(normalizedKey(book.displayTitle))
+            || linkedTitles.contains(normalizedKey(book.title))
+            || currentWeekInterval.contains(book.dateAdded)
+            || currentWeekInterval.contains(book.lastUpdated)
+            || (book.dateStarted.map { currentWeekInterval.contains($0) } ?? false)
+            || (book.dateFinished.map { currentWeekInterval.contains($0) } ?? false)
+        }
     }
 
     private var finishedBooks: [Book] {
         readingDNABooks.filter { $0.status == .finished }
+    }
+
+    private var activeReadingBooks: [Book] {
+        books.filter { !$0.isArchived }
+    }
+
+    private var currentWeekInterval: DateInterval {
+        let calendar = Calendar.current
+        return calendar.dateInterval(of: .weekOfYear, for: Date())
+        ?? DateInterval(start: calendar.startOfDay(for: Date()), duration: 7 * 24 * 60 * 60)
+    }
+
+    private var weeklyReadingSessions: [ReadingSession] {
+        sessions.filter { currentWeekInterval.contains($0.date) }
     }
 
     private var mostReadGenre: String {
@@ -200,7 +249,7 @@ struct ProfileView: View {
             return max(days, 1)
         }
 
-        guard !dayCounts.isEmpty else { return "Not enough data yet" }
+        guard !dayCounts.isEmpty else { return "Not enough this week" }
 
         let average = dayCounts.reduce(0, +) / dayCounts.count
         return "\(average) day\(average == 1 ? "" : "s")"
@@ -223,7 +272,7 @@ struct ProfileView: View {
     }
 
     private var yearlyBooks: [Book] {
-        readingDNABooks.filter { book in
+        activeReadingBooks.filter { book in
             guard book.status == .finished else { return false }
 
             return Calendar.current.component(.year, from: finishedReferenceDate(for: book)) == currentYear
@@ -428,11 +477,11 @@ struct ProfileView: View {
     private var readingDNAObservations: [String] {
         var observations: [String] = []
 
-        if mostCommonBookLength != "Not enough data yet" {
+        if hasReadingDNAValue(mostCommonBookLength) {
             observations.append("You prefer books around \(mostCommonBookLength.lowercased()).")
         }
 
-        if mostReadTrope != "Not enough data yet" {
+        if hasReadingDNAValue(mostReadTrope) {
             let tropeCount = readingDNABooks.filter { $0.tropes.contains(where: { $0.localizedCaseInsensitiveCompare(mostReadTrope) == .orderedSame }) }.count
             if !readingDNABooks.isEmpty {
                 let percent = Int((Double(tropeCount) / Double(readingDNABooks.count)) * 100)
@@ -440,7 +489,7 @@ struct ProfileView: View {
             }
         }
 
-        if mostReadGenre != "Not enough data yet" {
+        if hasReadingDNAValue(mostReadGenre) {
             let genreBooks = readingDNABooks.filter { $0.genres.contains(where: { $0.localizedCaseInsensitiveCompare(mostReadGenre) == .orderedSame }) }
             let ratedGenreBooks = genreBooks.filter { $0.rating > 0 }
             let ratedBooks = readingDNABooks.filter { $0.rating > 0 }
@@ -460,12 +509,25 @@ struct ProfileView: View {
         return observations.isEmpty ? ["Keep adding books and Lumey will learn your reading patterns."] : Array(observations.prefix(3))
     }
 
+    private func hasReadingDNAValue(_ value: String) -> Bool {
+        value != "Not enough data yet" && value != "Not enough this week"
+    }
+
+    private func normalizedKey(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .filter { $0.isLetter || $0.isNumber || $0.isWhitespace }
+            .split(separator: " ")
+            .joined(separator: " ")
+    }
+
     private func mostCommonValue(_ values: [String]) -> String {
         let cleanedValues = values
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
 
-        guard !cleanedValues.isEmpty else { return "Not enough data yet" }
+        guard !cleanedValues.isEmpty else { return "Not enough this week" }
 
         let grouped = Dictionary(grouping: cleanedValues) { $0.lowercased() }
 
@@ -489,7 +551,7 @@ struct ProfileView: View {
                 HStack(spacing: 12) {
                     Text("Profile")
                         .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                     Spacer()
 
                     if showsCloseButton {
@@ -501,14 +563,14 @@ struct ProfileView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 18, height: 18)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.contrast)
                                 .frame(width: 40, height: 40)
                                 .background(
                                     Circle()
                                         .fill(LColors.bg)
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                                .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                                         )
                                 )
                         }
@@ -544,6 +606,7 @@ struct ProfileView: View {
         }
         .onChange(of: activeChallengeProfile?.userID) { _, _ in
             syncChallengeProfileState()
+            visibleChallengeSubmissionCount = 4
         }
         .onChange(of: challengeAvatarItem) { _, newItem in
             Task {
@@ -574,6 +637,18 @@ struct ProfileView: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.hidden)
         }
+        .adaptivePresentation(isPresented: $showingBookmarkedChallenges, useFullScreenCover: horizontalSizeClass == .regular) {
+            ChallengeBookmarksPage(userID: currentUserID)
+                .environmentObject(appState)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
+        }
+        .adaptivePresentation(item: $completedChallengesRoute, useFullScreenCover: horizontalSizeClass == .regular) { route in
+            ChallengeCompletedChallengesPage(userID: route.userID, username: route.username)
+                .environmentObject(appState)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
+        }
     }
 
     // MARK: - Challenge Profile
@@ -593,12 +668,16 @@ struct ProfileView: View {
                 challengeBioCard(profile)
             }
 
+            if isViewingCurrentChallengeProfile {
+                bookmarkedChallengesCard
+            }
+
             recentChallengeEntriesSection
         }
     }
 
     private func challengeProfileHero(_ profile: ChallengeUserProfile) -> some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(spacing: 16) {
                 challengeAvatarView(profile)
 
@@ -625,12 +704,12 @@ struct ProfileView: View {
                             } label: {
                                 Text("Save Username")
                                     .font(.system(size: 12, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
                                     .padding(.horizontal, 18)
                                     .padding(.vertical, 9)
                                     .background(
                                         Capsule(style: .continuous)
-                                            .fill(LGradients.header)
+                                            .fill(LGradients.completion)
                                     )
                             }
                             .buttonStyle(.plain)
@@ -654,7 +733,7 @@ struct ProfileView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 12, height: 12)
-                                .foregroundStyle(LGradients.header)
+                                .foregroundStyle(LColors.accents.secondary)
 
                             Text(challengeFavoriteGenre(for: profile))
                                 .font(.system(size: 12, weight: .black, design: .rounded))
@@ -688,7 +767,7 @@ struct ProfileView: View {
 
                 Text(isSignedIn ? "Signed in with Apple" : "Sign in to sync your Loomey profile.")
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(isSignedIn ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.textSecondary))
+                    .foregroundStyle(isSignedIn ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.textSecondary))
                     .multilineTextAlignment(.center)
             }
 
@@ -709,7 +788,7 @@ struct ProfileView: View {
 
                     Text(isSignedIn ? "Sign Out" : "Sign In")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 13)
@@ -719,7 +798,7 @@ struct ProfileView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: LSpacing.buttonRadius, style: .continuous)
-                        .strokeBorder(isSignedIn ? AnyShapeStyle(LColors.glassBorder) : AnyShapeStyle(LGradients.header), lineWidth: 1.5)
+                        .strokeBorder(isSignedIn ? AnyShapeStyle(LColors.glassBorder) : AnyShapeStyle(LColors.accents.secondary), lineWidth: 1.5)
                 )
                 .shadow(color: isSignedIn ? Color.black.opacity(0.18) : LColors.gradientPurple.opacity(0.25), radius: 12, x: 0, y: 7)
             }
@@ -743,10 +822,10 @@ struct ProfileView: View {
                         .frame(width: 32, height: 32)
                         .background(
                             Circle()
-                                .fill(LGradients.header)
+                                .fill(LGradients.completion)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+                                        .strokeBorder(LColors.border.primary, lineWidth: 1)
                                 )
                         )
                 }
@@ -774,7 +853,7 @@ struct ProfileView: View {
         HStack(spacing: 6) {
             Text(challengeUsername(for: profile))
                 .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
                 .multilineTextAlignment(.center)
 
             if showsEditIcon {
@@ -797,15 +876,15 @@ struct ProfileView: View {
                 } label: {
                     Text(isFollowingChallengeProfile ? "Following" : "Follow")
                         .font(.system(size: 12, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
                         .padding(.horizontal, 22)
                         .padding(.vertical, 10)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(isFollowingChallengeProfile ? AnyShapeStyle(LColors.glassSurface) : AnyShapeStyle(LGradients.header))
+                                .fill(isFollowingChallengeProfile ? AnyShapeStyle(LColors.glassSurface) : AnyShapeStyle(LColors.accents.special))
                                 .overlay(
                                     Capsule(style: .continuous)
-                                        .strokeBorder(LGradients.header, lineWidth: 1)
+                                        .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                                 )
                         )
                 }
@@ -825,10 +904,10 @@ struct ProfileView: View {
                         .frame(width: 38, height: 38)
                         .background(
                             Circle()
-                                .fill(isCreatingConversation ? AnyShapeStyle(LColors.glassSurface) : AnyShapeStyle(LGradients.header))
+                                .fill(isCreatingConversation ? AnyShapeStyle(LColors.glassSurface) : AnyShapeStyle(LColors.accents.primary))
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LGradients.header, lineWidth: 1)
+                                        .strokeBorder(LColors.accents.secondary, lineWidth: 1)
                                 )
                         )
                 }
@@ -844,14 +923,14 @@ struct ProfileView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.special)
                     .frame(width: 38, height: 38)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.special, lineWidth: 1)
                             )
                     )
             }
@@ -863,7 +942,7 @@ struct ProfileView: View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -873,7 +952,7 @@ struct ProfileView: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.045))
+                .fill(LColors.surface.nested)
         )
     }
 
@@ -885,12 +964,21 @@ struct ProfileView: View {
             ],
             spacing: 12
         ) {
-            challengeStatCard(
-                icon: "startrophyhands",
-                title: "Completed",
-                value: "\(profile.challengesCompleted)",
-                subtitle: "Challenges"
-            )
+            Button {
+                completedChallengesRoute = CompletedChallengesRoute(
+                    userID: profile.userID,
+                    username: challengeUsername(for: profile)
+                )
+            } label: {
+                challengeStatCard(
+                    icon: "startrophyhands",
+                    title: "Completed",
+                    value: "\(profile.challengesCompleted)",
+                    subtitle: "Challenges"
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Completed challenges")
 
             challengeStatCard(
                 icon: "starfill",
@@ -921,32 +1009,32 @@ struct ProfileView: View {
         value: String,
         subtitle: String
     ) -> some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .secondary) {
             VStack(alignment: .leading, spacing: 12) {
                 Image(icon)
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 17, height: 17)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 38, height: 38)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1)
                             )
                     )
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(value)
                         .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.headingPrimary)
 
                     Text(title)
                         .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text(subtitle)
                         .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -962,28 +1050,28 @@ struct ProfileView: View {
     }
 
     private func currentChallengeCard(_ title: String) -> some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             HStack(spacing: 12) {
                 Image("stargoal")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1)
                             )
                     )
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Current Challenge")
                         .font(.system(size: 12, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text(title)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -996,8 +1084,54 @@ struct ProfileView: View {
         }
     }
 
+    private var bookmarkedChallengesCard: some View {
+        Button {
+            showingBookmarkedChallenges = true
+        } label: {
+            GlassCard(variant: .secondary) {
+                HStack(spacing: 12) {
+                    Image("starmark")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 18, height: 18)
+                        .foregroundStyle(LColors.accents.secondary)
+                        .frame(width: 42, height: 42)
+                        .background(
+                            Circle()
+                                .fill(LColors.glassSurface)
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(LColors.accents.secondary, lineWidth: 1)
+                                )
+                        )
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Bookmarked Challenges")
+                            .font(.system(size: 13, weight: .black, design: .rounded))
+                            .foregroundStyle(LColors.cardTitle)
+
+                        Text("\(activeChallengeBookmarks.count) saved challenge\(activeChallengeBookmarks.count == 1 ? "" : "s")")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(LColors.textSecondary)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Image("chevright")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 13, height: 13)
+                        .foregroundStyle(LColors.textSecondary)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
     private func challengeBioCard(_ profile: ChallengeUserProfile) -> some View {
-        GlassCard {
+        GlassCard(variant: .tertiary) {
             VStack(alignment: .leading, spacing: 10) {
                 profileSectionHeader(icon: "starnote", title: "About")
 
@@ -1014,18 +1148,18 @@ struct ProfileView: View {
             profileSectionHeader(icon: "sparkle", title: "Recent Challenge Entries")
 
             if displayedChallengeSubmissions.isEmpty {
-                GlassCard {
+                GlassCard(variant: .elevated) {
                     VStack(spacing: 10) {
                         Image("openbook")
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 28, height: 28)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.special)
 
                         Text("No recent entries yet.")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
 
                         Text("Challenge submissions will appear here once this reader starts joining events.")
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -1036,7 +1170,7 @@ struct ProfileView: View {
                 }
             } else {
                 VStack(spacing: 10) {
-                    ForEach(displayedChallengeSubmissions, id: \.id) { submission in
+                    ForEach(visibleChallengeSubmissions, id: \.id) { submission in
                         Button {
                             onChallengeSubmissionTapped?(submission)
                         } label: {
@@ -1044,9 +1178,45 @@ struct ProfileView: View {
                         }
                         .buttonStyle(.plain)
                     }
+
+                    if hasMoreChallengeSubmissions {
+                        loadMoreChallengeEntriesButton
+                    }
                 }
             }
         }
+    }
+
+    private var loadMoreChallengeEntriesButton: some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.25)) {
+                visibleChallengeSubmissionCount = min(
+                    visibleChallengeSubmissionCount + 4,
+                    displayedChallengeSubmissions.count
+                )
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Text("Load More")
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+
+                Image("chevdown")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 11, height: 11)
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 13)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(LGradients.completion)
+            )
+            .shadow(color: LColors.gradientPurple.opacity(0.28), radius: 10, y: 4)
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 4)
     }
 
     private func recentChallengeSubmissionRow(_ submission: ChallengeSubmission) -> some View {
@@ -1056,21 +1226,21 @@ struct ProfileView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 15, height: 15)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
                         .fill(LColors.glassSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
                         )
                 )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(submission.validationStatus.displayName)
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(submission.submittedDate.formatted(date: .abbreviated, time: .omitted))
                     .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -1086,7 +1256,7 @@ struct ProfileView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12, height: 12)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.contrast)
 
                     Text("\(submission.likeCount)")
                         .font(.system(size: 10, weight: .black, design: .rounded))
@@ -1110,10 +1280,10 @@ struct ProfileView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .fill(Color.white.opacity(0.045))
+                .fill(LColors.surface.nested)
                 .overlay(
                     RoundedRectangle(cornerRadius: 15, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                        .strokeBorder(LColors.border.nested, lineWidth: 1)
                 )
         )
     }
@@ -1125,11 +1295,11 @@ struct ProfileView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 15, height: 15)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.secondary)
 
             Text(title)
                 .font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Spacer()
         }
@@ -1141,13 +1311,13 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Reading DNA")
                 .font(.system(size: 22, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Text("Lumey learns your reading habits automatically.")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(LColors.textSecondary)
 
-            GlassCard {
+            GlassCard(variant: .subtle) {
                 VStack(alignment: .leading, spacing: 12) {
                     ReadingDNARow(iconName: "openbook", title: "Most Read Genre", value: mostReadGenre)
                     ReadingDNARow(iconName: "xsmile", title: "Most Read Mood", value: mostReadMood)
@@ -1161,16 +1331,16 @@ struct ProfileView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            GlassCard {
+            GlassCard(variant: .featured) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Observations")
                         .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     ForEach(readingDNAObservations, id: \.self) { observation in
                         HStack(alignment: .top, spacing: 10) {
                             Circle()
-                                .fill(LGradients.header)
+                                .fill(LGradients.completion)
                                 .frame(width: 9, height: 9)
                                 .padding(.top, 5)
 
@@ -1192,13 +1362,13 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Year In Books")
                 .font(.system(size: 22, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Text("Your \(currentYear) reading wrapped into one cozy report.")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(LColors.textSecondary)
 
-            GlassCard {
+            GlassCard(variant: .primary) {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(spacing: 14) {
                         Image("startrophyfill")
@@ -1206,21 +1376,21 @@ struct ProfileView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18, height: 18)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(LColors.accents.special)
                             .frame(width: 40, height: 40)
                             .background(
                                 Circle()
-                                    .fill(Color.white.opacity(0.06))
+                                    .fill(LColors.iconContainer.primary)
                             )
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.special, lineWidth: 1)
                             )
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("\(currentYear) Wrapped")
                                 .font(.system(size: 18, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.cardTitle)
 
                             Text("The story your reading year tells.")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -1409,15 +1579,15 @@ struct ReadingDNARow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.primary)
                 .frame(width: 38, height: 38)
                 .background(
                     Circle()
-                        .fill(Color.white.opacity(0.06))
+                        .fill(LColors.iconContainer.primary)
                 )
                 .overlay(
                     Circle()
-                        .strokeBorder(LGradients.header, lineWidth: 1)
+                        .strokeBorder(LColors.accents.primary, lineWidth: 1)
                 )
 
             VStack(alignment: .leading, spacing: 3) {
@@ -1427,13 +1597,19 @@ struct ReadingDNARow: View {
 
                 Text(value)
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .lineLimit(2)
             }
 
             Spacer(minLength: 0)
         }
     }
+}
+
+private struct CompletedChallengesRoute: Identifiable {
+    let id = UUID()
+    let userID: String
+    let username: String
 }
 
 private extension Double {

@@ -140,7 +140,7 @@ enum ReadingActivityDetector {
         session.durationMinutes > 0
         || session.pagesRead > 0
         || session.notes.localizedCaseInsensitiveContains("goal check-in")
-        || session.linkedGoalID != nil
+        || session.hasLinkedGoal
     }
 }
 

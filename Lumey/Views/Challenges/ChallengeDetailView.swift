@@ -23,12 +23,31 @@ struct ChallengeDetailView: View {
     @Query(sort: \ChallengeUserProfile.username)
     private var profiles: [ChallengeUserProfile]
 
+    @Query(sort: \ChallengeBookmark.createdAt, order: .reverse)
+    private var bookmarks: [ChallengeBookmark]
+
     @State private var showingSubmissionSheet = false
     @State private var showingResultView = false
     @State private var challengeManager: ChallengeManager?
 
     private var currentUserID: String {
         appState.currentAppleUserId ?? ""
+    }
+
+    private var bookmarkUserID: String {
+        appState.currentAppleUserId ?? "local-user"
+    }
+
+    private var activeBookmark: ChallengeBookmark? {
+        bookmarks.first {
+            $0.userID == bookmarkUserID &&
+            $0.challengeID == challenge.id &&
+            $0.isActive
+        }
+    }
+
+    private var isBookmarked: Bool {
+        activeBookmark != nil
     }
 
     private var currentCycle: ChallengeCycle {
@@ -128,31 +147,25 @@ struct ChallengeDetailView: View {
         HStack(spacing: 12) {
             Text("Challenge")
                 .font(.system(size: 32, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Spacer()
 
             Button {
-                dismiss()
+                toggleBookmark()
             } label: {
-                Image("xmarkwavy")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .foregroundStyle(LGradients.header)
-                    .frame(width: 42, height: 42)
-                    .background(
-                        Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
-                            )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
-                    )
+                headerIconButton("starmark", isActive: isBookmarked)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(isBookmarked ? "Remove challenge bookmark" : "Bookmark challenge")
+
+            Button {
+                dismiss()
+            } label: {
+                headerIconButton("xmarkwavy")
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close")
         }
         .padding(.horizontal, 20)
         .padding(.top, 20)
@@ -161,10 +174,29 @@ struct ChallengeDetailView: View {
         .safeAreaPadding(.top)
     }
 
+    private func headerIconButton(_ iconName: String, isActive: Bool = false) -> some View {
+        Image(iconName)
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 20, height: 20)
+            .foregroundStyle(isActive ? AnyShapeStyle(LColors.gradientYellow) : AnyShapeStyle(LColors.accents.primary))
+            .frame(width: 42, height: 42)
+            .background(
+                Circle()
+                    .fill(LColors.bg)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(isActive ? AnyShapeStyle(LColors.gradientYellow) : AnyShapeStyle(LColors.accents.contrast), lineWidth: 1.2)
+                    )
+                    .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
+            )
+    }
+
     // MARK: - Challenge Info
 
     private var challengeInfoSection: some View {
-        GlassCard(padding: 18) {
+        GlassCard(padding: 18, variant: .featured) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 14) {
                     Image(challenge.iconName)
@@ -172,7 +204,7 @@ struct ChallengeDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.accents.primary)
                         .frame(width: 56, height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -187,12 +219,12 @@ struct ChallengeDetailView: View {
                         HStack(spacing: 6) {
                             Text(challenge.title)
                                 .font(.system(size: 20, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(LColors.headingPrimary)
 
                             if challenge.isFeatured {
                                 Text("FEATURED")
                                     .font(.system(size: 8, weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(LColors.cardTitle)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(Capsule().fill(LGradients.header))
@@ -228,11 +260,11 @@ struct ChallengeDetailView: View {
     // MARK: - Requirement
 
     private var requirementSection: some View {
-        GlassCard(padding: 14) {
+        GlassCard(padding: 14, variant: .primary) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Requirement")
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 Text(challenge.requirementText)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -255,7 +287,7 @@ struct ChallengeDetailView: View {
     }
 
     private func statCard(icon: String, value: String, label: String, color: Color) -> some View {
-        GlassCard(padding: 10) {
+        GlassCard(padding: 10, variant: .secondary) {
             VStack(spacing: 6) {
                 Image(icon)
                     .renderingMode(.template)
@@ -266,7 +298,7 @@ struct ChallengeDetailView: View {
 
                 Text(value)
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
 
@@ -400,11 +432,11 @@ struct ChallengeDetailView: View {
     @ViewBuilder
     private var userStatusSection: some View {
         if let entry = userEntry {
-            GlassCard(padding: 14) {
+            GlassCard(padding: 14, variant: .tertiary) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Your Status")
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     HStack(spacing: 14) {
                         statusRow(label: "Status", value: entry.status.displayName)
@@ -443,7 +475,7 @@ struct ChallengeDetailView: View {
                 .foregroundStyle(LColors.textSecondary)
             Text(value)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -455,7 +487,7 @@ struct ChallengeDetailView: View {
             if !challengeSubmissions.isEmpty {
                 Text("Submissions")
                     .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(LColors.cardTitle)
 
                 ForEach(challengeSubmissions) { submission in
                     ChallengeFeedEntryCard(
@@ -514,6 +546,32 @@ struct ChallengeDetailView: View {
 
     private func profile(for submission: ChallengeSubmission) -> ChallengeUserProfile? {
         profiles.first { $0.userID == submission.userID }
+    }
+
+    private func toggleBookmark() {
+        if let activeBookmark {
+            activeBookmark.deletedAt = Date()
+            activeBookmark.updatedAt = Date()
+            try? modelContext.save()
+            return
+        }
+
+        if let existing = bookmarks.first(where: {
+            $0.userID == bookmarkUserID &&
+            $0.challengeID == challenge.id
+        }) {
+            existing.deletedAt = nil
+            existing.refreshSnapshot(from: challenge)
+            try? modelContext.save()
+            return
+        }
+
+        let bookmark = ChallengeBookmark(
+            userID: bookmarkUserID,
+            challenge: challenge
+        )
+        modelContext.insert(bookmark)
+        try? modelContext.save()
     }
 }
 

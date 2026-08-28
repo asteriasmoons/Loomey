@@ -31,6 +31,10 @@ struct ChallengeSubmissionResultView: View {
 
                         proofCard
 
+                        if submission.hasPhotoProof {
+                            photoProofCard
+                        }
+
                         actionButton
                     }
                     .padding(.horizontal, 20)
@@ -47,7 +51,7 @@ struct ChallengeSubmissionResultView: View {
         HStack(spacing: 12) {
             Text("Submission Result")
                 .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.headingPrimary)
 
             Spacer()
 
@@ -59,14 +63,14 @@ struct ChallengeSubmissionResultView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.primary)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.2)
+                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
                     )
             }
@@ -78,7 +82,7 @@ struct ChallengeSubmissionResultView: View {
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(LColors.border.nested)
                 .frame(height: 1)
         }
         .safeAreaPadding(.top)
@@ -87,21 +91,21 @@ struct ChallengeSubmissionResultView: View {
     // MARK: - Hero
 
     private var resultHeroCard: some View {
-        GlassCard {
+        GlassCard(variant: .featured) {
             VStack(alignment: .center, spacing: 14) {
                 Image(statusIcon)
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 34, height: 34)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 76, height: 76)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1.3)
+                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.3)
                             )
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 14, y: 7)
                     )
@@ -109,7 +113,7 @@ struct ChallengeSubmissionResultView: View {
                 VStack(spacing: 6) {
                     Text(statusTitle)
                         .font(.system(size: 23, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.headingPrimary)
                         .multilineTextAlignment(.center)
 
                     Text(challenge.title)
@@ -127,7 +131,7 @@ struct ChallengeSubmissionResultView: View {
     private var statusBadge: some View {
         Text(submission.validationStatus.displayName.uppercased())
             .font(.system(size: 10, weight: .black, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(LColors.cardTitle)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
@@ -143,7 +147,7 @@ struct ChallengeSubmissionResultView: View {
     // MARK: - Message
 
     private var messageCard: some View {
-        GlassCard {
+        GlassCard(variant: .primary) {
             VStack(alignment: .leading, spacing: 10) {
                 sectionHeader(icon: "sparkle", title: "Validation Message")
 
@@ -159,28 +163,28 @@ struct ChallengeSubmissionResultView: View {
     // MARK: - Points
 
     private var pointsCard: some View {
-        GlassCard {
+        GlassCard(variant: .secondary) {
             HStack(spacing: 14) {
                 Image("achievement")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22, height: 22)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(LColors.accents.secondary)
                     .frame(width: 46, height: 46)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LGradients.header, lineWidth: 1)
+                                    .strokeBorder(LColors.accents.secondary, lineWidth: 1)
                             )
                     )
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Points Awarded")
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(LColors.cardTitle)
 
                     Text("\(challenge.points) points earned")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -195,7 +199,7 @@ struct ChallengeSubmissionResultView: View {
     // MARK: - Proof
 
     private var proofCard: some View {
-        GlassCard {
+        GlassCard(variant: .tertiary) {
             VStack(alignment: .leading, spacing: 10) {
                 sectionHeader(icon: "checkwavy", title: "Submitted Proof")
 
@@ -212,12 +216,12 @@ struct ChallengeSubmissionResultView: View {
 
                 if !submission.submissionNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Divider()
-                        .background(Color.white.opacity(0.12))
+                        .background(LColors.border.subtle)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Your Note")
                             .font(.system(size: 11, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(LColors.cardTitle)
 
                         Text(submission.submissionNote)
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -229,6 +233,80 @@ struct ChallengeSubmissionResultView: View {
         }
     }
 
+    private var photoProofCard: some View {
+        GlassCard(variant: .elevated) {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader(icon: "image", title: "Photo Validation")
+
+                AsyncImage(url: URL(string: submission.photoURL)) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        placeholderPhoto
+                    case .empty:
+                        ZStack {
+                            placeholderPhoto
+                            ProgressView()
+                                .tint(.white)
+                        }
+                    @unknown default:
+                        placeholderPhoto
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 190)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
+                )
+
+                HStack(spacing: 8) {
+                    Image(statusIcon(for: submission.photoValidationStatus))
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 13, height: 13)
+                        .foregroundStyle(LColors.accents.special)
+
+                    Text(submission.photoValidationStatus.displayName)
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .foregroundStyle(LColors.cardTitle)
+
+                    if submission.photoValidationConfidence > 0 {
+                        Text("\(Int((submission.photoValidationConfidence * 100).rounded()))% confidence")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(LColors.textSecondary)
+                    }
+                }
+
+                if let message = submission.photoValidationMessage,
+                   !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(message)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(LColors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private var placeholderPhoto: some View {
+        Rectangle()
+            .fill(LColors.glassSurface)
+            .overlay {
+                Image("image")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
+                    .foregroundStyle(LColors.accents.primary)
+            }
+    }
+
     // MARK: - Action
 
     private var actionButton: some View {
@@ -237,7 +315,7 @@ struct ChallengeSubmissionResultView: View {
         } label: {
             Text(buttonTitle)
                 .font(.system(size: 14, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 15)
                 .background(
@@ -258,11 +336,11 @@ struct ChallengeSubmissionResultView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 15, height: 15)
-                .foregroundStyle(LGradients.header)
+                .foregroundStyle(LColors.accents.contrast)
 
             Text(title)
                 .font(.system(size: 14, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(LColors.cardTitle)
 
             Spacer()
         }
@@ -271,7 +349,11 @@ struct ChallengeSubmissionResultView: View {
     // MARK: - Computed Text
 
     private var statusIcon: String {
-        switch submission.validationStatus {
+        statusIcon(for: submission.validationStatus)
+    }
+
+    private func statusIcon(for status: ChallengeSubmissionStatus) -> String {
+        switch status {
         case .approved:
             return "checkwavy"
         case .inProgress:
