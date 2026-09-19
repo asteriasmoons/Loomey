@@ -74,6 +74,8 @@ struct SettingsView: View {
     @State private var pendingStreakChange: PendingReadingStreakSettingsChange?
     @State private var showStreakResetConfirm = false
     @State private var showingReleaseNotes = false
+    @State private var showingReportCenter = false
+    @State private var showingStreakSettings = false
 
     private var syncedBooks: [Book] {
         books.filter { $0.deletedAt == nil }
@@ -137,9 +139,10 @@ struct SettingsView: View {
                         header
                         commandCenter
                         releaseNotesCard
+                        reportCenterCard
                         AppThemeSettingsSection()
                         libraryPulse
-                        readingStreaksSettings
+                        readingStreaksCard
                         dataVault
                         cloudKitCard
                     }
@@ -228,6 +231,20 @@ struct SettingsView: View {
                     .presentationDetents([.large])
                     .presentationDragIndicator(.hidden)
             }
+            .adaptivePresentation(isPresented: $showingReportCenter, useFullScreenCover: horizontalSizeClass == .regular) {
+                LumeyReportCenterView()
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.hidden)
+            }
+            .adaptivePresentation(isPresented: $showingStreakSettings, useFullScreenCover: horizontalSizeClass == .regular) {
+                ReadingStreakSettingsSheet(
+                    configuration: streakConfiguration,
+                    summaries: streakSummaries,
+                    onChange: requestStreakConfigurationChange
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
+            }
         }
     }
 }
@@ -294,6 +311,17 @@ private extension SettingsView {
         }
     }
 
+    var reportCenterCard: some View {
+        SettingsActionCard(
+            title: "Send a Report",
+            subtitle: "Send bug reports, beta feedback, and feature requests to Voxiverse.",
+            iconName: "document",
+            gradientColors: [LColors.gradientPink, LColors.gradientBlue]
+        ) {
+            showingReportCenter = true
+        }
+    }
+
     var libraryPulse: some View {
         HStack(spacing: 12) {
             SettingsMetricCard(
@@ -310,12 +338,20 @@ private extension SettingsView {
         }
     }
 
-    var readingStreaksSettings: some View {
-        ReadingStreakSettingsSection(
-            configuration: streakConfiguration,
-            summaries: streakSummaries,
-            onChange: requestStreakConfigurationChange
-        )
+    var readingStreaksCard: some View {
+        SettingsActionCard(
+            title: "Reading Streaks",
+            subtitle: readingStreaksSummaryText,
+            iconName: "flame",
+            gradientColors: [LColors.accents.contrast, LColors.accents.primary]
+        ) {
+            showingStreakSettings = true
+        }
+    }
+
+    var readingStreaksSummaryText: String {
+        let daily = streakSummaries.first { $0.kind == .daily }
+        return "Current \(daily?.current ?? 0) days. Longest \(daily?.longest ?? 0) days."
     }
 
     var dataVault: some View {
@@ -990,6 +1026,61 @@ private struct LegacyCleanupBookRow: View {
 }
 
 // MARK: - Components
+
+private struct ReadingStreakSettingsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let configuration: ReadingStreakConfiguration
+    let summaries: [ReadingStreakSummary]
+    let onChange: (ReadingStreakConfiguration, Set<ReadingStreakKind>) -> Void
+
+    var body: some View {
+        ZStack {
+            LumeyBackground()
+                .ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("SETTINGS")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .tracking(1.6)
+                                .foregroundStyle(LColors.textSecondary)
+
+                            Text("Reading Streaks")
+                                .font(.system(size: 32, weight: .black, design: .rounded))
+                                .foregroundStyle(LColors.headingPrimary)
+                        }
+
+                        Spacer(minLength: 0)
+
+                        Button { dismiss() } label: {
+                            Image("xmarkwavy")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 17, height: 17)
+                                .foregroundStyle(LGradients.header)
+                                .frame(width: 44, height: 44)
+                                .background(LColors.glassSurface, in: Circle())
+                                .overlay { Circle().strokeBorder(LColors.glassBorder, lineWidth: 1) }
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 16)
+                    }
+
+                    ReadingStreakSettingsSection(
+                        configuration: configuration,
+                        summaries: summaries,
+                        onChange: onChange
+                    )
+                }
+                .padding(.horizontal, LSpacing.pageHorizontal)
+                .padding(.bottom, 100)
+            }
+        }
+    }
+}
 
 private struct ReadingStreakSettingsSection: View {
     let configuration: ReadingStreakConfiguration

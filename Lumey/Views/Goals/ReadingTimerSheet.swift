@@ -697,6 +697,8 @@ struct SaveSessionSheet: View {
             linkedGoalTitle: selectedGoal?.displayTitle ?? "",
             durationMinutes: prefillMinutes,
             pagesRead: pages,
+            startPage: Int(startPage) ?? 0,
+            endPage: enteredEndPage,
             notes: "",
             date: sessionDate
         )

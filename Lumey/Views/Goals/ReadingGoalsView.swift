@@ -30,6 +30,7 @@ struct ReadingGoalsView: View {
     
     @State private var showingAddGoalSheet = false
     @State private var showingLogSession = false
+    @State private var showingCatchUp = false
     @State private var showingReadingTimer = false
     @State private var showingAddDreamSheet = false
     @State private var showingCheckIn = false
@@ -95,6 +96,11 @@ struct ReadingGoalsView: View {
             }
             .adaptivePresentation(isPresented: $showingLogSession, useFullScreenCover: horizontalSizeClass == .regular) {
                 LogSessionSheet(goals: goals, books: books)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.hidden)
+            }
+            .sheet(isPresented: $showingCatchUp) {
+                CatchUpSheet(books: books, sessions: sessions)
                     .presentationDetents([.large])
                     .presentationDragIndicator(.hidden)
             }
@@ -249,6 +255,33 @@ private extension ReadingGoalsView {
                 }
                 .buttonStyle(.plain)
             }
+
+            Button {
+                showingCatchUp = true
+            } label: {
+                HStack(spacing: 7) {
+                    Image("clockwavy")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 13, height: 13)
+
+                    Text("Catch Up")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                }
+                .foregroundStyle(LColors.cardTitle)
+                .padding(.horizontal, 13)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(LColors.glassSurface)
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .strokeBorder(LColors.accents.secondary, lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -1897,6 +1930,8 @@ struct LogSessionSheet: View {
             linkedGoalTitles: linkedGoals.map(\.displayTitle),
             durationMinutes: mins,
             pagesRead: pages,
+            startPage: Int(startPage) ?? 0,
+            endPage: enteredEndPage,
             notes: "",
             date: sessionDate
         )

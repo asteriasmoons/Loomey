@@ -25,6 +25,9 @@ final class ReadingSession {
     // Session data
     var durationMinutes: Int = 0
     var pagesRead: Int = 0
+    var startPage: Int = 0
+    var endPage: Int = 0
+    var isCatchUpSession: Bool = false
     var notes: String = ""
     var date: Date = Date()
 
@@ -46,6 +49,9 @@ final class ReadingSession {
         linkedGoalTitles: [String] = [],
         durationMinutes: Int = 0,
         pagesRead: Int = 0,
+        startPage: Int = 0,
+        endPage: Int = 0,
+        isCatchUpSession: Bool = false,
         notes: String = "",
         date: Date = Date()
     ) {
@@ -60,6 +66,9 @@ final class ReadingSession {
         self.linkedGoalTitles = storedGoalTitles
         self.durationMinutes = durationMinutes
         self.pagesRead = pagesRead
+        self.startPage = startPage
+        self.endPage = endPage
+        self.isCatchUpSession = isCatchUpSession
         self.notes = notes
         self.date = date
         self.pointsEarned = Self.calculatePoints(minutes: durationMinutes, pages: pagesRead)

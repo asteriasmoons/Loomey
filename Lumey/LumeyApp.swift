@@ -49,6 +49,8 @@ struct LumeyApp: App {
             ReadingList.self,
             ReaderSettings.self,
             EPUBCollection.self,
+            SubmittedReport.self,
+            SubmittedReportAttachment.self,
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,
