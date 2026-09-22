@@ -8,6 +8,7 @@ import SwiftData
 
 @main
 struct LumeyApp: App {
+    @UIApplicationDelegateAdaptor(LumeyNotificationDelegate.self) private var notificationDelegate
     private static let cloudKitContainerIdentifier = "iCloud.im.lystaria.Lumey"
 
     var sharedModelContainer: ModelContainer = {

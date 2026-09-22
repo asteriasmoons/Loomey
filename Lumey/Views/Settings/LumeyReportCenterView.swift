@@ -6,6 +6,7 @@ import UIKit
 struct LumeyReportCenterView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @EnvironmentObject private var appState: AppState
     @State private var showingBugReport = false
     @State private var showingBetaFeedback = false
     @State private var showingFeatureRequest = false
@@ -31,7 +32,7 @@ struct LumeyReportCenterView: View {
                     reportCard(
                         title: "Beta Feedback",
                         subtitle: "Share what you tested and how it felt.",
-                        asset: "chatsparkle"
+                        asset: "chatstar"
                     )
                 }
                 .buttonStyle(.plain)
@@ -72,6 +73,16 @@ struct LumeyReportCenterView: View {
         .lumeyReportAdaptivePresentation(isPresented: $showingSubmitted, useFullScreenCover: horizontalSizeClass == .regular) {
             LumeySubmittedReportsView()
         }
+        .onAppear {
+            if appState.pendingReportConversationID != nil {
+                showingSubmitted = true
+            }
+        }
+        .onChange(of: appState.pendingReportConversationID) { _, newValue in
+            if newValue != nil {
+                showingSubmitted = true
+            }
+        }
     }
 
     private func reportCard(title: String, subtitle: String, asset: String) -> some View {
@@ -85,7 +96,7 @@ struct LumeyReportCenterView: View {
                         .foregroundStyle(LColors.textPrimary)
                     Text(subtitle)
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                        .foregroundStyle(LColors.accents.contrast)
                         .multilineTextAlignment(.leading)
                 }
 
@@ -106,8 +117,20 @@ struct LumeyReportCenterView: View {
 struct LumeySubmittedReportsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject private var appState: AppState
     @Query(sort: \SubmittedReport.submittedAt, order: .reverse) private var reports: [SubmittedReport]
     @State private var selectedReport: SubmittedReport?
+    @State private var shouldOpenConversationForSelectedReport = false
+    @State private var isRefreshingConversations = false
+
+    private let reportGridColumns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
+    private let reportGridCardContentHeight: CGFloat = 160
+    private let reportGridTitleHeight: CGFloat = 18
 
     var body: some View {
         ScrollView {
@@ -133,9 +156,12 @@ struct LumeySubmittedReportsView: View {
                         .padding(.vertical, 10)
                     }
                 } else {
-                    LazyVStack(spacing: 12) {
+                    LazyVGrid(columns: reportGridColumns, spacing: 12) {
                         ForEach(reports) { report in
-                            Button { selectedReport = report } label: {
+                            Button {
+                                shouldOpenConversationForSelectedReport = false
+                                selectedReport = report
+                            } label: {
                                 submittedReportCard(report)
                             }
                             .buttonStyle(.plain)
@@ -151,58 +177,146 @@ struct LumeySubmittedReportsView: View {
         .background { LumeyBackground() }
         .lumeyReportAdaptivePresentation(isPresented: selectedReportPresented, useFullScreenCover: horizontalSizeClass == .regular) {
             if let selectedReport {
-                LumeySubmittedReportDetailView(report: selectedReport)
+                LumeySubmittedReportDetailView(
+                    report: selectedReport,
+                    openConversationOnAppear: shouldOpenConversationForSelectedReport
+                )
+                .onDisappear {
+                    shouldOpenConversationForSelectedReport = false
+                }
             }
+        }
+        .onAppear(perform: openPendingConversationTarget)
+        .onChange(of: appState.pendingReportConversationID) { _, _ in
+            openPendingConversationTarget()
+        }
+        .task(id: reportRefreshKey) {
+            await refreshConversationSummaries()
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: LumeyReportConversationNotificationManager.conversationDataDidChange
+        )) { _ in
+            Task { await refreshConversationSummaries() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await refreshConversationSummaries() }
+        }
+    }
+
+    private func openPendingConversationTarget() {
+        guard let pendingID = appState.pendingReportConversationID else { return }
+        guard let report = reports.first(where: { $0.reportID == pendingID }) else { return }
+        shouldOpenConversationForSelectedReport = true
+        selectedReport = report
+        _ = appState.consumePendingReportConversationID()
+    }
+
+    private var reportRefreshKey: String {
+        reports.map(\.reportID).joined(separator: "|")
+    }
+
+    private func refreshConversationSummaries() async {
+        guard !isRefreshingConversations else { return }
+        guard !reports.isEmpty else { return }
+        isRefreshingConversations = true
+        defer { isRefreshingConversations = false }
+
+        let service = LumeyReportConversationService()
+        for report in reports {
+            _ = await service.fetchSummary(for: report, modelContext: modelContext)
+        }
+    }
+
+    private func conversationStatusText(for report: SubmittedReport) -> String {
+        switch report.conversationState {
+        case .notStarted:
+            return ""
+        case .invited:
+            return "Invite waiting"
+        case .accepted:
+            return report.conversationUnreadCount > 0 ? "\(report.conversationUnreadCount) unread" : "Conversation open"
+        case .declined:
+            return "Declined"
         }
     }
 
     private func submittedReportCard(_ report: SubmittedReport) -> some View {
-        GlassCard(cornerRadius: 22) {
-            HStack(spacing: 14) {
-                LumeyReportIcon(asset: reportIconName(for: report), size: 48, iconSize: 22)
+        GlassCard(cornerRadius: 22, padding: 11) {
+            VStack(alignment: .center, spacing: 8) {
+                ZStack(alignment: .topTrailing) {
+                    LumeyReportIcon(asset: reportIconName(for: report), size: 48, iconSize: 22)
 
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(report.title)
-                        .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.textPrimary)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
+                    if report.conversationState == .invited || report.conversationUnreadCount > 0 {
+                        Circle()
+                            .fill(report.conversationUnreadCount > 0 ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.accents.primary))
+                            .frame(width: 13, height: 13)
+                            .overlay(Circle().strokeBorder(LColors.bg, lineWidth: 2))
+                            .offset(x: 3, y: -3)
+                            .accessibilityHidden(true)
+                    }
+                }
+
+                Text(report.title)
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, minHeight: reportGridTitleHeight, maxHeight: reportGridTitleHeight)
+
+                VStack(alignment: .center, spacing: 3) {
                     Text(report.submittedAt.formatted(date: .abbreviated, time: .shortened))
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(LColors.accents.contrast)
+                        .multilineTextAlignment(.center)
+
                     Text(report.reportType)
                         .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                        .foregroundStyle(LColors.accents.contrast)
+                        .multilineTextAlignment(.center)
+
                     Text(report.reportID)
                         .font(.system(size: 11, weight: .black, design: .rounded))
                         .foregroundStyle(LGradients.header)
+                        .multilineTextAlignment(.center)
+
+                    if report.conversationState != .notStarted {
+                        Text(conversationStatusText(for: report))
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .foregroundStyle(LColors.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(1)
+                    }
                 }
 
-                Spacer(minLength: 8)
+                HStack(spacing: 12) {
+                    if !report.attachments.isEmpty {
+                        Image("imagesign")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 17, height: 17)
+                            .foregroundStyle(LGradients.header)
+                    }
 
-                if !report.attachments.isEmpty {
-                    Image("imagesign")
+                    Image("chevright")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 17, height: 17)
+                        .frame(width: 18, height: 18)
                         .foregroundStyle(LGradients.header)
                 }
-
-                Image("chevright")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 15, height: 15)
-                    .foregroundStyle(LGradients.header)
+                .frame(maxWidth: .infinity)
             }
+            .frame(maxWidth: .infinity, minHeight: reportGridCardContentHeight, maxHeight: reportGridCardContentHeight)
         }
     }
 
     private func reportIconName(for report: SubmittedReport) -> String {
         switch report.reportType {
         case "Beta Feedback":
-            return "chatsparkle"
+            return "chatstar"
         case "Feature Request":
             return "brightbulb"
         default:
@@ -221,8 +335,23 @@ struct LumeySubmittedReportsView: View {
 struct LumeySubmittedReportDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     let report: SubmittedReport
+    let openConversationOnAppear: Bool
     @State private var selectedAttachment: SubmittedReportAttachment?
+    @State private var showConversation = false
+    @State private var conversationState: LumeyReportConversationState
+    @State private var conversationUnreadCount: Int
+    @State private var didHandleInitialConversationOpen = false
+    @StateObject private var conversationService = LumeyReportConversationService()
+
+    init(report: SubmittedReport, openConversationOnAppear: Bool = false) {
+        self.report = report
+        self.openConversationOnAppear = openConversationOnAppear
+        _conversationState = State(initialValue: report.conversationState)
+        _conversationUnreadCount = State(initialValue: report.conversationUnreadCount)
+    }
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -239,6 +368,12 @@ struct LumeySubmittedReportDetailView: View {
                 LumeyReportHeader(eyebrow: report.reportType, title: report.title) {
                     dismiss()
                 }
+                LumeyReportConversationButton(
+                    state: conversationState,
+                    unreadCount: conversationUnreadCount
+                ) {
+                    showConversation = true
+                }
                 reportDetails
                 attachmentsSection
             }
@@ -253,6 +388,45 @@ struct LumeySubmittedReportDetailView: View {
                 LumeySubmittedReportImageView(attachment: selectedAttachment)
             }
         }
+        .lumeyReportAdaptivePresentation(isPresented: $showConversation, useFullScreenCover: horizontalSizeClass == .regular) {
+            LumeyReportConversationView(report: report)
+        }
+        .task {
+            await refreshConversationSummaryAsync()
+            openInitialConversationIfNeeded()
+        }
+        .onChange(of: showConversation) { _, isShowing in
+            if !isShowing {
+                refreshConversationSummary()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: LumeyReportConversationNotificationManager.conversationDataDidChange
+        )) { _ in
+            refreshConversationSummary()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            refreshConversationSummary()
+        }
+    }
+
+    private func refreshConversationSummary() {
+        Task {
+            await refreshConversationSummaryAsync()
+        }
+    }
+
+    private func refreshConversationSummaryAsync() async {
+        let summary = await conversationService.fetchSummary(for: report, modelContext: modelContext)
+        conversationState = summary.state
+        conversationUnreadCount = summary.reporterUnreadCount
+    }
+
+    private func openInitialConversationIfNeeded() {
+        guard openConversationOnAppear, !didHandleInitialConversationOpen else { return }
+        didHandleInitialConversationOpen = true
+        showConversation = true
     }
 
     @ViewBuilder
@@ -282,17 +456,17 @@ struct LumeySubmittedReportDetailView: View {
                 metadataTile(label: "AI", value: report.needsAI)
             }
 
-            reportTextSection(title: "What Should the Feature Do?", text: report.featureDescription)
+            reportTextSection(title: "What Should the Feature Do?", text: report.featureDescription, headerColor: LColors.accents.secondary)
             reportTextSection(title: "How Should It Work?", text: report.imaginedWorkflow)
             if !report.relatedExistingFeature.trimmed.isEmpty {
-                reportTextSection(title: "Related Existing Feature", text: report.relatedExistingFeature)
+                reportTextSection(title: "Related Existing Feature", text: report.relatedExistingFeature, headerColor: LColors.accents.secondary)
             }
             reportTextSection(title: "Problem or Limitation", text: report.problemAddressed)
-            reportTextSection(title: "Desired Result", text: report.desiredResult)
+            reportTextSection(title: "Desired Result", text: report.desiredResult, headerColor: LColors.accents.secondary)
             if !report.additionalDetails.trimmed.isEmpty {
                 reportTextSection(title: "Additional Details", text: report.additionalDetails)
             }
-            diagnosticsSection
+            diagnosticsSection(headerColor: LColors.accents.secondary)
         }
     }
 
@@ -306,12 +480,12 @@ struct LumeySubmittedReportDetailView: View {
                 metadataTile(label: "Report ID", value: report.reportID)
             }
 
-            reportTextSection(title: "What Did You Test?", text: report.testedWhat)
-            reportTextSection(title: "What Worked Well?", text: report.workedWell)
-            reportTextSection(title: "What Could Be Better?", text: report.couldBeBetter)
-            reportTextSection(title: "Anything Unexpected?", text: report.unexpected)
-            reportTextSection(title: "Additional Thoughts", text: report.additionalNotes)
-            diagnosticsSection
+            reportTextSection(title: "What Did You Test?", text: report.testedWhat, headerColor: LColors.accents.secondary)
+            reportTextSection(title: "What Worked Well?", text: report.workedWell, headerColor: LColors.accents.secondary)
+            reportTextSection(title: "What Could Be Better?", text: report.couldBeBetter, headerColor: LColors.accents.secondary)
+            reportTextSection(title: "Anything Unexpected?", text: report.unexpected, headerColor: LColors.accents.secondary)
+            reportTextSection(title: "Additional Thoughts", text: report.additionalNotes, headerColor: LColors.accents.secondary)
+            diagnosticsSection()
         }
     }
 
@@ -327,7 +501,7 @@ struct LumeySubmittedReportDetailView: View {
             }
 
             reportTextSection(title: "What Happened", text: report.descriptionText)
-            reportTextSection(title: "Expected Behavior", text: report.expectedBehavior)
+            reportTextSection(title: "Expected Behavior", text: report.expectedBehavior, headerColor: LColors.accents.secondary)
 
             if !report.steps.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
@@ -353,8 +527,8 @@ struct LumeySubmittedReportDetailView: View {
                 }
             }
 
-            reportTextSection(title: "Additional Notes", text: report.additionalNotes)
-            diagnosticsSection
+            reportTextSection(title: "Additional Notes", text: report.additionalNotes, headerColor: LColors.accents.secondary)
+            diagnosticsSection()
         }
     }
 
@@ -376,9 +550,9 @@ struct LumeySubmittedReportDetailView: View {
         }
     }
 
-    private var diagnosticsSection: some View {
+    private func diagnosticsSection(headerColor: Color? = nil) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            LumeyReportSectionHeader(title: "Diagnostics")
+            LumeyReportSectionHeader(title: "Diagnostics", color: headerColor)
             LazyVGrid(columns: columns, spacing: 12) {
                 metadataTile(label: "App", value: report.appName)
                 metadataTile(label: "Version", value: report.appVersion)
@@ -404,7 +578,7 @@ struct LumeySubmittedReportDetailView: View {
                 Text(label.uppercased())
                     .font(.system(size: 10, weight: .black, design: .rounded))
                     .tracking(1.5)
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(LColors.accents.contrast)
                 Text(value.trimmed.isEmpty ? "Not provided" : value)
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .foregroundStyle(value.trimmed.isEmpty ? AnyShapeStyle(LColors.textSecondary) : AnyShapeStyle(LColors.textPrimary))
@@ -416,9 +590,9 @@ struct LumeySubmittedReportDetailView: View {
         }
     }
 
-    private func reportTextSection(title: String, text: String) -> some View {
+    private func reportTextSection(title: String, text: String, headerColor: Color? = nil) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            LumeyReportSectionHeader(title: title)
+            LumeyReportSectionHeader(title: title, color: headerColor)
             GlassCard(cornerRadius: 22) {
                 Text(text.trimmed.isEmpty ? "Not provided" : text)
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -773,9 +947,9 @@ struct LumeyReportHeader: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(eyebrow)
-                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .font(.system(size: 13, weight: .black, design: .rounded))
                     .tracking(1.6)
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(LColors.accents.contrast)
 
                 Text(title)
                     .font(.system(size: 32, weight: .black, design: .rounded))
@@ -790,11 +964,23 @@ struct LumeyReportHeader: View {
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 17, height: 17)
-                    .foregroundStyle(LGradients.header)
-                    .frame(width: 44, height: 44)
-                    .background(LColors.glassSurface, in: Circle())
-                    .overlay { Circle().strokeBorder(LColors.glassBorder, lineWidth: 1) }
+                    .frame(width: 24, height: 24)
+                    .foregroundStyle(
+                        LColors.accents.primary
+                    )
+                    .frame(width: 46, height: 46)
+                    .background(
+                        Circle()
+                            .fill(LColors.bg)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(
+                                        LColors.accents.primary,
+                                        lineWidth: 1.35
+                                    )
+                            )
+                            .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
+                    )
             }
             .buttonStyle(.plain)
             .padding(.top, 16)
@@ -842,11 +1028,12 @@ struct LumeyReportInfoCard: View {
 
 struct LumeyReportSectionHeader: View {
     let title: String
+    var color: Color? = nil
 
     var body: some View {
         Text(title)
             .font(.system(size: 20, weight: .black, design: .rounded))
-            .foregroundStyle(LColors.headingPrimary)
+            .foregroundStyle(color ?? LColors.accents.contrast)
     }
 }
 
@@ -865,7 +1052,7 @@ struct LumeyReportTextField: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 11)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15))
         }
     }
 }
@@ -898,7 +1085,7 @@ struct LumeyReportTextEditor: View {
                     .padding(10)
             }
             .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15))
         }
     }
 }
@@ -958,7 +1145,7 @@ struct LumeyReportPickerField: View {
                     .scrollIndicators(.hidden)
                     .frame(height: dropdownHeight)
                     .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15))
                     .padding(.top, 8)
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
@@ -983,7 +1170,7 @@ struct LumeyReportPickerField: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 11)
         .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15))
     }
 
     private var dropdownRowHeight: CGFloat { 42 }

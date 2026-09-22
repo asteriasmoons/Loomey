@@ -52,6 +52,7 @@ private struct PendingReadingStreakSettingsChange {
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @EnvironmentObject private var appState: AppState
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
     private var books: [Book]
@@ -236,6 +237,16 @@ struct SettingsView: View {
                     .presentationDetents([.large])
                     .presentationDragIndicator(.hidden)
             }
+            .onAppear {
+                if appState.pendingReportConversationID != nil {
+                    showingReportCenter = true
+                }
+            }
+            .onChange(of: appState.pendingReportConversationID) { _, newValue in
+                if newValue != nil {
+                    showingReportCenter = true
+                }
+            }
             .adaptivePresentation(isPresented: $showingStreakSettings, useFullScreenCover: horizontalSizeClass == .regular) {
                 ReadingStreakSettingsSheet(
                     configuration: streakConfiguration,
@@ -316,7 +327,7 @@ private extension SettingsView {
             title: "Send a Report",
             subtitle: "Send bug reports, beta feedback, and feature requests to Voxiverse.",
             iconName: "document",
-            gradientColors: [LColors.gradientPink, LColors.gradientBlue]
+            gradientColors: [LColors.accents.contrast, LColors.accents.primary]
         ) {
             showingReportCenter = true
         }
@@ -327,13 +338,15 @@ private extension SettingsView {
             SettingsMetricCard(
                 title: "Active",
                 value: "\(activeBooks.count)",
-                iconName: "books"
+                iconName: "books",
+                gradientColors: [LColors.gradientCyan, LColors.gradientPurple]
             )
 
             SettingsMetricCard(
                 title: "Archive",
                 value: "\(syncedBooks.count - activeBooks.count)",
-                iconName: "folderfill"
+                iconName: "folderfill",
+                gradientColors: [LColors.gradientCyan, LColors.gradientPink]
             )
         }
     }
@@ -373,7 +386,7 @@ private extension SettingsView {
                 title: "Export Lumey",
                 subtitle: "Save your Lumey library as a clean CSV file",
                 iconName: "exportfill",
-                gradientColors: [LColors.gradientYellow, LColors.gradientBlue]
+                gradientColors: [LColors.accents.contrast, LColors.accents.primary]
             ) {
                 prepareLumeyExport()
             }
@@ -1039,18 +1052,12 @@ private struct ReadingStreakSettingsSheet: View {
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
-                    HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("SETTINGS")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .tracking(1.6)
-                                .foregroundStyle(LColors.textSecondary)
-
-                            Text("Reading Streaks")
-                                .font(.system(size: 32, weight: .black, design: .rounded))
-                                .foregroundStyle(LColors.headingPrimary)
-                        }
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .center) {
+                        Text("Reading Streaks")
+                            .font(.system(size: 32, weight: .black, design: .rounded))
+                            .foregroundStyle(LColors.headingPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
 
                         Spacer(minLength: 0)
 
@@ -1059,14 +1066,25 @@ private struct ReadingStreakSettingsSheet: View {
                                 .renderingMode(.template)
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 17, height: 17)
-                                .foregroundStyle(LGradients.header)
-                                .frame(width: 44, height: 44)
-                                .background(LColors.glassSurface, in: Circle())
-                                .overlay { Circle().strokeBorder(LColors.glassBorder, lineWidth: 1) }
+                                .frame(width: 24, height: 24)
+                                .foregroundStyle(
+                                    LColors.accents.primary
+                                )
+                                .frame(width: 46, height: 46)
+                                .background(
+                                    Circle()
+                                        .fill(LColors.bg)
+                                        .overlay(
+                                            Circle()
+                                                .strokeBorder(
+                                                    LColors.accents.primary,
+                                                    lineWidth: 1.35
+                                                )
+                                        )
+                                        .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
+                                )
                         }
                         .buttonStyle(.plain)
-                        .padding(.top, 16)
                     }
 
                     ReadingStreakSettingsSection(
@@ -1076,7 +1094,8 @@ private struct ReadingStreakSettingsSheet: View {
                     )
                 }
                 .padding(.horizontal, LSpacing.pageHorizontal)
-                .padding(.bottom, 100)
+                .padding(.top, 20)
+                .padding(.bottom, 120)
             }
         }
     }
@@ -1368,6 +1387,7 @@ private struct SettingsMetricCard: View {
     let title: String
     let value: String
     let iconName: String
+    let gradientColors: [Color]
 
     var body: some View {
         GlassCard(cornerRadius: 20, padding: 16, variant: .subtle) {
@@ -1379,7 +1399,16 @@ private struct SettingsMetricCard: View {
                     .frame(width: 18, height: 18)
                     .foregroundStyle(LColors.accents.contrast)
                     .frame(width: 38, height: 38)
-                    .background(Circle().fill(LColors.iconContainer.primary))
+                    .background(
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: gradientColors,
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(value)
