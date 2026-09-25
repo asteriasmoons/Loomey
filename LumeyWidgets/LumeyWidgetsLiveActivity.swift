@@ -56,7 +56,7 @@ struct LumeyWidgetsLiveActivity: Widget {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(context.state.isPaused ? "Paused" : "Live")
                             .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(context.state.isPaused ? .white.opacity(0.45) : Color(hex: "#03DBFC"))
+                            .foregroundStyle(context.state.isPaused ? .white.opacity(0.45) : Color(widgetHex: "#03DBFC"))
 
                         if context.state.isPaused {
                             Text(formatSeconds(context.state.pausedElapsedSeconds))
@@ -84,12 +84,12 @@ struct LumeyWidgetsLiveActivity: Widget {
                         } icon: {
                             Image(systemName: context.state.isPaused ? "pause.circle.fill" : "timer")
                                 .font(.system(size: 14))
-                                .foregroundStyle(context.state.isPaused ? .white.opacity(0.45) : Color(hex: "#03DBFC"))
+                                .foregroundStyle(context.state.isPaused ? .white.opacity(0.45) : Color(widgetHex: "#03DBFC"))
                         }
                         Spacer()
                         Text("Open Lumey")
                             .font(.system(size: 12, weight: .black, design: .rounded))
-                            .foregroundStyle(Color(hex: "#7D19F7"))
+                            .foregroundStyle(Color(widgetHex: "#7D19F7"))
                     }
                     .padding(.horizontal, 4)
                     .padding(.bottom, 4)
@@ -114,7 +114,7 @@ struct LumeyWidgetsLiveActivity: Widget {
                 WidgetBookIcon(size: 12)
             }
             .widgetURL(URL(string: "lumey://timer"))
-            .keylineTint(Color(hex: "#03DBFC"))
+            .keylineTint(Color(widgetHex: "#03DBFC"))
         }
     }
 
@@ -177,11 +177,11 @@ struct ReadingTimerLockScreenView: View {
 
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(context.state.isPaused ? Color.white.opacity(0.3) : Color(hex: "#03DBFC"))
+                        .fill(context.state.isPaused ? Color.white.opacity(0.3) : Color(widgetHex: "#03DBFC"))
                         .frame(width: 6, height: 6)
                     Text(context.state.isPaused ? "Paused" : "Live")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(context.state.isPaused ? .white.opacity(0.45) : Color(hex: "#03DBFC"))
+                        .foregroundStyle(context.state.isPaused ? .white.opacity(0.45) : Color(widgetHex: "#03DBFC"))
                 }
             }
         }
@@ -203,7 +203,7 @@ private struct WidgetBookIcon: View {
             .frame(width: size, height: size)
             .foregroundStyle(
                 LinearGradient(
-                    colors: [Color(hex: "#7D19F7"), Color(hex: "#B66CFF")],
+                    colors: [Color(widgetHex: "#7D19F7"), Color(widgetHex: "#B66CFF")],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -214,7 +214,7 @@ private struct WidgetBookIcon: View {
 // MARK: - Color Helper (widget target)
 
 private extension Color {
-    init(hex: String) {
+    init(widgetHex hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)

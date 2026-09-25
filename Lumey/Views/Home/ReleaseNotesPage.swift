@@ -8,6 +8,7 @@ import SwiftUI
 struct ReleaseNotesPage: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     @State private var expandedIDs: Set<String> = [ReleaseNotesCatalog.notes.first?.id ?? ""]
 
     var body: some View {
@@ -51,38 +52,53 @@ struct ReleaseNotesPage: View {
             Button {
                 dismiss()
             } label: {
-                Image("xmarkwavy")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
-                    .frame(width: 42, height: 42)
-                    .background(
-                        Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                            )
-                    )
+                ZStack {
+                    Circle()
+                        .fill(theme.palette.background)
+
+                    BubblyIconMaterial(tint: accentColor(for: 0))
+                        .mask {
+                            Circle()
+                                .strokeBorder(lineWidth: 1.2)
+                        }
+
+                    Image("xmarkwavy")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .bubblyReleaseMaterial(tint: accentColor(for: 0))
+                }
+                .frame(width: 42, height: 42)
             }
             .buttonStyle(.plain)
         }
     }
 
     private var introCard: some View {
-        GlassCard(variant: .featured) {
+        let tint = accentColor(for: 0)
+
+        return GlassCard(variant: .featured, borderColor: tint) {
             HStack(spacing: 14) {
-                Image("timebook")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.contrast)
-                    .frame(width: 42, height: 42)
-                    .background(Circle().fill(LColors.iconContainer.primary))
-                    .overlay(Circle().strokeBorder(LColors.accents.contrast, lineWidth: 1))
+                ZStack {
+                    Circle()
+                        .fill(theme.palette.surface)
+
+                    BubblyIconMaterial(tint: tint)
+                        .mask {
+                            Circle()
+                                .strokeBorder(lineWidth: 1)
+                        }
+
+                    BubblyIconMaterial(tint: tint)
+                        .mask {
+                            Image("timebook")
+                                .resizable()
+                                .scaledToFit()
+                        }
+                        .frame(width: 20, height: 20)
+                }
+                .frame(width: 42, height: 42)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("What changed")
@@ -98,18 +114,24 @@ struct ReleaseNotesPage: View {
                 Spacer(minLength: 0)
             }
         }
+        .bubblyReleaseBorder(tint: tint, cornerRadius: 24)
     }
 
     private func releaseNoteCard(_ note: LumeyReleaseNote, accentIndex: Int) -> some View {
         let isExpanded = expandedIDs.contains(note.id)
-        let tint = accentColor(for: accentIndex)
+        let tint = accentColor(for: accentIndex + 1)
 
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.84)) {
                 toggle(note.id)
             }
         } label: {
-            GlassCard(cornerRadius: 20, padding: 16, variant: isExpanded ? .featured : .primary) {
+            GlassCard(
+                cornerRadius: 20,
+                padding: 16,
+                variant: isExpanded ? .featured : .primary,
+                borderColor: tint
+            ) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .top, spacing: 12) {
                         VStack(alignment: .leading, spacing: 5) {
@@ -119,7 +141,7 @@ struct ReleaseNotesPage: View {
 
                             Text(note.releaseDate)
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                                .foregroundStyle(tint)
+                                .bubblyReleaseMaterial(tint: tint)
 
                             Text(note.headline)
                                 .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -134,20 +156,17 @@ struct ReleaseNotesPage: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(tint)
+                            .bubblyReleaseMaterial(tint: tint)
                     }
 
                     if isExpanded {
                         VStack(alignment: .leading, spacing: 10) {
-                            fullWidthDivider
+                            fullWidthDivider(tint: tint)
 
                             ForEach(Array(note.bullets.enumerated()), id: \.offset) { index, bullet in
                                 bulletRow(
                                     bullet,
-                                    tint: bulletTint(
-                                        baseTint: tint,
-                                        index: index
-                                    )
+                                    tint: accentColor(for: accentIndex + 1 + index)
                                 )
                             }
                         }
@@ -156,19 +175,19 @@ struct ReleaseNotesPage: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .bubblyReleaseBorder(tint: tint, cornerRadius: 20)
         }
         .buttonStyle(.plain)
     }
 
-    private var fullWidthDivider: some View {
+    private func fullWidthDivider(tint: Color) -> some View {
         GeometryReader { proxy in
             let dotCount = max(Int(proxy.size.width / 8), 1)
 
             HStack(spacing: 4) {
                 ForEach(0..<dotCount, id: \.self) { _ in
-                    Circle()
-                        .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
-                        .background(Circle().fill(LColors.surface.nested))
+                    BubblyIconMaterial(tint: tint)
+                        .mask { Circle() }
                         .frame(width: 4, height: 4)
                 }
             }
@@ -179,8 +198,8 @@ struct ReleaseNotesPage: View {
 
     private func bulletRow(_ text: String, tint: Color) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Circle()
-                .fill(tint)
+            BubblyIconMaterial(tint: tint)
+                .mask { Circle() }
                 .frame(width: 8, height: 8)
                 .padding(.top, 5)
 
@@ -193,20 +212,8 @@ struct ReleaseNotesPage: View {
     }
 
     private func accentColor(for index: Int) -> Color {
-        switch index % 4 {
-        case 0: return LColors.accents.primary
-        case 1: return LColors.accents.contrast
-        case 2: return LColors.accents.secondary
-        default: return LColors.accents.special
-        }
-    }
-
-    private func bulletTint(baseTint: Color, index: Int) -> Color {
-        switch index % 3 {
-        case 0: return baseTint
-        case 1: return LColors.accents.secondary
-        default: return LColors.accents.contrast
-        }
+        let rotation = theme.palette.rotation
+        return rotation[index % rotation.count]
     }
 
     private func toggle(_ id: String) {
@@ -214,6 +221,28 @@ struct ReleaseNotesPage: View {
             expandedIDs.remove(id)
         } else {
             expandedIDs.insert(id)
+        }
+    }
+}
+
+private extension View {
+    func bubblyReleaseMaterial(tint: Color) -> some View {
+        foregroundStyle(.clear)
+            .overlay {
+                BubblyIconMaterial(tint: tint)
+                    .mask { self }
+                    .allowsHitTesting(false)
+            }
+    }
+
+    func bubblyReleaseBorder(tint: Color, cornerRadius: CGFloat) -> some View {
+        overlay {
+            BubblyIconMaterial(tint: tint)
+                .mask {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .strokeBorder(lineWidth: 1)
+                }
+                .allowsHitTesting(false)
         }
     }
 }

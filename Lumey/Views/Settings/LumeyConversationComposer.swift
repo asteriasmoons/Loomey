@@ -3,6 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct LumeyConversationComposer: View {
+    @Environment(\.appTheme) private var theme
     @Binding var draft: String
     let isEnabled: Bool
     let isSending: Bool
@@ -10,6 +11,7 @@ struct LumeyConversationComposer: View {
     let onSend: (String, [LumeyConversationAttachment]) -> Bool
 
     @State private var isExpanded = false
+    @State private var showingAttachmentMenu = false
     @State private var showingPhotos = false
     @State private var showingFiles = false
     @State private var selectedPhotos: [PhotosPickerItem] = []
@@ -103,9 +105,8 @@ struct LumeyConversationComposer: View {
                 .padding(.horizontal, 12)
 
             HStack {
-                Menu {
-                    Button("Gallery") { showingPhotos = true }
-                    Button("Files") { showingFiles = true }
+                Button {
+                    showingAttachmentMenu = true
                 } label: {
                     icon("attach", tint: LColors.accents.primary, size: 29)
                         .frame(width: 42, height: 42)
@@ -115,6 +116,21 @@ struct LumeyConversationComposer: View {
                 .disabled(!isEnabled)
                 .opacity(isEnabled ? 1 : 0.45)
                 .accessibilityLabel("Add attachment")
+                .popover(isPresented: $showingAttachmentMenu, attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        attachmentMenuButton("Gallery") {
+                            showingAttachmentMenu = false
+                            showingPhotos = true
+                        }
+                        attachmentMenuButton("Files") {
+                            showingAttachmentMenu = false
+                            showingFiles = true
+                        }
+                    }
+                    .padding(8)
+                    .background(LColors.surface.elevated)
+                    .presentationCompactAdaptation(.popover)
+                }
 
                 Spacer(minLength: 0)
 
@@ -137,7 +153,7 @@ struct LumeyConversationComposer: View {
         }
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
+                .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
         }
         .sheet(isPresented: $isExpanded) { expandedEditor }
         .photosPicker(isPresented: $showingPhotos, selection: $selectedPhotos, maxSelectionCount: 3, matching: .images)
@@ -164,10 +180,57 @@ struct LumeyConversationComposer: View {
             .scaledToFit()
             .frame(width: size, height: size)
             .foregroundStyle(tint)
+            .bubblyIconMaterial(tint: tint)
+    }
+
+    private func attachmentMenuButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundStyle(LColors.text.primary)
+                .frame(minWidth: 120, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var expandedEditor: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            HStack {
+                Button { isExpanded = false } label: {
+                    icon("xmarkwavy", tint: LColors.accents.secondary, size: 24)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Close message editor")
+
+                Spacer()
+
+                Text("Message")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .foregroundStyle(LColors.text.primary)
+
+                Spacer()
+
+                Button {
+                    sendDraft()
+                    isExpanded = false
+                } label: {
+                    icon("send", tint: LColors.accents.secondary, size: 24)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSend)
+                .opacity(canSend ? 1 : 0.45)
+                .accessibilityLabel("Send message")
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+
             TextEditor(text: $draft)
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundStyle(LColors.text.primary)
@@ -175,27 +238,8 @@ struct LumeyConversationComposer: View {
                 .scrollContentBackground(.hidden)
                 .padding(16)
                 .background(LColors.surface.primary)
-                .navigationTitle("Message")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button { isExpanded = false } label: {
-                            icon("xmarkwavy", tint: LColors.accents.secondary, size: 24)
-                        }
-                        .accessibilityLabel("Close message editor")
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button {
-                            sendDraft()
-                            isExpanded = false
-                        } label: {
-                            icon("send", tint: LColors.accents.secondary, size: 24)
-                        }
-                        .disabled(!canSend)
-                        .accessibilityLabel("Send message")
-                    }
-                }
         }
+        .background(LColors.surface.primary)
         .presentationDetents([.large])
     }
 

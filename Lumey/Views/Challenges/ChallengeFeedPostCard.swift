@@ -7,11 +7,14 @@ import SwiftUI
 import UIKit
 
 struct ChallengeFeedPostCard: View {
+    @Environment(\.appTheme) private var theme
+
     let feedItem: ChallengeFeedItemDTO
     let profile: ChallengeUserProfileDTO?
     let post: ChallengeFeedPostDTO?
     let linkedBookTitle: String?
     let linkedChallengeTitle: String?
+    var accentColor: Color = LColors.accents.primary
 
     let isLiked: Bool
     let onLikeTapped: () -> Void
@@ -74,7 +77,7 @@ struct ChallengeFeedPostCard: View {
     }
 
     var body: some View {
-        GlassCard(padding: 14, variant: .featured) {
+        GlassCard(padding: 14, variant: .featured, borderColor: accentColor) {
             VStack(alignment: .leading, spacing: 13) {
                 headerRow
 
@@ -154,7 +157,7 @@ struct ChallengeFeedPostCard: View {
 
                         Text(displayMood)
                             .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.accents.primary)
+                            .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             .lineLimit(1)
                     }
                 }
@@ -167,14 +170,14 @@ struct ChallengeFeedPostCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LColors.accents.contrast)
+                .bubblyIconMaterial(tint: accentColor)
                 .frame(width: 32, height: 32)
                 .background(
                     Circle()
                         .fill(LColors.glassSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(LColors.accents.primary, lineWidth: 1)
+                                .strokeBorder(accentColor, lineWidth: 1)
                         )
                 )
         }
@@ -198,7 +201,7 @@ struct ChallengeFeedPostCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 12, height: 12)
-                .foregroundStyle(LColors.accents.secondary)
+                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
             Text("Contains spoilers")
                 .font(.system(size: 10, weight: .black, design: .rounded))
@@ -371,12 +374,16 @@ struct ChallengeFeedPostCard: View {
                 .font(.system(size: 11, weight: .black, design: .rounded))
                 .lineLimit(1)
         }
-        .foregroundStyle(LColors.textSecondary)
+        .foregroundStyle(.white)
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
         .background(
             Capsule(style: .continuous)
-                .fill(LColors.surface.nested)
+                .fill(.clear)
+                .overlay {
+                    BubblyIconMaterial(tint: theme.palette.primaryAction)
+                        .clipShape(Capsule(style: .continuous))
+                }
         )
     }
     
@@ -392,7 +399,7 @@ struct ChallengeFeedPostCard: View {
                         .fill(LColors.surface.nested)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(LColors.border.nested, lineWidth: 1)
+                                .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                         )
                 )
 
@@ -409,12 +416,7 @@ struct ChallengeFeedPostCard: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
-                    .background(
-                        Circle()
-                            .fill(LGradients.header)
-                    )
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
             }
             .buttonStyle(.plain)
         }
@@ -436,9 +438,10 @@ struct ChallengeFeedPostCard: View {
                         .frame(width: 20, height: 20)
                         .foregroundStyle(
                             isLiked
-                            ? AnyShapeStyle(LColors.gradientPurple)
+                            ? AnyShapeStyle(theme.palette.indicators)
                             : AnyShapeStyle(LColors.textSecondary)
                         )
+                        .bubblyIconMaterial(tint: isLiked ? theme.palette.indicators : theme.palette.secondaryAccent)
 
                     Text("\(feedItem.likeCount)")
                         .font(.system(size: 14, weight: .black, design: .rounded))
@@ -458,10 +461,9 @@ struct ChallengeFeedPostCard: View {
                         .scaledToFit()
                         .frame(width: 20, height: 20)
                         .foregroundStyle(
-                            showInlineCommentBox
-                            ? AnyShapeStyle(.white)
-                            : AnyShapeStyle(LColors.textSecondary)
+                            AnyShapeStyle(theme.palette.secondaryAccent)
                         )
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                     Text("\(feedItem.commentCount)")
                         .font(.system(size: 14, weight: .black, design: .rounded))
@@ -479,10 +481,9 @@ struct ChallengeFeedPostCard: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(
-                        feedItem.commentCount > 0
-                        ? AnyShapeStyle(.white)
-                        : AnyShapeStyle(LColors.textSecondary)
+                        AnyShapeStyle(theme.palette.secondaryAccent)
                     )
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
             }
             .buttonStyle(.plain)
 
@@ -497,7 +498,7 @@ struct ChallengeFeedPostCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                 }
                 .buttonStyle(.plain)
             }

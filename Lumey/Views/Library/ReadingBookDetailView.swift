@@ -12,6 +12,7 @@ struct ReadingBookDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
     @State private var isSummaryExpanded = false
     @State private var showEPUBImporter = false
@@ -83,17 +84,14 @@ struct ReadingBookDetailView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
-                    .background(
-                        Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                            )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
-                    )
+                    .background(Circle().fill(theme.palette.raisedSurface))
+                    .overlay {
+                        BubblyIconMaterial(tint: theme.palette.primaryAction)
+                            .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                    }
             }
             .buttonStyle(.plain)
         }
@@ -102,7 +100,7 @@ struct ReadingBookDetailView: View {
     // MARK: - EPUB Reader
 
     private var epubReaderCard: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 12) {
                     Image("openbook")
@@ -110,16 +108,14 @@ struct ReadingBookDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .foregroundStyle(theme.palette.primaryAction)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .frame(width: 42, height: 42)
-                        .background(
-                            Circle()
-                                .fill(LColors.iconContainer.primary)
-                        )
-                        .overlay(
-                            Circle()
-                                .strokeBorder(LColors.accents.contrast, lineWidth: 1)
-                        )
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                .mask { Circle().strokeBorder(lineWidth: 1) }
+                        }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(book.hasEPUB ? "EPUB Attached" : "No EPUB Attached")
@@ -177,17 +173,12 @@ struct ReadingBookDetailView: View {
             Text(title)
                 .font(.system(size: 13, weight: .black, design: .rounded))
         }
-        .foregroundStyle(LColors.accents.secondary)
+        .foregroundStyle(theme.palette.textPrimary)
+        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(
-            Capsule(style: .continuous)
-                .fill(LColors.glassSurface2)
-        )
-        .overlay(
-            Capsule(style: .continuous)
-                .strokeBorder(LColors.glassBorder, lineWidth: 1)
-        )
+        .background { BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 999) }
+        .bubblyTileLift()
     }
 
     // MARK: - Feature Cards Grid
@@ -202,83 +193,72 @@ struct ReadingBookDetailView: View {
             NavigationLink {
                 BookNotesView(book: book)
             } label: {
-                featureCard(icon: "lovedocument", title: "Notes", count: book.bookNotes?.count ?? 0)
+                featureCard(icon: "lovedocument", title: "Notes", count: book.bookNotes?.count ?? 0, tint: theme.palette.rotation[0])
             }
             .buttonStyle(.plain)
 
             NavigationLink {
                 BookQuotesView(book: book)
             } label: {
-                featureCard(icon: "starmark", title: "Quotes", count: book.bookQuotes?.count ?? 0)
+                featureCard(icon: "starmark", title: "Quotes", count: book.bookQuotes?.count ?? 0, tint: theme.palette.rotation[1])
             }
             .buttonStyle(.plain)
 
             NavigationLink {
                 BookReviewsView(book: book)
             } label: {
-                featureCard(icon: "starcircle", title: "Reviews", count: book.bookReviews?.count ?? 0)
+                featureCard(icon: "starcircle", title: "Reviews", count: book.bookReviews?.count ?? 0, tint: theme.palette.rotation[2])
             }
             .buttonStyle(.plain)
 
             NavigationLink {
                 BookInsightsView(book: book)
             } label: {
-                featureCard(icon: "pencil", title: "Insights", count: book.insights?.count ?? 0)
+                featureCard(icon: "pencil", title: "Insights", count: book.insights?.count ?? 0, tint: theme.palette.rotation[0])
             }
             .buttonStyle(.plain)
         }
     }
 
-    private func featureCard(icon: String, title: String, count: Int) -> some View {
-        GlassCard(cornerRadius: 18, padding: 14, variant: .tertiary) {
-            ZStack(alignment: .topTrailing) {
-                VStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LColors.gradientBlue.opacity(0.18)
-                            )
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(
-                                        LColors.accents.contrast,
-                                        lineWidth: 1
-                                    )
-                            )
-                            .frame(width: 54, height: 54)
+    private func featureCard(icon: String, title: String, count: Int, tint: Color) -> some View {
+        GlassCard(cornerRadius: 18, padding: 0, variant: .tertiary, borderColor: tint) {
+            ZStack {
+                BubblyLightWash(colors: [tint], intensity: 0.34, fadeEnd: 0.82)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
+                ZStack(alignment: .topTrailing) {
+                    VStack(spacing: 12) {
                         Image(icon)
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 26, height: 26)
-                            .foregroundStyle(
-                                LColors.accents.contrast
-                            )
+                            .frame(width: 32, height: 32)
+                            .foregroundStyle(tint)
+                            .bubblyIconMaterial(tint: tint)
+                            .frame(height: 54)
+
+                        Text(title)
+                            .font(.system(size: 13, weight: .black, design: .rounded))
+                            .foregroundStyle(LColors.cardTitle)
                     }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 100)
 
-                    Text(title)
-                        .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                    Text("\(count)")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .foregroundStyle(tint)
+                        .bubblyIconMaterial(tint: tint)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: tint)
+                                .mask { Capsule().strokeBorder(lineWidth: 1) }
+                        }
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 100)
-
-                Text("\(count)")
-                    .font(.system(size: 10, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.cardTitle)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(LGradients.header)
-                    )
-                    .overlay(
-                        Capsule(style: .continuous)
-                            .strokeBorder(LColors.border.subtle, lineWidth: 1)
-                    )
+                .padding(14)
             }
         }
     }
@@ -286,7 +266,7 @@ struct ReadingBookDetailView: View {
     // MARK: - Detail Header
 
     private var detailHeader: some View {
-        GlassCard(variant: .primary) {
+        GlassCard(variant: .primary, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 14) {
                 ZStack(alignment: .topTrailing) {
                     HStack(alignment: .top, spacing: 14) {
@@ -312,18 +292,18 @@ struct ReadingBookDetailView: View {
                             }
                             
                             FlowLayout(spacing: 8) {
-                                LibraryStatusPill(text: book.status.rawValue)
-                                LibraryStatusPill(text: book.format.rawValue)
-                                LibraryStatusPill(text: book.ownership.rawValue)
+                                LibraryStatusPill(text: book.status.rawValue, tint: theme.palette.rotation[0])
+                                LibraryStatusPill(text: book.format.rawValue, tint: theme.palette.rotation[1])
+                                LibraryStatusPill(text: book.ownership.rawValue, tint: theme.palette.rotation[2])
                                 
                                 if book.isFavorite {
-                                    LibraryStatusPill(text: "Favorite")
+                                    LibraryStatusPill(text: "Favorite", tint: theme.palette.rotation[0])
                                 }
                                 if book.isReread {
-                                    LibraryStatusPill(text: "Reread")
+                                    LibraryStatusPill(text: "Reread", tint: theme.palette.rotation[1])
                                 }
                                 if book.isDNF {
-                                    LibraryStatusPill(text: "DNF")
+                                    LibraryStatusPill(text: "DNF", tint: theme.palette.rotation[2])
                                 }
                             }
                         }
@@ -335,10 +315,18 @@ struct ReadingBookDetailView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    LibraryRatingRow(book: book)
+                    LibraryRatingRow(
+                        book: book,
+                        useBubblyMaterial: true,
+                        tint: theme.palette.secondaryAccent
+                    )
                     
                     VStack(alignment: .leading, spacing: 6) {
-                        GradientProgressBar(value: book.calculatedProgress, isPaused: book.status == .paused)
+                        GradientProgressBar(
+                            value: book.calculatedProgress,
+                            isPaused: book.status == .paused,
+                            tint: theme.palette.indicators
+                        )
                             .frame(height: 8)
                         
                         Text(progressSummaryText)
@@ -385,21 +373,14 @@ struct ReadingBookDetailView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 14, height: 14)
-                .foregroundStyle(
-                    LColors.accents.contrast
-                )
+                .foregroundStyle(theme.palette.primaryAction)
+                .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 .frame(width: 34, height: 34)
-                .background(
-                    Circle()
-                        .fill(LColors.iconContainer.primary)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    LColors.accents.contrast,
-                                    lineWidth: 1.2
-                                )
-                        )
-                )
+                .background(Circle().fill(theme.palette.raisedSurface))
+                .overlay {
+                    BubblyIconMaterial(tint: theme.palette.primaryAction)
+                        .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                }
         }
         .buttonStyle(.plain)
     }
@@ -407,35 +388,55 @@ struct ReadingBookDetailView: View {
     private var detailSections: some View {
         VStack(alignment: .leading, spacing: 14) {
             if !book.subtitle.isEmpty {
-                detailCard(title: "Subtitle") {
+                detailCard(title: "Subtitle", borderColor: theme.palette.indicators) {
                     LibraryDetailBlock(label: "Subtitle", value: book.subtitle)
                 }
             }
             
             if !book.genres.isEmpty || !book.tags.isEmpty || !book.moods.isEmpty || !book.tropes.isEmpty || !book.topics.isEmpty {
-                detailCard(title: "Organization") {
+                detailCard(title: "Organization", borderColor: theme.palette.primaryAction) {
                     VStack(alignment: .leading, spacing: 10) {
                         if !book.genres.isEmpty {
-                            LibraryWrappedPills(label: "Genre", values: book.genres)
+                            organizationPills(
+                                label: "Genre",
+                                values: book.genres,
+                                tint: theme.palette.primaryAction
+                            )
                         }
                         if !book.topics.isEmpty {
-                            LibraryWrappedPills(label: "Topics", values: book.topics)
+                            organizationPills(
+                                label: "Topics",
+                                values: book.topics,
+                                tint: theme.palette.secondaryAccent
+                            )
                         }
                         if !book.tags.isEmpty {
-                            LibraryWrappedPills(label: "Tags", values: book.tags)
+                            organizationPills(
+                                label: "Tags",
+                                values: book.tags,
+                                tint: theme.palette.secondaryAccent
+                            )
                         }
                         if !book.moods.isEmpty {
-                            LibraryWrappedPills(label: "Mood", values: book.moods)
+                            organizationPills(
+                                label: "Mood",
+                                values: book.moods,
+                                tint: theme.palette.indicators
+                            )
                         }
                         if !book.tropes.isEmpty {
-                            LibraryWrappedPills(label: "Tropes", values: book.tropes)
+                            organizationPills(
+                                label: "Tropes",
+                                values: book.tropes,
+                                tint: theme.palette.primaryAction
+                            )
                         }
                     }
                 }
             }
             
             if !book.publisher.isEmpty || !book.publicationYear.isEmpty || !book.isbn.isEmpty {
-                detailCard(title: "Publishing") {
+                detailCard(title: "Publishing", borderColor: theme.palette.secondaryAccent) {
                     VStack(alignment: .leading, spacing: 8) {
                         if !book.publisher.isEmpty {
                             LibraryDetailLine(label: "Publisher", value: book.publisher)
@@ -452,8 +453,12 @@ struct ReadingBookDetailView: View {
         }
     }
     
-    private func detailCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        GlassCard(variant: .secondary) {
+    private func detailCard<Content: View>(
+        title: String,
+        borderColor: Color,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        GlassCard(variant: .secondary, borderColor: borderColor) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(title)
                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -464,6 +469,21 @@ struct ReadingBookDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
+
+    private func organizationPills(label: String, values: [String], tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.system(size: 11, weight: .black, design: .rounded))
+                .foregroundStyle(LColors.textSecondary)
+
+            FlowLayout(spacing: 7) {
+                ForEach(values, id: \.self) { value in
+                    LibraryStatusPill(text: value, tint: tint)
+                }
+            }
+        }
+    }
+
     private func handleEPUBImport(_ result: Result<[URL], Error>) {
         epubError = nil
 

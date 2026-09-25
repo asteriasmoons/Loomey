@@ -6,6 +6,7 @@ import UIKit
 struct LumeyReportCenterView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
     @State private var showingBugReport = false
     @State private var showingBetaFeedback = false
@@ -15,15 +16,14 @@ struct LumeyReportCenterView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
-                LumeyReportHeader(eyebrow: "VOXIVERSE", title: "Send a Report") {
-                    dismiss()
-                }
+                reportCenterHeader
 
                 Button { showingBugReport = true } label: {
                     reportCard(
                         title: "Bug Report",
                         subtitle: "Tell Voxiverse what went wrong.",
-                        asset: "bug"
+                        asset: "bug",
+                        accentIndex: 0
                     )
                 }
                 .buttonStyle(.plain)
@@ -32,7 +32,8 @@ struct LumeyReportCenterView: View {
                     reportCard(
                         title: "Beta Feedback",
                         subtitle: "Share what you tested and how it felt.",
-                        asset: "chatstar"
+                        asset: "chatstar",
+                        accentIndex: 1
                     )
                 }
                 .buttonStyle(.plain)
@@ -41,7 +42,8 @@ struct LumeyReportCenterView: View {
                     reportCard(
                         title: "Feature Request",
                         subtitle: "Request something new for Loomey.",
-                        asset: "brightbulb"
+                        asset: "brightbulb",
+                        accentIndex: 2
                     )
                 }
                 .buttonStyle(.plain)
@@ -50,7 +52,8 @@ struct LumeyReportCenterView: View {
                     reportCard(
                         title: "Submitted",
                         subtitle: "View reports sent from this device.",
-                        asset: "inbox"
+                        asset: "inbox",
+                        accentIndex: 3
                     )
                 }
                 .buttonStyle(.plain)
@@ -85,18 +88,89 @@ struct LumeyReportCenterView: View {
         }
     }
 
-    private func reportCard(title: String, subtitle: String, asset: String) -> some View {
-        GlassCard(cornerRadius: 24) {
+    private var reportCenterHeader: some View {
+        let eyebrowTint = theme.palette.secondaryAccent
+        let closeTint = theme.palette.primaryAction
+
+        return HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("VOXIVERSE")
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .tracking(1.6)
+                    .bubblyReportCenterMaterial(tint: eyebrowTint)
+
+                Text("Send a Report")
+                    .font(.system(size: 32, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.headingPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                dismiss()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(theme.palette.background)
+
+                    BubblyIconMaterial(tint: closeTint)
+                        .mask {
+                            Circle()
+                                .strokeBorder(lineWidth: 1.35)
+                        }
+
+                    Image("xmarkwavy")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .bubblyReportCenterMaterial(tint: closeTint)
+                }
+                .frame(width: 46, height: 46)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 16)
+        }
+    }
+
+    private func reportCard(
+        title: String,
+        subtitle: String,
+        asset: String,
+        accentIndex: Int
+    ) -> some View {
+        let accent = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return GlassCard(cornerRadius: 24, borderColor: accent) {
             HStack(spacing: 14) {
-                LumeyReportIcon(asset: asset, size: 54, iconSize: 24)
+                ZStack {
+                    Circle()
+                        .fill(theme.palette.raisedSurface)
+
+                    BubblyIconMaterial(tint: accent)
+                        .mask {
+                            Circle()
+                                .strokeBorder(lineWidth: 1.2)
+                        }
+
+                    BubblyIconMaterial(tint: accent)
+                        .mask {
+                            Image(asset)
+                                .resizable()
+                                .scaledToFit()
+                        }
+                        .frame(width: 24, height: 24)
+                }
+                .frame(width: 54, height: 54)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 17, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.textPrimary)
+                        .bubblyReportCenterMaterial(tint: accent)
                     Text(subtitle)
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyReportCenterMaterial(tint: accent)
                         .multilineTextAlignment(.leading)
                 }
 
@@ -107,7 +181,7 @@ struct LumeyReportCenterView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)
-                    .foregroundStyle(LGradients.header)
+                    .bubblyReportCenterMaterial(tint: accent)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -119,6 +193,7 @@ struct LumeySubmittedReportsView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
     @Query(sort: \SubmittedReport.submittedAt, order: .reverse) private var reports: [SubmittedReport]
     @State private var selectedReport: SubmittedReport?
@@ -135,7 +210,12 @@ struct LumeySubmittedReportsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
-                LumeyReportHeader(eyebrow: "REPORTS", title: "Submitted") {
+                LumeyReportHeader(
+                    eyebrow: "REPORTS",
+                    title: "Submitted",
+                    eyebrowColor: theme.palette.secondaryAccent,
+                    bubbly: true
+                ) {
                     dismiss()
                 }
 
@@ -157,12 +237,13 @@ struct LumeySubmittedReportsView: View {
                     }
                 } else {
                     LazyVGrid(columns: reportGridColumns, spacing: 12) {
-                        ForEach(reports) { report in
+                        ForEach(reports.indices, id: \.self) { index in
+                            let report = reports[index]
                             Button {
                                 shouldOpenConversationForSelectedReport = false
                                 selectedReport = report
                             } label: {
-                                submittedReportCard(report)
+                                submittedReportCard(report, accentIndex: index)
                             }
                             .buttonStyle(.plain)
                         }
@@ -228,24 +309,27 @@ struct LumeySubmittedReportsView: View {
         }
     }
 
-    private func conversationStatusText(for report: SubmittedReport) -> String {
-        switch report.conversationState {
-        case .notStarted:
-            return ""
-        case .invited:
-            return "Invite waiting"
-        case .accepted:
-            return report.conversationUnreadCount > 0 ? "\(report.conversationUnreadCount) unread" : "Conversation open"
-        case .declined:
-            return "Declined"
-        }
-    }
+    private func submittedReportCard(_ report: SubmittedReport, accentIndex: Int) -> some View {
+        let accent = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
 
-    private func submittedReportCard(_ report: SubmittedReport) -> some View {
-        GlassCard(cornerRadius: 22, padding: 11) {
+        return GlassCard(cornerRadius: 22, padding: 11, borderColor: accent) {
             VStack(alignment: .center, spacing: 8) {
                 ZStack(alignment: .topTrailing) {
-                    LumeyReportIcon(asset: reportIconName(for: report), size: 48, iconSize: 22)
+                    ZStack {
+                        Circle()
+                            .fill(theme.palette.raisedSurface)
+
+                        BubblyIconMaterial(tint: accent)
+                            .mask { Circle().strokeBorder(lineWidth: 1.2) }
+
+                        Image(reportIconName(for: report))
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
+                            .bubblyIconMaterial(tint: accent)
+                    }
+                    .frame(width: 48, height: 48)
 
                     if report.conversationState == .invited || report.conversationUnreadCount > 0 {
                         Circle()
@@ -268,26 +352,19 @@ struct LumeySubmittedReportsView: View {
                 VStack(alignment: .center, spacing: 3) {
                     Text(report.submittedAt.formatted(date: .abbreviated, time: .shortened))
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .multilineTextAlignment(.center)
 
                     Text(report.reportType)
                         .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: theme.palette.indicators)
                         .multilineTextAlignment(.center)
 
                     Text(report.reportID)
                         .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(LGradients.header)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .multilineTextAlignment(.center)
 
-                    if report.conversationState != .notStarted {
-                        Text(conversationStatusText(for: report))
-                            .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(1)
-                    }
                 }
 
                 HStack(spacing: 12) {
@@ -305,7 +382,7 @@ struct LumeySubmittedReportsView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(LGradients.header)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -337,6 +414,7 @@ struct LumeySubmittedReportDetailView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appTheme) private var theme
     let report: SubmittedReport
     let openConversationOnAppear: Bool
     @State private var selectedAttachment: SubmittedReportAttachment?
@@ -365,12 +443,18 @@ struct LumeySubmittedReportDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
-                LumeyReportHeader(eyebrow: report.reportType, title: report.title) {
+                LumeyReportHeader(
+                    eyebrow: report.reportType,
+                    title: report.title,
+                    eyebrowColor: theme.palette.secondaryAccent,
+                    bubbly: true
+                ) {
                     dismiss()
                 }
                 LumeyReportConversationButton(
                     state: conversationState,
-                    unreadCount: conversationUnreadCount
+                    unreadCount: conversationUnreadCount,
+                    accentColor: theme.palette.primaryAction
                 ) {
                     showConversation = true
                 }
@@ -441,80 +525,92 @@ struct LumeySubmittedReportDetailView: View {
     }
 
     private var featureRequestDetails: some View {
-        VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
+        let hasRelatedFeature = !report.relatedExistingFeature.trimmed.isEmpty
+        let hasAdditionalDetails = !report.additionalDetails.trimmed.isEmpty
+        let problemIndex = hasRelatedFeature ? 3 : 2
+        let desiredIndex = problemIndex + 1
+        let additionalIndex = desiredIndex + 1
+        let diagnosticsIndex = additionalIndex + (hasAdditionalDetails ? 1 : 0)
+
+        return VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
             LazyVGrid(columns: columns, spacing: 12) {
-                metadataTile(label: "Submitted", value: report.submittedAt.formatted(date: .abbreviated, time: .omitted))
-                metadataTile(label: "Report ID", value: report.reportID)
-                metadataTile(label: "Area", value: report.category)
-                metadataTile(label: "Feature Type", value: report.featureType)
-                metadataTile(label: "Importance", value: report.featureImportance)
-                metadataTile(label: "Who Is This For?", value: report.intendedAudience)
-                metadataTile(label: "Where Should It Live?", value: report.desiredLocation)
-                metadataTile(label: "Saved Data", value: report.requiresSavedData)
-                metadataTile(label: "Notifications", value: report.needsNotifications)
-                metadataTile(label: "Sharing", value: report.needsSharing)
-                metadataTile(label: "AI", value: report.needsAI)
+                metadataTile(label: "Submitted", value: report.submittedAt.formatted(date: .abbreviated, time: .omitted), accentIndex: 0)
+                metadataTile(label: "Report ID", value: report.reportID, accentIndex: 1)
+                metadataTile(label: "Area", value: report.category, accentIndex: 2)
+                metadataTile(label: "Feature Type", value: displayFeatureType, accentIndex: 3)
+                metadataTile(label: "Importance", value: report.featureImportance, accentIndex: 4)
+                metadataTile(label: "Who Is This For?", value: report.intendedAudience, accentIndex: 5)
+                metadataTile(label: "Where Should It Live?", value: report.desiredLocation, accentIndex: 6)
+                metadataTile(label: "Saved Data", value: report.requiresSavedData, accentIndex: 7)
+                metadataTile(label: "Notifications", value: report.needsNotifications, accentIndex: 8)
+                metadataTile(label: "Sharing", value: report.needsSharing, accentIndex: 9)
+                metadataTile(label: "AI", value: report.needsAI, accentIndex: 10)
             }
 
-            reportTextSection(title: "What Should the Feature Do?", text: report.featureDescription, headerColor: LColors.accents.secondary)
-            reportTextSection(title: "How Should It Work?", text: report.imaginedWorkflow)
-            if !report.relatedExistingFeature.trimmed.isEmpty {
-                reportTextSection(title: "Related Existing Feature", text: report.relatedExistingFeature, headerColor: LColors.accents.secondary)
+            reportTextSection(title: "What Should the Feature Do?", text: report.featureDescription, accentIndex: 0)
+            reportTextSection(title: "How Should It Work?", text: report.imaginedWorkflow, accentIndex: 1)
+            if hasRelatedFeature {
+                reportTextSection(title: "Related Existing Feature", text: report.relatedExistingFeature, accentIndex: 2)
             }
-            reportTextSection(title: "Problem or Limitation", text: report.problemAddressed)
-            reportTextSection(title: "Desired Result", text: report.desiredResult, headerColor: LColors.accents.secondary)
-            if !report.additionalDetails.trimmed.isEmpty {
-                reportTextSection(title: "Additional Details", text: report.additionalDetails)
+            reportTextSection(title: "Problem or Limitation", text: report.problemAddressed, accentIndex: problemIndex)
+            reportTextSection(title: "Desired Result", text: report.desiredResult, accentIndex: desiredIndex)
+            if hasAdditionalDetails {
+                reportTextSection(title: "Additional Details", text: report.additionalDetails, accentIndex: additionalIndex)
             }
-            diagnosticsSection(headerColor: LColors.accents.secondary)
+            diagnosticsSection(headerColor: rotationColor(diagnosticsIndex), usesBubblyTiles: true)
         }
     }
 
     private var betaFeedbackDetails: some View {
         VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
             LazyVGrid(columns: columns, spacing: 12) {
-                metadataTile(label: "Submitted", value: report.submittedAt.formatted(date: .abbreviated, time: .omitted))
-                metadataTile(label: "Report Type", value: report.reportType)
-                metadataTile(label: "Area", value: report.category)
-                metadataTile(label: "Experience", value: report.overallExperience)
-                metadataTile(label: "Report ID", value: report.reportID)
+                metadataTile(label: "Submitted", value: report.submittedAt.formatted(date: .abbreviated, time: .omitted), accentIndex: 0)
+                metadataTile(label: "Report Type", value: report.reportType, accentIndex: 1)
+                metadataTile(label: "Area", value: report.category, accentIndex: 2)
+                metadataTile(label: "Experience", value: report.overallExperience, accentIndex: 3)
+                metadataTile(label: "Report ID", value: report.reportID, accentIndex: 4)
             }
 
-            reportTextSection(title: "What Did You Test?", text: report.testedWhat, headerColor: LColors.accents.secondary)
-            reportTextSection(title: "What Worked Well?", text: report.workedWell, headerColor: LColors.accents.secondary)
-            reportTextSection(title: "What Could Be Better?", text: report.couldBeBetter, headerColor: LColors.accents.secondary)
-            reportTextSection(title: "Anything Unexpected?", text: report.unexpected, headerColor: LColors.accents.secondary)
-            reportTextSection(title: "Additional Thoughts", text: report.additionalNotes, headerColor: LColors.accents.secondary)
-            diagnosticsSection()
+            reportTextSection(title: "What Did You Test?", text: report.testedWhat, accentIndex: 0)
+            reportTextSection(title: "What Worked Well?", text: report.workedWell, accentIndex: 1)
+            reportTextSection(title: "What Could Be Better?", text: report.couldBeBetter, accentIndex: 2)
+            reportTextSection(title: "Anything Unexpected?", text: report.unexpected, accentIndex: 3)
+            reportTextSection(title: "Additional Thoughts", text: report.additionalNotes, accentIndex: 4)
+            diagnosticsSection(headerColor: rotationColor(5), usesBubblyTiles: true)
         }
     }
 
     private var bugReportDetails: some View {
-        VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
+        let additionalNotesIndex = report.steps.isEmpty ? 2 : 3
+
+        return VStack(alignment: .leading, spacing: LSpacing.sectionGap) {
             LazyVGrid(columns: columns, spacing: 12) {
-                metadataTile(label: "Submitted", value: report.submittedAt.formatted(date: .abbreviated, time: .omitted))
-                metadataTile(label: "Status", value: report.status)
-                metadataTile(label: "Area", value: report.category)
-                metadataTile(label: "Severity", value: report.severity)
-                metadataTile(label: "Frequency", value: report.frequency)
-                metadataTile(label: "Report ID", value: report.reportID)
+                metadataTile(label: "Submitted", value: report.submittedAt.formatted(date: .abbreviated, time: .omitted), accentIndex: 0)
+                metadataTile(label: "Status", value: report.status, accentIndex: 1)
+                metadataTile(label: "Area", value: report.category, accentIndex: 2)
+                metadataTile(label: "Severity", value: report.severity, accentIndex: 3)
+                metadataTile(label: "Frequency", value: report.frequency, accentIndex: 4)
+                metadataTile(label: "Report ID", value: report.reportID, accentIndex: 5)
             }
 
-            reportTextSection(title: "What Happened", text: report.descriptionText)
-            reportTextSection(title: "Expected Behavior", text: report.expectedBehavior, headerColor: LColors.accents.secondary)
+            reportTextSection(title: "What Happened", text: report.descriptionText, headerColor: theme.palette.primaryAction, borderColor: theme.palette.secondaryAccent, bubblyHeader: true)
+            reportTextSection(title: "Expected Behavior", text: report.expectedBehavior, headerColor: theme.palette.secondaryAccent, borderColor: theme.palette.indicators, bubblyHeader: true)
 
             if !report.steps.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    LumeyReportSectionHeader(title: "Steps to Reproduce")
-                    GlassCard(cornerRadius: 22) {
+                    LumeyReportSectionHeader(title: "Steps to Reproduce", color: theme.palette.indicators, bubbly: true)
+                    GlassCard(cornerRadius: 22, borderColor: theme.palette.primaryAction) {
                         VStack(alignment: .leading, spacing: 12) {
                             ForEach(report.steps.indices, id: \.self) { index in
                                 HStack(alignment: .center, spacing: 12) {
                                     Text("\(index + 1)")
                                         .font(.system(size: 13, weight: .black, design: .rounded))
-                                        .foregroundStyle(LColors.bg)
+                                        .foregroundStyle(LColors.textPrimary)
                                         .frame(width: 28, height: 28)
-                                        .background(LGradients.tag, in: Circle())
+                                        .background {
+                                            BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                                .clipShape(Circle())
+                                        }
                                     Text(report.steps[index])
                                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                                         .foregroundStyle(LColors.textPrimary)
@@ -527,8 +623,8 @@ struct LumeySubmittedReportDetailView: View {
                 }
             }
 
-            reportTextSection(title: "Additional Notes", text: report.additionalNotes, headerColor: LColors.accents.secondary)
-            diagnosticsSection()
+            reportTextSection(title: "Additional Notes", text: report.additionalNotes, accentIndex: additionalNotesIndex)
+            diagnosticsSection(headerColor: rotationColor(additionalNotesIndex + 1), usesBubblyTiles: true)
         }
     }
 
@@ -536,7 +632,11 @@ struct LumeySubmittedReportDetailView: View {
     private var attachmentsSection: some View {
         if !report.attachments.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
-                LumeyReportSectionHeader(title: report.reportType == "Feature Request" ? "Reference Images" : "Attachments")
+                LumeyReportSectionHeader(
+                    title: report.reportType == "Feature Request" ? "Reference Images" : "Attachments",
+                    color: rotationColor(attachmentsSectionAccentIndex),
+                    bubbly: true
+                )
                 LazyVGrid(columns: attachmentColumns, spacing: 12) {
                     ForEach(report.attachments.sorted { $0.createdAt < $1.createdAt }) { attachment in
                         Button { selectedAttachment = attachment } label: {
@@ -550,16 +650,16 @@ struct LumeySubmittedReportDetailView: View {
         }
     }
 
-    private func diagnosticsSection(headerColor: Color? = nil) -> some View {
+    private func diagnosticsSection(headerColor: Color? = nil, usesBubblyTiles: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            LumeyReportSectionHeader(title: "Diagnostics", color: headerColor)
+            LumeyReportSectionHeader(title: "Diagnostics", color: headerColor, bubbly: usesBubblyTiles)
             LazyVGrid(columns: columns, spacing: 12) {
-                metadataTile(label: "App", value: report.appName)
-                metadataTile(label: "Version", value: report.appVersion)
-                metadataTile(label: "Build", value: report.buildNumber)
-                metadataTile(label: "Device", value: report.deviceModel)
-                metadataTile(label: "iOS", value: report.iOSVersion)
-                metadataTile(label: "Screen", value: displayScreenName)
+                metadataTile(label: "App", value: report.appName, accentIndex: usesBubblyTiles ? 0 : nil)
+                metadataTile(label: "Version", value: report.appVersion, accentIndex: usesBubblyTiles ? 1 : nil)
+                metadataTile(label: "Build", value: report.buildNumber, accentIndex: usesBubblyTiles ? 2 : nil)
+                metadataTile(label: "Device", value: report.deviceModel, accentIndex: usesBubblyTiles ? 3 : nil)
+                metadataTile(label: "iOS", value: report.iOSVersion, accentIndex: usesBubblyTiles ? 4 : nil)
+                metadataTile(label: "Screen", value: displayScreenName, accentIndex: usesBubblyTiles ? 5 : nil)
             }
         }
     }
@@ -572,28 +672,75 @@ struct LumeySubmittedReportDetailView: View {
         return trimmed
     }
 
-    private func metadataTile(label: String, value: String) -> some View {
-        GlassCard(cornerRadius: 18, padding: 0) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(label.uppercased())
-                    .font(.system(size: 10, weight: .black, design: .rounded))
-                    .tracking(1.5)
-                    .foregroundStyle(LColors.accents.contrast)
-                Text(value.trimmed.isEmpty ? "Not provided" : value)
-                    .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(value.trimmed.isEmpty ? AnyShapeStyle(LColors.textSecondary) : AnyShapeStyle(LColors.textPrimary))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 16)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+    private var displayFeatureType: String {
+        report.featureType == "Enhancement to Existing Feature"
+            ? "Enhancement"
+            : report.featureType
+    }
+
+    private var attachmentsSectionAccentIndex: Int {
+        switch report.reportType {
+        case "Feature Request":
+            let sectionCount = 4
+                + (report.relatedExistingFeature.trimmed.isEmpty ? 0 : 1)
+                + (report.additionalDetails.trimmed.isEmpty ? 0 : 1)
+            return sectionCount + 1
+        case "Beta Feedback":
+            return 6
+        default:
+            let additionalNotesIndex = report.steps.isEmpty ? 2 : 3
+            return additionalNotesIndex + 2
         }
     }
 
-    private func reportTextSection(title: String, text: String, headerColor: Color? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            LumeyReportSectionHeader(title: title, color: headerColor)
-            GlassCard(cornerRadius: 22) {
+    private func rotationColor(_ index: Int) -> Color {
+        theme.palette.rotation[index % theme.palette.rotation.count]
+    }
+
+    @ViewBuilder
+    private func metadataTile(label: String, value: String, accentIndex: Int? = nil) -> some View {
+        let content = VStack(alignment: .leading, spacing: 6) {
+            Text(label.uppercased())
+                .font(.system(size: 10, weight: .black, design: .rounded))
+                .tracking(1.5)
+                .foregroundStyle(accentIndex == nil ? LColors.accents.contrast : LColors.textSecondary)
+            Text(value.trimmed.isEmpty ? "Not provided" : value)
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(value.trimmed.isEmpty ? AnyShapeStyle(LColors.textSecondary) : AnyShapeStyle(LColors.textPrimary))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+
+        if let accentIndex {
+            content
+                .background {
+                    BubblyTileSurface(
+                        tint: theme.palette.rotation[accentIndex % theme.palette.rotation.count],
+                        cornerRadius: 18
+                    )
+                }
+                .bubblyTileLift()
+        } else {
+            GlassCard(cornerRadius: 18, padding: 0) { content }
+        }
+    }
+
+    private func reportTextSection(
+        title: String,
+        text: String,
+        headerColor: Color? = nil,
+        borderColor: Color? = nil,
+        bubblyHeader: Bool = false,
+        accentIndex: Int? = nil
+    ) -> some View {
+        let resolvedHeaderColor = accentIndex.map { rotationColor($0) } ?? headerColor
+        let resolvedBorderColor = accentIndex.map { rotationColor($0 + 1) } ?? borderColor
+
+        return VStack(alignment: .leading, spacing: 12) {
+            LumeyReportSectionHeader(title: title, color: resolvedHeaderColor, bubbly: bubblyHeader || accentIndex != nil)
+            GlassCard(cornerRadius: 22, borderColor: resolvedBorderColor) {
                 Text(text.trimmed.isEmpty ? "Not provided" : text)
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .foregroundStyle(text.trimmed.isEmpty ? LColors.textSecondary : LColors.textPrimary)
@@ -912,7 +1059,7 @@ enum LumeyReportFormOptions {
     ]
 
     static let featureTypes = [
-        "New Feature", "Enhancement to Existing Feature", "New Tool",
+        "New Feature", "Enhancement", "New Tool",
         "New View or Screen", "New Integration", "Automation",
         "Customization Option", "Accessibility", "Import / Export",
         "Widget", "Other"
@@ -941,6 +1088,8 @@ struct LumeyReportFormScaffold<Content: View>: View {
 struct LumeyReportHeader: View {
     let eyebrow: String
     let title: String
+    var eyebrowColor: Color? = nil
+    var bubbly = false
     let close: () -> Void
 
     var body: some View {
@@ -949,7 +1098,8 @@ struct LumeyReportHeader: View {
                 Text(eyebrow)
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .tracking(1.6)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .foregroundStyle(eyebrowColor ?? LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: eyebrowColor ?? LColors.accents.contrast, isEnabled: bubbly)
 
                 Text(title)
                     .font(.system(size: 32, weight: .black, design: .rounded))
@@ -968,19 +1118,19 @@ struct LumeyReportHeader: View {
                     .foregroundStyle(
                         LColors.accents.primary
                     )
+                    .bubblyIconMaterial(tint: LColors.accents.primary, isEnabled: bubbly)
                     .frame(width: 46, height: 46)
-                    .background(
+                    .background {
                         Circle()
                             .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(
-                                        LColors.accents.primary,
-                                        lineWidth: 1.35
-                                    )
-                            )
                             .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                    )
+                        if bubbly {
+                            BubblyIconMaterial(tint: LColors.accents.primary)
+                                .mask { Circle().strokeBorder(lineWidth: 1.35) }
+                        } else {
+                            Circle().strokeBorder(LColors.accents.primary, lineWidth: 1.35)
+                        }
+                    }
             }
             .buttonStyle(.plain)
             .padding(.top, 16)
@@ -1009,9 +1159,10 @@ struct LumeyReportIcon: View {
 struct LumeyReportInfoCard: View {
     let title: String
     let message: String
+    var borderColor: Color? = nil
 
     var body: some View {
-        GlassCard(cornerRadius: 22) {
+        GlassCard(cornerRadius: 22, borderColor: borderColor) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -1029,11 +1180,13 @@ struct LumeyReportInfoCard: View {
 struct LumeyReportSectionHeader: View {
     let title: String
     var color: Color? = nil
+    var bubbly = false
 
     var body: some View {
         Text(title)
             .font(.system(size: 20, weight: .black, design: .rounded))
             .foregroundStyle(color ?? LColors.accents.contrast)
+            .bubblyIconMaterial(tint: color ?? LColors.accents.contrast, isEnabled: bubbly)
     }
 }
 
@@ -1041,6 +1194,7 @@ struct LumeyReportTextField: View {
     let title: String
     let placeholder: String
     @Binding var text: String
+    var borderColor: Color? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -1052,7 +1206,7 @@ struct LumeyReportTextField: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 11)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(borderColor ?? LColors.accents.contrast, lineWidth: 1.15))
         }
     }
 }
@@ -1062,6 +1216,7 @@ struct LumeyReportTextEditor: View {
     let placeholder: String
     @Binding var text: String
     var minHeight: CGFloat
+    var borderColor: Color? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -1085,7 +1240,7 @@ struct LumeyReportTextEditor: View {
                     .padding(10)
             }
             .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(borderColor ?? LColors.accents.contrast, lineWidth: 1.15))
         }
     }
 }
@@ -1094,6 +1249,8 @@ struct LumeyReportPickerField: View {
     let title: String
     let options: [String]
     @Binding var selection: String
+    var bubblyTint: Color? = nil
+    var textShadow = false
     @State private var isExpanded = false
 
     var body: some View {
@@ -1121,8 +1278,9 @@ struct LumeyReportPickerField: View {
                                 } label: {
                                     HStack {
                                         Text(option)
-                                            .font(.system(size: 14, weight: option == selection ? .black : .semibold, design: .rounded))
-                                            .foregroundStyle(option == selection ? LColors.textPrimary : LColors.textSecondary)
+                                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                                            .foregroundStyle(LColors.textPrimary)
+                                            .shadow(color: textShadow ? Color.black.opacity(0.45) : .clear, radius: 3, y: 2)
                                         Spacer()
                                         if option == selection {
                                             Image("checkwavy")
@@ -1130,7 +1288,8 @@ struct LumeyReportPickerField: View {
                                                 .resizable()
                                                 .scaledToFit()
                                                 .frame(width: 13, height: 13)
-                                                .foregroundStyle(LGradients.header)
+                                                .foregroundStyle(LColors.textPrimary)
+                                                .shadow(color: Color.black.opacity(0.45), radius: 3, y: 2)
                                         }
                                     }
                                     .padding(.horizontal, 12)
@@ -1144,8 +1303,18 @@ struct LumeyReportPickerField: View {
                     }
                     .scrollIndicators(.hidden)
                     .frame(height: dropdownHeight)
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15))
+                    .background {
+                        if let bubblyTint {
+                            BubblyTileSurface(tint: bubblyTint, cornerRadius: 14)
+                        } else {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary)
+                        }
+                    }
+                    .overlay {
+                        if bubblyTint == nil {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15)
+                        }
+                    }
                     .padding(.top, 8)
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
@@ -1156,8 +1325,9 @@ struct LumeyReportPickerField: View {
     private var pickerLabel: some View {
         HStack {
             Text(selection)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.system(size: 14, weight: .bold, design: .rounded))
                 .foregroundStyle(LColors.textPrimary)
+                .shadow(color: textShadow ? Color.black.opacity(0.45) : .clear, radius: 3, y: 2)
             Spacer()
             Image("chevdown")
                 .renderingMode(.template)
@@ -1169,8 +1339,18 @@ struct LumeyReportPickerField: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 11)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15))
+        .background {
+            if let bubblyTint {
+                BubblyTileSurface(tint: bubblyTint, cornerRadius: 14)
+            } else {
+                RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary)
+            }
+        }
+        .overlay {
+            if bubblyTint == nil {
+                RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.accents.contrast, lineWidth: 1.15)
+            }
+        }
     }
 
     private var dropdownRowHeight: CGFloat { 42 }
@@ -1184,6 +1364,8 @@ struct LumeyReportDynamicStepsField: View {
     let title: String
     @Binding var steps: [String]
     let maxSteps: Int
+    var accentColor: Color? = nil
+    var bubblyNumbers = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -1193,19 +1375,26 @@ struct LumeyReportDynamicStepsField: View {
                     HStack(alignment: .center, spacing: 10) {
                         Text("\(index + 1)")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.bg)
+                            .foregroundStyle(LColors.textPrimary)
                             .frame(width: stepControlSize, height: stepControlSize)
-                            .background(LGradients.tag, in: Circle())
+                            .background {
+                                if bubblyNumbers, let accentColor {
+                                    BubblyIconMaterial(tint: accentColor).clipShape(Circle())
+                                } else {
+                                    Circle().fill(LGradients.tag)
+                                }
+                            }
                             .overlay {
                                 Circle()
-                                    .strokeBorder(LColors.glassBorder.opacity(0.75), lineWidth: 1)
+                                    .strokeBorder((accentColor ?? LColors.glassBorder).opacity(0.75), lineWidth: 1)
                             }
                             .shadow(color: LColors.gradientPurple.opacity(0.22), radius: 8, y: 4)
 
                         LumeyReportTextField(
                             title: "",
                             placeholder: "Step \(index + 1)",
-                            text: $steps[index]
+                            text: $steps[index],
+                            borderColor: accentColor
                         )
 
                         if steps.count > 1 {
@@ -1243,11 +1432,11 @@ struct LumeyReportDynamicStepsField: View {
                             Text("Add Step")
                                 .font(.system(size: 13, weight: .black, design: .rounded))
                         }
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(LColors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)
                         .background(LColors.glassSurface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.glassBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(accentColor ?? LColors.glassBorder, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                 }
@@ -1262,19 +1451,23 @@ struct LumeyReportAttachmentsPicker: View {
     let title: String
     @Binding var selectedPhotos: [PhotosPickerItem]
     let attachmentData: [Data]
+    var accentColor: Color? = nil
+    var sectionColor: Color? = nil
+    var bubbly = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LumeyReportSectionHeader(title: title)
+            LumeyReportSectionHeader(title: title, color: sectionColor ?? accentColor, bubbly: bubbly)
             PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 3, matching: .images) {
-                GlassCard(cornerRadius: 18) {
+                GlassCard(cornerRadius: 18, borderColor: accentColor) {
                     HStack(spacing: 14) {
                         Image("image")
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 22, height: 22)
-                            .foregroundStyle(LGradients.header)
+                            .foregroundStyle(accentColor ?? LColors.accents.primary)
+                            .bubblyIconMaterial(tint: accentColor ?? LColors.accents.primary, isEnabled: bubbly)
 
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Add Screenshots")
@@ -1300,11 +1493,13 @@ struct LumeyReportAttachmentsPicker: View {
 
 struct LumeyReportDiagnosticsCard: View {
     let screenName: String
+    var borderColor: Color? = nil
 
     var body: some View {
         LumeyReportInfoCard(
             title: "Automatic Diagnostics",
-            message: "Loomey will include its app version, build number, device model, iOS version, screen, and submission time from \(screenName)."
+            message: "Loomey will include its app version, build number, device model, iOS version, screen, and submission time from \(screenName).",
+            borderColor: borderColor
         )
     }
 }
@@ -1348,6 +1543,7 @@ struct LumeyReportSubmitButton: View {
     let sendingTitle: String
     let canSubmit: Bool
     let isSubmitting: Bool
+    var bubblyTint: Color? = nil
     let action: () -> Void
 
     var body: some View {
@@ -1355,7 +1551,7 @@ struct LumeyReportSubmitButton: View {
             HStack(spacing: 10) {
                 if isSubmitting {
                     ProgressView()
-                        .tint(LColors.bg)
+                        .tint(LColors.textPrimary)
                 } else {
                     Image("sendbutton")
                         .renderingMode(.template)
@@ -1367,10 +1563,16 @@ struct LumeyReportSubmitButton: View {
                 Text(isSubmitting ? sendingTitle : title)
                     .font(.system(size: 16, weight: .black, design: .rounded))
             }
-            .foregroundStyle(LColors.bg)
+            .foregroundStyle(LColors.textPrimary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
-            .background(LGradients.header, in: RoundedRectangle(cornerRadius: LSpacing.buttonRadius))
+            .background {
+                if let bubblyTint {
+                    BubblyTileSurface(tint: bubblyTint, cornerRadius: LSpacing.buttonRadius)
+                } else {
+                    RoundedRectangle(cornerRadius: LSpacing.buttonRadius, style: .continuous).fill(LGradients.header)
+                }
+            }
             .opacity(canSubmit ? 1 : 0.45)
         }
         .buttonStyle(.plain)
@@ -1438,6 +1640,17 @@ func fieldLabel(_ title: String) -> some View {
 extension String {
     var trimmed: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+private extension View {
+    func bubblyReportCenterMaterial(tint: Color) -> some View {
+        foregroundStyle(.clear)
+            .overlay {
+                BubblyIconMaterial(tint: tint)
+                    .mask { self }
+                    .allowsHitTesting(false)
+            }
     }
 }
 

@@ -7,6 +7,9 @@ import SwiftUI
 
 struct AppThemeSettingsSection: View {
     @EnvironmentObject private var themeController: LumeyThemeController
+    @Environment(\.appTheme) private var appTheme
+
+    let borderColor: Color
 
     private let columns = [
         GridItem(.flexible(), spacing: 10),
@@ -19,7 +22,7 @@ struct AppThemeSettingsSection: View {
                 .font(.system(size: 20, weight: .black, design: .rounded))
                 .foregroundStyle(LColors.headingPrimary)
 
-            GlassCard(cornerRadius: 20, padding: 16, variant: .featured) {
+            GlassCard(cornerRadius: 20, padding: 16, variant: .featured, borderColor: borderColor) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Switch Loomey's overall palette without changing the structure of the app.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -27,8 +30,8 @@ struct AppThemeSettingsSection: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     LazyVGrid(columns: columns, spacing: 10) {
-                        ForEach(LumeyAppTheme.selectableThemes) { theme in
-                            themeOption(theme)
+                        ForEach(Array(LumeyAppTheme.selectableThemes.enumerated()), id: \.element.id) { index, theme in
+                            themeOption(theme, borderColor: accent(at: index))
                         }
                     }
                 }
@@ -36,7 +39,7 @@ struct AppThemeSettingsSection: View {
         }
     }
 
-    private func themeOption(_ theme: LumeyAppTheme) -> some View {
+    private func themeOption(_ theme: LumeyAppTheme, borderColor: Color) -> some View {
         let isSelected = themeController.selectedTheme == theme
         let palette = theme.palette
 
@@ -48,7 +51,8 @@ struct AppThemeSettingsSection: View {
                 padding: 14,
                 selected: isSelected,
                 contentAlignment: .leading,
-                variant: .primary
+                variant: .primary,
+                borderColor: borderColor
             ) {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 6) {
@@ -66,7 +70,7 @@ struct AppThemeSettingsSection: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 14, height: 14)
-                                .foregroundStyle(LColors.accents.primary)
+                                .foregroundStyle(borderColor)
                         }
                     }
 
@@ -100,5 +104,10 @@ struct AppThemeSettingsSection: View {
                 Circle()
                     .strokeBorder(LColors.border.nested, lineWidth: 0.8)
             )
+    }
+
+    private func accent(at index: Int) -> Color {
+        let rotation = appTheme.palette.rotation
+        return rotation[index % rotation.count]
     }
 }

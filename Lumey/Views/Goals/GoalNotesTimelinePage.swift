@@ -25,6 +25,7 @@ struct GoalNotesTimelinePage: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     let goal: ReadingGoals
 
@@ -140,16 +141,16 @@ struct GoalNotesTimelinePage: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.primary)
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
-                                .fill(LColors.bg)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                                )
-                                .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
+                                .fill(theme.palette.raisedSurface)
+                                .overlay {
+                                    BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                        .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                                }
                         )
                 }
                 .buttonStyle(.plain)
@@ -161,22 +162,17 @@ struct GoalNotesTimelinePage: View {
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 24, height: 24)
-                        .foregroundStyle(
-                            LColors.accents.special
-                        )
-                        .frame(width: 46, height: 46)
+                        .frame(width: 20, height: 20)
+                        .foregroundStyle(theme.palette.primaryAction)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
+                        .frame(width: 42, height: 42)
                         .background(
                             Circle()
-                                .fill(LColors.bg)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(
-                                            LColors.accents.special,
-                                            lineWidth: 1.35
-                                        )
-                                )
-                                .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
+                                .fill(theme.palette.raisedSurface)
+                                .overlay {
+                                    BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                        .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                                }
                         )
                 }
                 .buttonStyle(.plain)
@@ -188,8 +184,9 @@ struct GoalNotesTimelinePage: View {
 
     private var filterPills: some View {
         HStack(spacing: 8) {
-            ForEach(GoalNoteFilter.allCases) { filter in
+            ForEach(Array(GoalNoteFilter.allCases.enumerated()), id: \.element.id) { index, filter in
                 let isActive = activeFilter == filter
+                let tint = theme.palette.rotation[index % theme.palette.rotation.count]
 
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -198,26 +195,19 @@ struct GoalNotesTimelinePage: View {
                 } label: {
                     Text(filter.rawValue)
                         .font(.system(size: 12, weight: .black, design: .rounded))
-                        .foregroundStyle(isActive ? .white : LColors.textSecondary)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(
+                        .background {
+                            BubblyIconMaterial(tint: tint)
+                                .clipShape(Capsule(style: .continuous))
+                        }
+                        .overlay {
                             Capsule(style: .continuous)
-                                .fill(
-                                    isActive
-                                        ? AnyShapeStyle(LColors.accents.secondary)
-                                        : AnyShapeStyle(LColors.glassSurface2)
-                                )
-                        )
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .strokeBorder(
-                                    isActive
-                                        ? AnyShapeStyle(Color.clear)
-                                        : AnyShapeStyle(LColors.border.nested),
-                                    lineWidth: 1
-                                )
-                        )
+                                .strokeBorder(.white.opacity(isActive ? 0.72 : 0.20), lineWidth: isActive ? 1.3 : 0.8)
+                        }
+                        .opacity(isActive ? 1 : 0.64)
                 }
                 .buttonStyle(.plain)
             }
@@ -229,16 +219,16 @@ struct GoalNotesTimelinePage: View {
     // MARK: - Notes Timeline
 
     private var notesTimeline: some View {
-        LazyVStack(spacing: 0) {
+        LazyVStack(spacing: 8) {
             ForEach(Array(filteredNotes.enumerated()), id: \.element.id) { index, note in
+                let accent = theme.palette.rotation[index % theme.palette.rotation.count]
                 Button {
                     selectedNote = note
                 } label: {
                     GoalNoteTimelineRow(
                         note: note,
                         goal: goal,
-                        isFirst: index == 0,
-                        isLast: index == filteredNotes.count - 1
+                        accent: accent
                     )
                 }
                 .buttonStyle(.plain)
@@ -359,73 +349,50 @@ private extension View {
 struct GoalNoteTimelineRow: View {
     let note: GoalNote
     let goal: ReadingGoals
-    let isFirst: Bool
-    let isLast: Bool
-
-    private let nodeSize: CGFloat = 38
+    let accent: Color
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(spacing: 0) {
-                Rectangle()
-                    .fill(isFirst ? Color.clear : LColors.border.subtle)
-                    .frame(width: 1.5, height: 8)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Text(note.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
+
+                Text("•")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
 
                 Text("\(note.progressPercentage)%")
-                    .font(.system(size: 10, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.cardTitle)
-                    .frame(width: nodeSize, height: nodeSize)
-                    .background(
-                        Circle()
-                            .fill(LColors.glassSurface2)
-                    )
-                    .overlay(
-                        Circle()
-                            .strokeBorder(LColors.accents.contrast, lineWidth: 1)
-                    )
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
 
-                Rectangle()
-                    .fill(isLast ? Color.clear : LColors.border.subtle)
-                    .frame(width: 1.5)
-                    .frame(maxHeight: .infinity)
+                Spacer()
             }
-            .frame(width: nodeSize)
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 0) {
-                    Text(note.createdAt.formatted(date: .abbreviated, time: .shortened))
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+            Text(note.noteText)
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundStyle(LColors.text.primary)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
 
-                    Spacer()
-                }
-
-                Text(note.noteText)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(LColors.text.primary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if goal.mode == .recurring && note.completionCountSnapshot > 0 {
-                    Text("Completed \(note.completionCountSnapshot) times")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
-                }
+            if goal.mode == .recurring && note.completionCountSnapshot > 0 {
+                Text("Completed \(note.completionCountSnapshot) times")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(LColors.glassSurface2)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(LColors.border.nested, lineWidth: 1)
-            )
-            .padding(.bottom, isLast ? 0 : 8)
         }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(LColors.glassSurface2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(accent, lineWidth: 1)
+        )
     }
 }
 

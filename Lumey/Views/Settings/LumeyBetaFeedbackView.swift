@@ -5,6 +5,7 @@ import SwiftUI
 struct LumeyBetaFeedbackView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     @State private var title = ""
@@ -34,7 +35,12 @@ struct LumeyBetaFeedbackView: View {
 
     var body: some View {
         LumeyReportFormScaffold {
-            LumeyReportHeader(eyebrow: "VOXIVERSE", title: "Beta Feedback") {
+            LumeyReportHeader(
+                eyebrow: "VOXIVERSE",
+                title: "Beta Feedback",
+                eyebrowColor: theme.palette.secondaryAccent,
+                bubbly: true
+            ) {
                 dismiss()
             }
             LumeyReportInfoCard(
@@ -43,14 +49,22 @@ struct LumeyBetaFeedbackView: View {
             )
             detailsSection
             testingSection
-            LumeyReportAttachmentsPicker(title: "Attachments", selectedPhotos: $selectedPhotos, attachmentData: attachmentData)
-            LumeyReportDiagnosticsCard(screenName: "Beta Feedback")
+            LumeyReportAttachmentsPicker(
+                title: "Attachments",
+                selectedPhotos: $selectedPhotos,
+                attachmentData: attachmentData,
+                accentColor: theme.palette.secondaryAccent,
+                sectionColor: theme.palette.indicators,
+                bubbly: true
+            )
+            LumeyReportDiagnosticsCard(screenName: "Beta Feedback", borderColor: theme.palette.indicators)
             LumeyReportStatusCards(successTitle: "Feedback Sent", reportID: submittedReportID, error: submissionError)
             LumeyReportSubmitButton(
                 title: "Submit Beta Feedback",
                 sendingTitle: "Sending...",
                 canSubmit: canSubmit,
-                isSubmitting: isSubmitting
+                isSubmitting: isSubmitting,
+                bubblyTint: theme.palette.primaryAction
             ) {
                 Task { await submitFeedback() }
             }
@@ -62,21 +76,21 @@ struct LumeyBetaFeedbackView: View {
 
     private var detailsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            LumeyReportSectionHeader(title: "Feedback Details")
-            LumeyReportTextField(title: "Title", placeholder: "Short summary of the feedback", text: $title)
-            LumeyReportPickerField(title: "Area", options: areas, selection: $area)
-            LumeyReportPickerField(title: "Overall Experience", options: overallExperiences, selection: $overallExperience)
+            LumeyReportSectionHeader(title: "Feedback Details", color: theme.palette.primaryAction, bubbly: true)
+            LumeyReportTextField(title: "Title", placeholder: "Short summary of the feedback", text: $title, borderColor: theme.palette.secondaryAccent)
+            LumeyReportPickerField(title: "Area", options: areas, selection: $area, bubblyTint: theme.palette.primaryAction, textShadow: true)
+            LumeyReportPickerField(title: "Overall Experience", options: overallExperiences, selection: $overallExperience, bubblyTint: theme.palette.secondaryAccent, textShadow: true)
         }
     }
 
     private var testingSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            LumeyReportSectionHeader(title: "Testing Notes")
-            LumeyReportTextEditor(title: "What Did You Test?", placeholder: "Which feature, workflow, screen, or part of Lumey were you testing?", text: $testedWhat, minHeight: 130)
-            LumeyReportTextEditor(title: "What Worked Well?", placeholder: "What felt good, clear, useful, or polished?", text: $workedWell, minHeight: 110)
-            LumeyReportTextEditor(title: "What Could Be Better?", placeholder: "What felt awkward, confusing, incomplete, slow, or visually off?", text: $couldBeBetter, minHeight: 110)
-            LumeyReportTextEditor(title: "Anything Unexpected?", placeholder: "Anything surprising that was not necessarily a bug?", text: $unexpected, minHeight: 100)
-            LumeyReportTextEditor(title: "Additional Thoughts", placeholder: "Anything else you want to share?", text: $additionalThoughts, minHeight: 100)
+            LumeyReportSectionHeader(title: "Testing Notes", color: theme.palette.secondaryAccent, bubbly: true)
+            LumeyReportTextEditor(title: "What Did You Test?", placeholder: "Which feature, workflow, screen, or part of Lumey were you testing?", text: $testedWhat, minHeight: 130, borderColor: theme.palette.indicators)
+            LumeyReportTextEditor(title: "What Worked Well?", placeholder: "What felt good, clear, useful, or polished?", text: $workedWell, minHeight: 110, borderColor: theme.palette.primaryAction)
+            LumeyReportTextEditor(title: "What Could Be Better?", placeholder: "What felt awkward, confusing, incomplete, slow, or visually off?", text: $couldBeBetter, minHeight: 110, borderColor: theme.palette.secondaryAccent)
+            LumeyReportTextEditor(title: "Anything Unexpected?", placeholder: "Anything surprising that was not necessarily a bug?", text: $unexpected, minHeight: 100, borderColor: theme.palette.indicators)
+            LumeyReportTextEditor(title: "Additional Thoughts", placeholder: "Anything else you want to share?", text: $additionalThoughts, minHeight: 100, borderColor: theme.palette.primaryAction)
         }
     }
 

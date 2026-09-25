@@ -6,6 +6,8 @@
 import SwiftUI
 
 struct ChallengeProofSummaryView: View {
+    @Environment(\.appTheme) private var theme
+
     let challenge: ReadingChallenge
     let selectedBookIDs: [UUID]
     let selectedSessionIDs: [UUID]
@@ -15,6 +17,7 @@ struct ChallengeProofSummaryView: View {
     let sessions: [ReadingSession]
     let reviews: [BookReview]
     let readingLists: [ReadingList]
+    let accentIndex: Int
 
     private var linkedBooks: [Book] {
         books.filter { selectedBookIDs.contains($0.id) }
@@ -38,7 +41,9 @@ struct ChallengeProofSummaryView: View {
 
     var body: some View {
         if hasAnyProof {
-            GlassCard(padding: 14, variant: .featured) {
+            let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+            GlassCard(padding: 14, variant: .featured, borderColor: tint) {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 8) {
                         Image("searchsparkle")
@@ -46,7 +51,7 @@ struct ChallengeProofSummaryView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(LColors.accents.primary)
+                            .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
                         Text("Proof Summary")
                             .font(.system(size: 13, weight: .black, design: .rounded))
@@ -80,7 +85,7 @@ struct ChallengeProofSummaryView: View {
                                 icon: "checkwavy",
                                 label: "Finished",
                                 detail: "\(finishedCount) of \(linkedBooks.count)",
-                                color: AnyShapeStyle(LColors.success)
+                                color: LColors.success
                             )
                         }
 
@@ -92,7 +97,7 @@ struct ChallengeProofSummaryView: View {
                                 detail: ratedBooks.prefix(3)
                                     .map { "\($0.displayTitle): \(formattedRating($0.rating))" }
                                     .joined(separator: ", "),
-                                color: AnyShapeStyle(LColors.accents.primary)
+                                color: theme.palette.primaryAction
                             )
                         }
                     }
@@ -135,7 +140,7 @@ struct ChallengeProofSummaryView: View {
         icon: String,
         label: String,
         detail: String,
-        color: AnyShapeStyle = AnyShapeStyle(LColors.textSecondary)
+        color: Color? = nil
     ) -> some View {
         HStack(spacing: 8) {
             Image(icon)
@@ -143,7 +148,7 @@ struct ChallengeProofSummaryView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 11, height: 11)
-                .foregroundStyle(color)
+                .bubblyIconMaterial(tint: color ?? theme.palette.textSecondary)
 
             Text(label)
                 .font(.system(size: 11, weight: .bold, design: .rounded))

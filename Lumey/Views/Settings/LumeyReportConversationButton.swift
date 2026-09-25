@@ -6,8 +6,11 @@
 import SwiftUI
 
 struct LumeyReportConversationButton: View {
+    @Environment(\.appTheme) private var theme
+
     let state: LumeyReportConversationState
     let unreadCount: Int
+    var accentColor: Color? = nil
     let action: () -> Void
 
     private var title: String {
@@ -42,10 +45,25 @@ struct LumeyReportConversationButton: View {
 
     var body: some View {
         Button(action: action) {
-            GlassCard(cornerRadius: 24) {
+            GlassCard(cornerRadius: 24, borderColor: accentColor) {
                 HStack(spacing: 14) {
                     ZStack(alignment: .topTrailing) {
-                        LumeyReportIcon(asset: "chatstar", size: 52, iconSize: 24)
+                        if let accentColor {
+                            ZStack {
+                                Circle().fill(theme.palette.raisedSurface)
+                                BubblyIconMaterial(tint: accentColor)
+                                    .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                                Image("chatstar")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 24, height: 24)
+                                    .bubblyIconMaterial(tint: accentColor)
+                            }
+                            .frame(width: 52, height: 52)
+                        } else {
+                            LumeyReportIcon(asset: "chatstar", size: 52, iconSize: 24)
+                        }
 
                         if showsBadge {
                             Circle()
@@ -78,7 +96,10 @@ struct LumeyReportConversationButton: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 22, height: 22)
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(
+                            accentColor.map { AnyShapeStyle($0) } ?? AnyShapeStyle(LGradients.header)
+                        )
+                        .bubblyIconMaterial(tint: accentColor ?? LColors.accents.primary, isEnabled: accentColor != nil)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }

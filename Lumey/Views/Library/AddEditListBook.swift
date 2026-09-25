@@ -1,44 +1,37 @@
 //
-//  AddEditReadingListSheet.swift
+//  AddEditListBook.swift
 //  Lumey
 //
 
 import SwiftUI
 import SwiftData
 
-struct AddEditReadingListSheet: View {
+struct AddEditListBook: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.appTheme) private var theme
-    
-    let list: ReadingList?
-    
+
+    @Bindable var list: ReadingList
+
     @Query(sort: \Book.lastUpdated, order: .reverse)
     private var allBooks: [Book]
-    
-    @State private var title = ""
-    @State private var listDescription = ""
-    @State private var iconName = "books"
-    @State private var status: ReadingListStatus = .active
-    @State private var hasDueDate = false
-    @State private var dueDate = Date()
+
     @State private var selectedBookIDs: [UUID] = []
     @State private var manualBookTitle = ""
     @State private var manualBookAuthor = ""
     @State private var manualBookSummary = ""
     @State private var isGeneratingManualSummary = false
     @State private var manualSummaryError: String?
-    
-    @State private var showingIconPicker = false
     @State private var isExistingBookPickerExpanded = false
-    
-    private var isEditing: Bool { list != nil }
-    
+
     private var availableBooks: [Book] {
         allBooks.filter { !$0.isArchived }
     }
-    
+
+    private var unlinkedBooks: [Book] {
+        availableBooks.filter { !selectedBookIDs.contains($0.id) }
+    }
+
     private var availableSeries: [String] {
         let names = Set(allBooks.compactMap { book in
             let trimmed = book.seriesName.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -47,93 +40,47 @@ struct AddEditReadingListSheet: View {
         return names.sorted()
     }
 
-    private var unlinkedBooks: [Book] {
-        availableBooks.filter { !selectedBookIDs.contains($0.id) }
+    private var canAddManualBook: Bool {
+        !manualBookTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        && !manualBookAuthor.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private var dueDateYearRange: ClosedRange<Int> {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        let selectedYear = Calendar.current.component(.year, from: dueDate)
-        return min(currentYear - 5, selectedYear)...max(currentYear + 20, selectedYear)
-    }
-    
     var body: some View {
         ZStack {
             LumeyBackground()
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 sheetHeader
-                
+
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        sectionCard(title: "List Details", accentIndex: 0) {
-                            LumeyTextField(title: "Title", text: $title, borderColor: theme.palette.primaryAction)
-                            LumeyTextEditor(
-                                title: "Description",
-                                text: $listDescription,
-                                minHeight: 80,
-                                borderColor: theme.palette.secondaryAccent
-                            )
-                        }
-                        
-                        sectionCard(title: "Display", accentIndex: 1) {
-                            readingListIconPicker
-                            
-                            LumeyEnumPicker(
-                                title: "Status",
-                                selection: $status,
-                                options: ReadingListStatus.allCases,
-                                tint: theme.palette.secondaryAccent
-                            )
-                        }
-                        
-                        sectionCard(title: "Due Date", accentIndex: 2) {
-                            LumeyIconToggle(
-                                title: "Use Due Date",
-                                iconName: "lovecalendar",
-                                isOn: $hasDueDate,
-                                tint: theme.palette.indicators
-                            )
-                            
-                            if hasDueDate {
-                                LumeyDateDrumPicker(
-                                    date: $dueDate,
-                                    solidTint: theme.palette.indicators,
-                                    yearRange: dueDateYearRange
-                                )
-                            }
-                        }
-                        
                         booksSection
-                        
                         seriesQuickAddSection
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 18)
                     .padding(.bottom, 38)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
         }
-        .task(id: list?.id) { loadList() }
-        .adaptivePresentation(isPresented: $showingIconPicker, useFullScreenCover: horizontalSizeClass == .regular) {
-            IconPickerView(selectedIcon: $iconName)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.hidden)
+        .task(id: list.id) {
+            selectedBookIDs = list.items.map(\.bookID)
         }
     }
-    
-    // MARK: - Header
-    
+
     private var sheetHeader: some View {
         HStack(spacing: 12) {
-            Text(isEditing ? "Edit List" : "New List")
-                .font(.system(size: 28, weight: .black, design: .rounded))
+            Text(list.bookCount == 0 ? "Add List Books" : "Edit List Books")
+                .font(.system(size: 26, weight: .black, design: .rounded))
                 .foregroundStyle(LColors.headingPrimary)
-            
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+
             Spacer()
-            
-            Button { saveList() } label: {
+
+            Button { saveBooks() } label: {
                 Text("Save")
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
@@ -146,7 +93,7 @@ struct AddEditReadingListSheet: View {
                     }
             }
             .buttonStyle(.plain)
-            
+
             Button { dismiss() } label: {
                 Image("xmarkwavy")
                     .renderingMode(.template)
@@ -158,7 +105,7 @@ struct AddEditReadingListSheet: View {
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
-                            .fill(LColors.bg)
+                            .fill(theme.palette.background)
                             .overlay(
                                 Circle()
                                     .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
@@ -172,127 +119,80 @@ struct AddEditReadingListSheet: View {
         .padding(.bottom, 14)
         .background(LColors.bg.opacity(0.98))
         .overlay(alignment: .bottom) {
-            Rectangle().fill(LColors.border.nested).frame(height: 1)
+            Rectangle()
+                .fill(LColors.border.nested)
+                .frame(height: 1)
         }
         .safeAreaPadding(.top)
     }
 
-    private var readingListIconPicker: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text("Icon")
-                .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+    private var booksSection: some View {
+        sectionCard(title: "Books", accentIndex: 0) {
+            selectedBookPreviews
+            existingBookDropdown
+            manualBookEntry
+        }
+    }
+
+    @ViewBuilder
+    private var selectedBookPreviews: some View {
+        if !selectedBookIDs.isEmpty {
+            VStack(spacing: 8) {
+                ForEach(Array(selectedBookIDs.enumerated()), id: \.element) { index, bookID in
+                    if let book = availableBooks.first(where: { $0.id == bookID }) {
+                        selectedBookPreview(book, index: index)
+                    }
+                }
+            }
+        }
+    }
+
+    private func selectedBookPreview(_ book: Book, index: Int) -> some View {
+        let accent = theme.palette.rotation[index % theme.palette.rotation.count]
+
+        return HStack(spacing: 10) {
+            Image("books")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 14, height: 14)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(book.title)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                    .lineLimit(1)
+
+                Text(book.author)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.82))
+                    .lineLimit(1)
+            }
+
+            Spacer()
 
             Button {
-                showingIconPicker = true
+                selectedBookIDs.removeAll { $0 == book.id }
             } label: {
-                HStack(spacing: 12) {
-                    LumeyIconView(iconId: iconName, size: 24)
-                        .foregroundStyle(theme.palette.primaryAction)
-                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
-                        .frame(width: 42, height: 42)
-                        .background(Circle().fill(theme.palette.raisedSurface))
-                        .overlay {
-                            BubblyIconMaterial(tint: theme.palette.primaryAction)
-                                .mask { Circle().strokeBorder(lineWidth: 1) }
-                        }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Choose Icon")
-                            .font(.system(size: 14, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
-
-                        Text(iconName)
-                            .font(.system(size: 11, weight: .semibold, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
-                            .lineLimit(1)
-                    }
-
-                    Spacer()
-
-                    Image("chevright")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 12, height: 12)
-                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(theme.palette.raisedSurface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
-                )
+                Image("xmarkwavy")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 12, height: 12)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(theme.palette.raisedSurface))
             }
             .buttonStyle(.plain)
         }
-    }
-    
-    // MARK: - Books Section
-    
-    private var booksSection: some View {
-        sectionCard(title: "Books", accentIndex: 3) {
-            if !selectedBookIDs.isEmpty {
-                VStack(spacing: 8) {
-                    ForEach(Array(selectedBookIDs.enumerated()), id: \.element) { index, bookID in
-                        if let book = availableBooks.first(where: { $0.id == bookID }) {
-                            let accent = theme.palette.rotation[index % theme.palette.rotation.count]
-                            HStack(spacing: 10) {
-                                Image("books")
-                                    .renderingMode(.template)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 14, height: 14)
-                                    .foregroundStyle(.white)
-                                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
-                                
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(book.title)
-                                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                                        .foregroundStyle(.white)
-                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
-                                        .lineLimit(1)
-                                    
-                                    Text(book.author)
-                                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                        .foregroundStyle(.white.opacity(0.82))
-                                        .lineLimit(1)
-                                }
-                                
-                                Spacer()
-                                
-                                Button {
-                                    selectedBookIDs.removeAll { $0 == bookID }
-                                } label: {
-                                    Image("xmarkwavy")
-                                        .renderingMode(.template)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 12, height: 12)
-                                        .foregroundStyle(.white)
-                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
-                                        .frame(width: 28, height: 28)
-                                        .background(Circle().fill(theme.palette.raisedSurface))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background { BubblyTileSurface(tint: accent, cornerRadius: 14) }
-                            .bubblyTileLift()
-                        }
-                    }
-                }
-            }
-
-            existingBookDropdown
-            
-            manualBookEntry
-        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background { BubblyTileSurface(tint: accent, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 
     @ViewBuilder
@@ -389,13 +289,13 @@ struct AddEditReadingListSheet: View {
             }
         }
     }
-    
+
     private var manualBookEntry: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Manual Book")
                 .font(.system(size: 13, weight: .black, design: .rounded))
                 .foregroundStyle(LColors.textSecondary)
-            
+
             LumeyTextField(title: "Title", text: $manualBookTitle, borderColor: theme.palette.primaryAction)
             LumeyTextField(title: "Author", text: $manualBookAuthor, borderColor: theme.palette.secondaryAccent)
             LumeyTextEditor(
@@ -413,9 +313,7 @@ struct AddEditReadingListSheet: View {
                         ProgressView()
                             .scaleEffect(0.8)
                             .tint(.white)
-                    }
-
-                    if !isGeneratingManualSummary {
+                    } else {
                         Image("sparkle")
                             .renderingMode(.template)
                             .resizable()
@@ -436,8 +334,8 @@ struct AddEditReadingListSheet: View {
                 .bubblyTileLift()
             }
             .buttonStyle(.plain)
-            .disabled(!canGenerateManualSummary || isGeneratingManualSummary)
-            .opacity(canGenerateManualSummary ? 1 : 0.55)
+            .disabled(!canAddManualBook || isGeneratingManualSummary)
+            .opacity(canAddManualBook ? 1 : 0.55)
 
             if let manualSummaryError {
                 Text(manualSummaryError)
@@ -445,7 +343,7 @@ struct AddEditReadingListSheet: View {
                     .foregroundStyle(LColors.danger)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            
+
             Button {
                 addManualBook()
             } label: {
@@ -455,10 +353,10 @@ struct AddEditReadingListSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 13, height: 13)
-                    
+
                     Text("Add Manual Book")
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                    
+
                     Spacer()
                 }
                 .foregroundStyle(.white)
@@ -474,43 +372,11 @@ struct AddEditReadingListSheet: View {
         }
         .padding(.top, 4)
     }
-    
-    private var canAddManualBook: Bool {
-        !manualBookTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        && !manualBookAuthor.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
 
-    private var canGenerateManualSummary: Bool {
-        canAddManualBook
-    }
-
-    @MainActor
-    private func generateManualSummary() async {
-        guard canGenerateManualSummary, !isGeneratingManualSummary else { return }
-
-        isGeneratingManualSummary = true
-        manualSummaryError = nil
-
-        do {
-            let summary = try await RegularRecBookSummaryService.shared.fetchSummary(
-                title: manualBookTitle.trimmingCharacters(in: .whitespacesAndNewlines),
-                author: manualBookAuthor.trimmingCharacters(in: .whitespacesAndNewlines),
-                summary: manualBookSummary
-            )
-            manualBookSummary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
-        } catch {
-            manualSummaryError = error.localizedDescription
-        }
-
-        isGeneratingManualSummary = false
-    }
-    
-    // MARK: - Series Quick Add
-    
     @ViewBuilder
     private var seriesQuickAddSection: some View {
         if !availableSeries.isEmpty {
-            sectionCard(title: "Add Entire Series", accentIndex: 4) {
+            sectionCard(title: "Add Entire Series", accentIndex: 1) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(Array(availableSeries.enumerated()), id: \.element) { index, seriesName in
@@ -544,9 +410,7 @@ struct AddEditReadingListSheet: View {
             }
         }
     }
-    
-    // MARK: - Section Card
-    
+
     private func sectionCard<Content: View>(
         title: String,
         accentIndex: Int,
@@ -559,117 +423,83 @@ struct AddEditReadingListSheet: View {
                 Text(title)
                     .font(.system(size: 17, weight: .black, design: .rounded))
                     .foregroundStyle(LColors.cardTitle)
-                
+
                 VStack(spacing: 12) {
                     content()
                 }
             }
         }
     }
-    
-    // MARK: - Load / Save
-    
-    private func loadList() {
-        guard let list else { return }
-        title = list.title
-        listDescription = list.listDescription
-        iconName = list.iconName
-        status = list.status
-        
-        if let due = list.dueDate {
-            dueDate = due
-            hasDueDate = true
+
+    @MainActor
+    private func generateManualSummary() async {
+        guard canAddManualBook, !isGeneratingManualSummary else { return }
+
+        isGeneratingManualSummary = true
+        manualSummaryError = nil
+
+        do {
+            let summary = try await RegularRecBookSummaryService.shared.fetchSummary(
+                title: manualBookTitle.trimmingCharacters(in: .whitespacesAndNewlines),
+                author: manualBookAuthor.trimmingCharacters(in: .whitespacesAndNewlines),
+                summary: manualBookSummary
+            )
+            manualBookSummary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            manualSummaryError = error.localizedDescription
         }
-        
-        selectedBookIDs = list.items.map { $0.bookID }
+
+        isGeneratingManualSummary = false
     }
-    
-    private func saveList() {
-        if canAddManualBook {
-            addManualBook()
-        }
-        
-        let target = list ?? ReadingList()
-        let wasNew = list == nil
-        
-        target.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        target.listDescription = listDescription.trimmingCharacters(in: .whitespacesAndNewlines)
-        target.iconName = iconName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "books" : iconName
-        target.status = status
-        target.dueDate = hasDueDate ? dueDate : nil
-        
-        // Preserve existing item state (completion, order) for books that remain
-        let existingItems = target.items
-        var newItems: [ReadingListItemData] = []
-        
-        for (index, bookID) in selectedBookIDs.enumerated() {
-            if let existing = existingItems.first(where: { $0.bookID == bookID }) {
-                var updated = existing
-                updated.sortOrder = index
-                newItems.append(updated)
-            } else {
-                newItems.append(ReadingListItemData(
-                    bookID: bookID,
-                    sortOrder: index,
-                    dateAdded: Date()
-                ))
-            }
-        }
-        
-        target.items = newItems
-        target.updatedAt = Date()
-        
-        if wasNew {
-            modelContext.insert(target)
-        }
-        
-        try? modelContext.save()
-        dismiss()
-    }
-    
+
     private func addManualBook() {
         let trimmedTitle = manualBookTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedAuthor = manualBookAuthor.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedSummary = manualBookSummary.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty, !trimmedAuthor.isEmpty else { return }
-        
-        let book = Book(
-            title: trimmedTitle,
-            author: trimmedAuthor,
-            summary: trimmedSummary
-        )
+
+        let book = Book(title: trimmedTitle, author: trimmedAuthor, summary: trimmedSummary)
         modelContext.insert(book)
         selectedBookIDs.append(book.id)
-        
+
         manualBookTitle = ""
         manualBookAuthor = ""
         manualBookSummary = ""
+        manualSummaryError = nil
     }
-    
+
     private func addSeriesBooks(_ seriesName: String) {
         let seriesBooks = availableBooks.filter {
-            $0.seriesName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == seriesName.lowercased()
+            $0.seriesName.trimmingCharacters(in: .whitespacesAndNewlines)
+                .localizedCaseInsensitiveCompare(seriesName) == .orderedSame
         }
-        
-        for book in seriesBooks {
-            if !selectedBookIDs.contains(book.id) {
-                selectedBookIDs.append(book.id)
-            }
+
+        for book in seriesBooks where !selectedBookIDs.contains(book.id) {
+            selectedBookIDs.append(book.id)
         }
     }
-}
 
-private extension View {
-    @ViewBuilder
-    func adaptivePresentation<Content: View>(
-        isPresented: Binding<Bool>,
-        useFullScreenCover: Bool,
-        @ViewBuilder content: @escaping () -> Content
-    ) -> some View {
-        if useFullScreenCover {
-            self.fullScreenCover(isPresented: isPresented, content: content)
-        } else {
-            self.sheet(isPresented: isPresented, content: content)
+    private func saveBooks() {
+        if canAddManualBook {
+            addManualBook()
         }
+
+        let existingItems = list.items
+        list.items = selectedBookIDs.enumerated().map { index, bookID in
+            if let existing = existingItems.first(where: { $0.bookID == bookID }) {
+                var updated = existing
+                updated.sortOrder = index
+                return updated
+            }
+
+            return ReadingListItemData(
+                bookID: bookID,
+                sortOrder: index,
+                dateAdded: Date()
+            )
+        }
+        list.updatedAt = Date()
+        try? modelContext.save()
+        dismiss()
     }
 }

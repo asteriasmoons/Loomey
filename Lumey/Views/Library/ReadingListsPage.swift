@@ -10,6 +10,7 @@ struct ReadingListsPage: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     
     @Query(sort: \ReadingList.updatedAt, order: .reverse)
     private var allLists: [ReadingList]
@@ -94,16 +95,16 @@ struct ReadingListsPage: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.primary)
+                        .foregroundStyle(theme.palette.primaryAction)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
                                 .fill(LColors.bg)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                                 )
-                                .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                         )
                 }
                 .buttonStyle(.plain)
@@ -116,16 +117,16 @@ struct ReadingListsPage: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
                                 .fill(LColors.bg)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.2)
                                 )
-                                .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                         )
                 }
                 .buttonStyle(.plain)
@@ -261,6 +262,8 @@ private extension View {
 // MARK: - Reading List Card
 
 struct ReadingListCard: View {
+    @Environment(\.appTheme) private var theme
+
     let list: ReadingList
     let allBooks: [Book]
     var variant: GlassCardVariant = .primary
@@ -268,12 +271,7 @@ struct ReadingListCard: View {
     let onTap: () -> Void
 
     private var accent: Color {
-        switch accentIndex % 4 {
-        case 0:  return LColors.accents.primary
-        case 1:  return LColors.accents.contrast
-        case 2:  return LColors.accents.secondary
-        default: return LColors.accents.special
-        }
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
     }
 
     private var effectiveCompletedCount: Int {
@@ -307,19 +305,26 @@ struct ReadingListCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            GlassCard(variant: variant) {
-                HStack(spacing: 14) {
-                    Image(list.iconName)
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 22, height: 22)
-                        .foregroundStyle(accent)
-                        .frame(width: 46, height: 46)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(Circle().strokeBorder(accent, lineWidth: 1))
+            GlassCard(cornerRadius: 22, padding: 0, variant: variant, borderColor: accent) {
+                ZStack {
+                    BubblyLightWash(colors: [accent], intensity: 0.34, fadeEnd: 0.82)
 
-                    VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 14) {
+                        Image(list.iconName)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
+                            .foregroundStyle(accent)
+                            .bubblyIconMaterial(tint: accent)
+                            .frame(width: 46, height: 46)
+                            .background(Circle().fill(theme.palette.raisedSurface))
+                            .overlay {
+                                BubblyIconMaterial(tint: accent)
+                                    .mask { Circle().strokeBorder(lineWidth: 1) }
+                            }
+
+                        VStack(alignment: .leading, spacing: 6) {
                         Text(list.displayTitle)
                             .font(.system(size: 16, weight: .black, design: .rounded))
                             .foregroundStyle(LColors.cardTitle)
@@ -357,27 +362,60 @@ struct ReadingListCard: View {
                             GeometryReader { proxy in
                                 let intrinsicWidth: CGFloat = 25 * 8 + 24 * 4 // dot + spacing
                                 let scale = min(1, max(0.01, proxy.size.width / intrinsicWidth))
-                                DottedGoalProgressBar(value: effectiveProgressValue)
+                                ReadingListMaterialProgressBar(value: effectiveProgressValue, tint: accent)
                                     .frame(width: intrinsicWidth, height: 8)
                                     .scaleEffect(x: scale, y: 1, anchor: .leading)
                             }
                             .frame(height: 8)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .layoutPriority(1)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .layoutPriority(1)
 
-                    Image("chevright")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 18, height: 18)
-                        .foregroundStyle(LColors.text.tertiary)
+                        Image("chevright")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 18, height: 18)
+                            .foregroundStyle(accent)
+                            .bubblyIconMaterial(tint: accent)
+                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+}
+
+struct ReadingListMaterialProgressBar: View {
+    let value: Double
+    let tint: Color
+
+    private let dotCount = 25
+
+    private var filledDots: Int {
+        Int((min(max(value, 0), 1) * Double(dotCount)).rounded(.up))
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<dotCount, id: \.self) { index in
+                let isFilled = index < filledDots
+                BubblyIconMaterial(tint: isFilled ? tint : tint.opacity(0.24))
+                    .frame(width: 8, height: 8)
+                    .clipShape(Circle())
+                    .overlay {
+                        Circle()
+                            .strokeBorder(tint.opacity(isFilled ? 0.8 : 0.28), lineWidth: 0.6)
+                    }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

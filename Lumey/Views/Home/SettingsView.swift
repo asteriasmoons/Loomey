@@ -52,6 +52,7 @@ private struct PendingReadingStreakSettingsChange {
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
@@ -141,7 +142,7 @@ struct SettingsView: View {
                         commandCenter
                         releaseNotesCard
                         reportCenterCard
-                        AppThemeSettingsSection()
+                        AppThemeSettingsSection(borderColor: settingsAccent(at: 3))
                         libraryPulse
                         readingStreaksCard
                         dataVault
@@ -277,17 +278,24 @@ private extension SettingsView {
     }
 
     var commandCenter: some View {
-        GlassCard(variant: .featured) {
+        let accent = settingsAccent(at: 0)
+
+        return GlassCard(variant: .featured, borderColor: accent) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 14) {
-                    Image("settingswavy")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 25, height: 25)
-                        .foregroundStyle(LColors.appBackground)
-                        .frame(width: 52, height: 52)
-                        .background(Circle().fill(LGradients.header))
+                    ZStack {
+                        BubblyTileSurface(tint: accent, cornerRadius: 26)
+                            .clipShape(Circle())
+
+                        Image("settingswavy")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 25, height: 25)
+                            .foregroundStyle(theme.palette.textPrimary)
+                    }
+                    .frame(width: 52, height: 52)
+                    .bubblyTileLift()
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Library Ops")
@@ -303,9 +311,9 @@ private extension SettingsView {
                 }
 
                 HStack(spacing: 10) {
-                    SettingsSignalPill(title: "Reading", value: "\(readingBooks.count)")
-                    SettingsSignalPill(title: "Finished", value: "\(finishedBooks.count)")
-                    SettingsSignalPill(title: "Saved", value: "\(syncedBooks.count)")
+                    SettingsSignalPill(title: "Reading", value: "\(readingBooks.count)", tint: settingsAccent(at: 0))
+                    SettingsSignalPill(title: "Finished", value: "\(finishedBooks.count)", tint: settingsAccent(at: 1))
+                    SettingsSignalPill(title: "Saved", value: "\(syncedBooks.count)", tint: settingsAccent(at: 2))
                 }
             }
         }
@@ -316,7 +324,7 @@ private extension SettingsView {
             title: "Release Notes",
             subtitle: "See what changed across the latest Loomey updates.",
             iconName: "timebook",
-            gradientColors: [LColors.accents.contrast, LColors.accents.primary]
+            accent: settingsAccent(at: 1)
         ) {
             showingReleaseNotes = true
         }
@@ -327,7 +335,7 @@ private extension SettingsView {
             title: "Send a Report",
             subtitle: "Send bug reports, beta feedback, and feature requests to Voxiverse.",
             iconName: "document",
-            gradientColors: [LColors.accents.contrast, LColors.accents.primary]
+            accent: settingsAccent(at: 2)
         ) {
             showingReportCenter = true
         }
@@ -339,14 +347,14 @@ private extension SettingsView {
                 title: "Active",
                 value: "\(activeBooks.count)",
                 iconName: "books",
-                gradientColors: [LColors.gradientCyan, LColors.gradientPurple]
+                accent: settingsAccent(at: 4)
             )
 
             SettingsMetricCard(
                 title: "Archive",
                 value: "\(syncedBooks.count - activeBooks.count)",
                 iconName: "folderfill",
-                gradientColors: [LColors.gradientCyan, LColors.gradientPink]
+                accent: settingsAccent(at: 5)
             )
         }
     }
@@ -356,7 +364,7 @@ private extension SettingsView {
             title: "Reading Streaks",
             subtitle: readingStreaksSummaryText,
             iconName: "flame",
-            gradientColors: [LColors.accents.contrast, LColors.accents.primary]
+            accent: settingsAccent(at: 6)
         ) {
             showingStreakSettings = true
         }
@@ -377,7 +385,7 @@ private extension SettingsView {
                 title: "Import Goodreads",
                 subtitle: "Review CSV rows first. Likely duplicates are off by default.",
                 iconName: "upload",
-                gradientColors: [LColors.accents.contrast, LColors.accents.primary]
+                accent: settingsAccent(at: 7)
             ) {
                 showGoodreadsImporter = true
             }
@@ -386,7 +394,7 @@ private extension SettingsView {
                 title: "Export Lumey",
                 subtitle: "Save your Lumey library as a clean CSV file",
                 iconName: "exportfill",
-                gradientColors: [LColors.accents.contrast, LColors.accents.primary]
+                accent: settingsAccent(at: 8)
             ) {
                 prepareLumeyExport()
             }
@@ -396,7 +404,7 @@ private extension SettingsView {
                     title: "Undo Last Goodreads Import",
                     subtitle: "Delete \(lastGoodreadsBatch.count) books from the most recent tagged batch",
                     iconName: "reset",
-                    gradientColors: [LColors.gradientPink, LColors.gradientPurple]
+                    accent: settingsAccent(at: 9)
                 ) {
                     showUndoLastImportConfirm = true
                 }
@@ -407,7 +415,7 @@ private extension SettingsView {
                     title: "Review Recent Import Cleanup",
                     subtitle: "Preview \(likelyLegacyGoodreadsImports.count) likely books from the broken untagged import",
                     iconName: "trash",
-                    gradientColors: [LColors.gradientPink, LColors.gradientBlue]
+                    accent: settingsAccent(at: 9 + (lastGoodreadsBatch == nil ? 0 : 1))
                 ) {
                     legacyCleanupPreview = LegacyGoodreadsCleanupPreview(books: likelyLegacyGoodreadsImports)
                     selectedLegacyCleanupBookIDs = Set(likelyLegacyGoodreadsImports.map(\.id))
@@ -417,17 +425,23 @@ private extension SettingsView {
     }
 
     var cloudKitCard: some View {
-        GlassCard(variant: .primary) {
+        let accent = settingsAccent(at: cloudKitRotationIndex)
+
+        return GlassCard(variant: .primary, borderColor: accent) {
             HStack(alignment: .top, spacing: 14) {
-                Image("cloudmind")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
-                    .frame(width: 42, height: 42)
-                    .background(Circle().fill(LColors.iconContainer.primary))
-                    .overlay(Circle().strokeBorder(LColors.glassBorder, lineWidth: 1))
+                ZStack {
+                    Circle()
+                        .strokeBorder(accent, lineWidth: 1.2)
+
+                    BubblyIconMaterial(tint: accent)
+                        .mask {
+                            Image("cloudmind")
+                                .resizable()
+                                .scaledToFit()
+                        }
+                        .frame(width: 20, height: 20)
+                }
+                .frame(width: 42, height: 42)
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("CloudKit Library")
@@ -443,6 +457,17 @@ private extension SettingsView {
                 Spacer(minLength: 0)
             }
         }
+    }
+
+    var cloudKitRotationIndex: Int {
+        9
+        + (lastGoodreadsBatch == nil ? 0 : 1)
+        + (likelyLegacyGoodreadsImports.isEmpty ? 0 : 1)
+    }
+
+    func settingsAccent(at index: Int) -> Color {
+        let rotation = theme.palette.rotation
+        return rotation[index % rotation.count]
     }
 }
 
@@ -1070,19 +1095,16 @@ private struct ReadingStreakSettingsSheet: View {
                                 .foregroundStyle(
                                     LColors.accents.primary
                                 )
+                                .bubblyIconMaterial(tint: LColors.accents.primary)
                                 .frame(width: 46, height: 46)
-                                .background(
+                                .background {
                                     Circle()
                                         .fill(LColors.bg)
-                                        .overlay(
-                                            Circle()
-                                                .strokeBorder(
-                                                    LColors.accents.primary,
-                                                    lineWidth: 1.35
-                                                )
-                                        )
                                         .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                                )
+
+                                    BubblyIconMaterial(tint: LColors.accents.primary)
+                                        .mask { Circle().strokeBorder(lineWidth: 1.35) }
+                                }
                         }
                         .buttonStyle(.plain)
                     }
@@ -1102,6 +1124,8 @@ private struct ReadingStreakSettingsSheet: View {
 }
 
 private struct ReadingStreakSettingsSection: View {
+    @Environment(\.appTheme) private var theme
+
     let configuration: ReadingStreakConfiguration
     let summaries: [ReadingStreakSummary]
     let onChange: (ReadingStreakConfiguration, Set<ReadingStreakKind>) -> Void
@@ -1128,7 +1152,8 @@ private struct ReadingStreakSettingsSection: View {
             title: "Daily Reading Streak",
             subtitle: "Counts any day with a timed session, manual session, or goal check-in.",
             iconName: ReadingStreakKind.daily.iconName,
-            summary: summary(for: .daily)
+            summary: summary(for: .daily),
+            accentIndex: 0
         )
     }
 
@@ -1137,12 +1162,13 @@ private struct ReadingStreakSettingsSection: View {
             title: "Weekend Reading Streak",
             subtitle: "Your weekend is complete when both selected consecutive days have reading activity.",
             iconName: ReadingStreakKind.weekend.iconName,
-            summary: summary(for: .weekend)
+            summary: summary(for: .weekend),
+            accentIndex: 1
         ) {
             VStack(alignment: .leading, spacing: 13) {
                 Text("Current Weekend: \(normalizedConfiguration.weekendDay1.fullName) + \(normalizedConfiguration.weekendDay2.fullName)")
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.accents.special)
+                    .bubblyIconMaterial(tint: theme.palette.indicators)
 
                 weekdaySelector(
                     title: "Weekend Day 1",
@@ -1177,7 +1203,8 @@ private struct ReadingStreakSettingsSection: View {
             title: "Weekly Reading Streak",
             subtitle: "Each calendar week counts when you read on your chosen weekday.",
             iconName: ReadingStreakKind.weekly.iconName,
-            summary: summary(for: .weekly)
+            summary: summary(for: .weekly),
+            accentIndex: 2
         ) {
             weekdaySelector(
                 title: "Reading Day",
@@ -1196,7 +1223,8 @@ private struct ReadingStreakSettingsSection: View {
             title: "Monthly Reading Streak",
             subtitle: "Read on your chosen day each month. Shorter months automatically use their final day.",
             iconName: ReadingStreakKind.monthly.iconName,
-            summary: summary(for: .monthly)
+            summary: summary(for: .monthly),
+            accentIndex: 3
         ) {
             VStack(alignment: .leading, spacing: 9) {
                 Text("Reading Day of Month")
@@ -1239,8 +1267,10 @@ private struct ReadingStreakSettingsSection: View {
                 .foregroundStyle(LColors.textSecondary)
 
             HStack(spacing: 6) {
-                ForEach(ReadingWeekday.allCases) { day in
+                ForEach(ReadingWeekday.allCases.indices, id: \.self) { index in
+                    let day = ReadingWeekday.allCases[index]
                     let isEnabled = enabledDay == nil || enabledDay == day
+                    let accent = rotationColor(index)
 
                     Button {
                         guard isEnabled else { return }
@@ -1248,17 +1278,16 @@ private struct ReadingStreakSettingsSection: View {
                     } label: {
                         Text(day.shortName)
                             .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundStyle(selectedDay == day ? LColors.bg : LColors.textPrimary)
+                            .bubblyIconMaterial(tint: accent)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
-                            .background(
-                                Capsule(style: .continuous)
-                                    .fill(
-                                        selectedDay == day
-                                        ? AnyShapeStyle(LColors.accents.contrast)
-                                        : AnyShapeStyle(LColors.glassSurface)
-                                    )
-                            )
+                            .background {
+                                if selectedDay == day {
+                                    BubblyTileSurface(tint: accent, cornerRadius: 999)
+                                } else {
+                                    Capsule(style: .continuous).fill(LColors.glassSurface)
+                                }
+                            }
                             .overlay(
                                 Capsule(style: .continuous)
                                     .strokeBorder(
@@ -1276,16 +1305,22 @@ private struct ReadingStreakSettingsSection: View {
     }
 
     private func numberOption(value: Int, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        let accent = rotationColor(value - 1)
+
+        return Button(action: action) {
             Text("\(value)")
                 .font(.system(size: 11, weight: .black, design: .rounded))
-                .foregroundStyle(isSelected ? LColors.bg : LColors.textPrimary)
+                .bubblyIconMaterial(tint: accent)
                 .frame(maxWidth: .infinity)
                 .frame(height: 32)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(isSelected ? AnyShapeStyle(LColors.accents.secondary) : AnyShapeStyle(LColors.glassSurface))
-                )
+                .background {
+                    if isSelected {
+                        BubblyTileSurface(tint: accent, cornerRadius: 10)
+                    } else {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(LColors.glassSurface)
+                    }
+                }
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .strokeBorder(isSelected ? LColors.border.subtle : LColors.glassBorder, lineWidth: 1)
@@ -1293,13 +1328,20 @@ private struct ReadingStreakSettingsSection: View {
         }
         .buttonStyle(.plain)
     }
+
+    private func rotationColor(_ index: Int) -> Color {
+        theme.palette.rotation[index % theme.palette.rotation.count]
+    }
 }
 
 private struct StreakSettingsCard<Content: View>: View {
+    @Environment(\.appTheme) private var theme
+
     let title: String
     let subtitle: String
     let iconName: String
     let summary: ReadingStreakSummary
+    let accentIndex: Int
     let content: Content
 
     init(
@@ -1307,17 +1349,24 @@ private struct StreakSettingsCard<Content: View>: View {
         subtitle: String,
         iconName: String,
         summary: ReadingStreakSummary,
+        accentIndex: Int,
         @ViewBuilder content: () -> Content = { EmptyView() }
     ) {
         self.title = title
         self.subtitle = subtitle
         self.iconName = iconName
         self.summary = summary
+        self.accentIndex = accentIndex
         self.content = content()
     }
 
     var body: some View {
-        GlassCard(cornerRadius: 20, padding: 16, variant: .elevated) {
+        let accent = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+        let tileAccentIndex = (accentIndex * 2) % theme.palette.rotation.count
+        let tileAccent = theme.palette.rotation[tileAccentIndex]
+        let nextTileAccent = theme.palette.rotation[(tileAccentIndex + 1) % theme.palette.rotation.count]
+
+        return GlassCard(cornerRadius: 20, padding: 16, variant: .elevated, borderColor: accent) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 12) {
                     Image(iconName)
@@ -1325,10 +1374,13 @@ private struct StreakSettingsCard<Content: View>: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: accent)
                         .frame(width: 38, height: 38)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(Circle().strokeBorder(LColors.accents.secondary, lineWidth: 1))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: accent)
+                                .mask { Circle().strokeBorder(lineWidth: 1) }
+                        }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(title)
@@ -1345,8 +1397,8 @@ private struct StreakSettingsCard<Content: View>: View {
                 }
 
                 HStack(spacing: 10) {
-                    SettingsSignalPill(title: "Current", value: "\(summary.current)")
-                    SettingsSignalPill(title: "Longest", value: "\(summary.longest)")
+                    SettingsSignalPill(title: "Current", value: "\(summary.current)", tint: tileAccent)
+                    SettingsSignalPill(title: "Longest", value: "\(summary.longest)", tint: nextTileAccent)
                 }
 
                 content
@@ -1356,103 +1408,122 @@ private struct StreakSettingsCard<Content: View>: View {
 }
 
 private struct SettingsSignalPill: View {
+    @Environment(\.appTheme) private var theme
+
     let title: String
     let value: String
+    var tint: Color? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(value)
                 .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(tint == nil ? LColors.cardTitle : LColors.textPrimary)
+                .bubblyIconMaterial(tint: theme.palette.textPrimary, isEnabled: tint != nil)
 
             Text(title)
                 .font(.system(size: 10, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(tint == nil ? LColors.textSecondary : LColors.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(LColors.iconContainer.primary)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(LColors.border.subtle, lineWidth: 1)
-        )
+        .background {
+            if let tint {
+                BubblyTileSurface(tint: tint, cornerRadius: 16)
+            } else {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(LColors.iconContainer.primary)
+            }
+        }
+        .overlay {
+            if tint == nil {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(LColors.border.subtle, lineWidth: 1)
+            }
+        }
+        .bubblyTileLift(isEnabled: tint != nil)
     }
 }
 
 private struct SettingsMetricCard: View {
+    @Environment(\.appTheme) private var theme
+
     let title: String
     let value: String
     let iconName: String
-    let gradientColors: [Color]
+    let accent: Color
 
     var body: some View {
-        GlassCard(cornerRadius: 20, padding: 16, variant: .subtle) {
-            HStack(spacing: 12) {
-                Image(iconName)
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
+        let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .strokeBorder(accent, lineWidth: 1.2)
+
+                BubblyIconMaterial(tint: accent)
+                    .mask {
+                        Image(iconName)
+                            .resizable()
+                            .scaledToFit()
+                    }
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.contrast)
-                    .frame(width: 38, height: 38)
-                    .background(
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: gradientColors,
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    )
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(value)
-                        .font(.system(size: 24, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.headingPrimary)
-
-                    Text(title)
-                        .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
-                }
-
-                Spacer(minLength: 0)
             }
+            .frame(width: 38, height: 38)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(value)
+                    .font(.system(size: 24, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.headingPrimary)
+
+                Text(title)
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
+            }
+
+            Spacer(minLength: 0)
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            ZStack(alignment: .top) {
+                shape.fill(theme.palette.surface)
+
+                BubblyLightWash(colors: [accent])
+            }
+            .clipShape(shape)
+        }
+        .overlay(shape.strokeBorder(accent, lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.18), radius: 10, y: 5)
     }
 }
 
 private struct SettingsActionCard: View {
+    @Environment(\.appTheme) private var theme
+
     let title: String
     let subtitle: String
     let iconName: String
-    let gradientColors: [Color]
+    let accent: Color
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                Image(iconName)
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 22, height: 22)
-                    .foregroundStyle(LColors.appBackground)
-                    .frame(width: 48, height: 48)
-                    .background(
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: gradientColors,
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    )
+                ZStack {
+                    BubblyTileSurface(tint: accent, cornerRadius: 24)
+                        .clipShape(Circle())
+
+                    Image(iconName)
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 22, height: 22)
+                        .foregroundStyle(theme.palette.textPrimary)
+                }
+                .frame(width: 48, height: 48)
+                .bubblyTileLift()
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
@@ -1479,12 +1550,12 @@ private struct SettingsActionCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(LColors.glassSurface2)
+                    .fill(theme.palette.surface)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .strokeBorder(
-                        LColors.gradientBlue.opacity(0.72),
+                        accent,
                         lineWidth: 1
                     )
             )

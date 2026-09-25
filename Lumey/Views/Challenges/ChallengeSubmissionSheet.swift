@@ -11,6 +11,7 @@ struct ChallengeSubmissionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     let challenge: ReadingChallenge
@@ -78,6 +79,26 @@ struct ChallengeSubmissionSheet: View {
         }
     }
 
+    private var hasPickerSection: Bool {
+        needsBooks || needsSessions || needsReviews || needsReadingLists
+    }
+
+    private var showsSubmissionNote: Bool {
+        needsSubmissionNote || challenge.requiresAIValidation
+    }
+
+    private var submissionNoteAccentIndex: Int {
+        1 + (hasPickerSection ? 1 : 0)
+    }
+
+    private var photoProofAccentIndex: Int {
+        submissionNoteAccentIndex + (showsSubmissionNote ? 1 : 0)
+    }
+
+    private var proofSummaryAccentIndex: Int {
+        photoProofAccentIndex + 1
+    }
+
     var body: some View {
         ZStack {
             LumeyBackground()
@@ -110,7 +131,7 @@ struct ChallengeSubmissionSheet: View {
                             readingListPickerSection
                         }
 
-                        if !isSubmissionLocked && (needsSubmissionNote || challenge.requiresAIValidation) {
+                        if !isSubmissionLocked && showsSubmissionNote {
                             submissionNoteSection
                         }
 
@@ -184,16 +205,15 @@ struct ChallengeSubmissionSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -213,14 +233,14 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Challenge Info
 
     private var challengeInfoCard: some View {
-        GlassCard(padding: 14, variant: .tertiary) {
+        GlassCard(padding: 14, variant: .tertiary, borderColor: theme.palette.primaryAction) {
             HStack(spacing: 12) {
                 Image(challenge.iconName)
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 24, height: 24)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(challenge.requirementText)
@@ -238,14 +258,14 @@ struct ChallengeSubmissionSheet: View {
     }
 
     private var approvedLockCard: some View {
-        GlassCard(padding: 14, variant: .elevated) {
+        GlassCard(padding: 14, variant: .elevated, borderColor: theme.palette.secondaryAccent) {
             HStack(alignment: .top, spacing: 10) {
                 Image("checkwavy")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.success)
+                    .bubblyIconMaterial(tint: LColors.success)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Submission Approved")
@@ -267,7 +287,7 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Book Picker
 
     private var bookPickerSection: some View {
-        pickerSection(title: bookPickerTitle, icon: "flatbook") {
+        pickerSection(title: bookPickerTitle, icon: "flatbook", accentIndex: 1) {
             let eligible = eligibleBookProofs
             let pageCount = max(1, (eligible.count + bookPageSize - 1) / bookPageSize)
             let clampedPageIndex = min(bookPageIndex, pageCount - 1)
@@ -297,7 +317,9 @@ struct ChallengeSubmissionSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(isSelected ? LColors.success : LColors.textSecondary)
+                            .bubblyIconMaterial(
+                                tint: isSelected ? LColors.success : theme.palette.textSecondary
+                            )
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text(book.displayTitle)
@@ -406,7 +428,9 @@ struct ChallengeSubmissionSheet: View {
             .resizable()
             .scaledToFit()
             .frame(width: 15, height: 15)
-            .foregroundStyle(isEnabled ? AnyShapeStyle(.white) : AnyShapeStyle(LColors.textSecondary.opacity(0.55)))
+            .bubblyIconMaterial(
+                tint: isEnabled ? .white : theme.palette.textSecondary.opacity(0.55)
+            )
             .frame(width: 34, height: 34)
             .background(
                 Circle()
@@ -424,7 +448,7 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Session Picker
 
     private var sessionPickerSection: some View {
-        pickerSection(title: "Link Reading Sessions", icon: "clockfill") {
+        pickerSection(title: "Link Reading Sessions", icon: "clockfill", accentIndex: 1) {
             if allSessions.isEmpty {
                 Text("No reading sessions found")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -442,7 +466,9 @@ struct ChallengeSubmissionSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(isSelected ? LColors.success : LColors.textSecondary)
+                            .bubblyIconMaterial(
+                                tint: isSelected ? LColors.success : theme.palette.textSecondary
+                            )
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text(session.linkedBookTitle.isEmpty ? "Reading Session" : session.linkedBookTitle)
@@ -467,17 +493,17 @@ struct ChallengeSubmissionSheet: View {
                 } label: {
                     Text("Load More Sessions")
                         .font(.system(size: 12, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.72), radius: 1, y: 1)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(LColors.glassSurface2)
-                        )
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .strokeBorder(LColors.accents.contrast, lineWidth: 1)
-                        )
+                        .background {
+                            BubblyTileSurface(
+                                tint: theme.palette.indicators,
+                                cornerRadius: 16
+                            )
+                        }
+                        .bubblyTileLift()
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 4)
@@ -488,7 +514,7 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Review Picker
 
     private var reviewPickerSection: some View {
-        pickerSection(title: "Link Reviews", icon: "pagepencil") {
+        pickerSection(title: "Link Reviews", icon: "pagepencil", accentIndex: 1) {
             if allReviews.isEmpty {
                 Text("No reviews found")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -506,7 +532,9 @@ struct ChallengeSubmissionSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(isSelected ? LColors.success : LColors.textSecondary)
+                            .bubblyIconMaterial(
+                                tint: isSelected ? LColors.success : theme.palette.textSecondary
+                            )
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text(review.title.isEmpty ? "Untitled Review" : review.title)
@@ -531,7 +559,7 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Reading List Picker
 
     private var readingListPickerSection: some View {
-        pickerSection(title: "Link Reading Lists", icon: "bookstack") {
+        pickerSection(title: "Link Reading Lists", icon: "bookstack", accentIndex: 1) {
             ForEach(allReadingLists.prefix(20)) { list in
                 let isSelected = selectedReadingListIDs.contains(list.id)
                 Button {
@@ -543,7 +571,9 @@ struct ChallengeSubmissionSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(isSelected ? LColors.success : LColors.textSecondary)
+                            .bubblyIconMaterial(
+                                tint: isSelected ? LColors.success : theme.palette.textSecondary
+                            )
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text(list.displayTitle)
@@ -567,7 +597,9 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Submission Note
 
     private var submissionNoteSection: some View {
-        GlassCard(variant: .featured) {
+        let tint = theme.palette.rotation[submissionNoteAccentIndex % theme.palette.rotation.count]
+
+        return GlassCard(variant: .featured, borderColor: tint) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Submission Note")
                     .font(.system(size: 13, weight: .black, design: .rounded))
@@ -600,7 +632,9 @@ struct ChallengeSubmissionSheet: View {
     // MARK: - Photo Proof
 
     private var photoProofSection: some View {
-        GlassCard(variant: .primary) {
+        let tint = theme.palette.rotation[photoProofAccentIndex % theme.palette.rotation.count]
+
+        return GlassCard(variant: .primary, borderColor: tint) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 8) {
                     Image("image")
@@ -608,7 +642,7 @@ struct ChallengeSubmissionSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(LColors.accents.secondary)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                     Text("Photo Proof")
                         .font(.system(size: 13, weight: .black, design: .rounded))
@@ -618,17 +652,14 @@ struct ChallengeSubmissionSheet: View {
 
                     Text("OPTIONAL")
                         .font(.system(size: 8, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.72), radius: 1, y: 1)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(LColors.glassSurface)
-                                .overlay(
-                                    Capsule(style: .continuous)
-                                        .strokeBorder(LColors.accents.secondary, lineWidth: 1)
-                                )
-                        )
+                        .background {
+                            BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                .clipShape(Capsule(style: .continuous))
+                        }
                 }
 
                 Text("Attach a photo when you want Lumey to validate real-world proof for this challenge.")
@@ -673,7 +704,7 @@ struct ChallengeSubmissionSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 28, height: 28)
-                                .foregroundStyle(LColors.accents.special)
+                                .bubblyIconMaterial(tint: theme.palette.indicators)
                                 .frame(width: 66, height: 66)
                                 .background(
                                     Circle()
@@ -719,6 +750,7 @@ struct ChallengeSubmissionSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 13, height: 13)
+                .bubblyIconMaterial(tint: .white)
 
             Text(title)
                 .font(.system(size: 11, weight: .black, design: .rounded))
@@ -748,7 +780,8 @@ struct ChallengeSubmissionSheet: View {
             books: allBooks,
             sessions: allSessions,
             reviews: allReviews,
-            readingLists: allReadingLists
+            readingLists: allReadingLists,
+            accentIndex: proofSummaryAccentIndex
         )
     }
 
@@ -775,11 +808,13 @@ struct ChallengeSubmissionSheet: View {
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(LGradients.blue)
-            )
-            .shadow(color: LColors.gradientPurple.opacity(0.3), radius: 12, y: 6)
+            .background {
+                BubblyTileSurface(
+                    tint: theme.palette.secondaryAccent,
+                    cornerRadius: 18
+                )
+            }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
         .disabled(isSubmitting || isSubmissionLocked)
@@ -791,9 +826,12 @@ struct ChallengeSubmissionSheet: View {
     private func pickerSection<Content: View>(
         title: String,
         icon: String,
+        accentIndex: Int,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        GlassCard(variant: .secondary) {
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return GlassCard(variant: .secondary, borderColor: tint) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
                     Image(icon)
@@ -801,7 +839,7 @@ struct ChallengeSubmissionSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
                     Text(title)
                         .font(.system(size: 13, weight: .black, design: .rounded))

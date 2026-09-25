@@ -6,8 +6,15 @@
 import SwiftUI
 
 struct GoalIconPickerRow: View {
+    @Environment(\.appTheme) private var theme
+
     @Binding var iconName: String
+    var tint: Color? = nil
     let onPickIcon: () -> Void
+
+    private var resolvedTint: Color {
+        tint ?? theme.palette.primaryAction
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -21,19 +28,17 @@ struct GoalIconPickerRow: View {
                         iconId: iconName,
                         size: 24
                     )
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(resolvedTint)
+                    .bubblyIconMaterial(tint: resolvedTint)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
-                            .fill(LColors.iconContainer.primary)
+                            .fill(theme.palette.raisedSurface)
                     )
-                    .overlay(
-                        Circle()
-                            .strokeBorder(
-                                LGradients.header,
-                                lineWidth: 1
-                            )
-                    )
+                    .overlay {
+                        BubblyIconMaterial(tint: resolvedTint)
+                            .mask { Circle().strokeBorder(lineWidth: 1) }
+                    }
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Choose Icon")
@@ -54,6 +59,7 @@ struct GoalIconPickerRow: View {
                         .scaledToFit()
                         .frame(width: 12, height: 12)
                         .foregroundStyle(LColors.textSecondary)
+                        .bubblyIconMaterial(tint: resolvedTint)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
@@ -70,7 +76,7 @@ struct GoalIconPickerRow: View {
                         style: .continuous
                     )
                     .strokeBorder(
-                        LColors.border.nested,
+                        resolvedTint,
                         lineWidth: 1
                     )
                 )

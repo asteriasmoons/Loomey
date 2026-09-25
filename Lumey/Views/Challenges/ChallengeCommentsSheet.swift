@@ -7,6 +7,7 @@ import SwiftUI
 
 struct ChallengeCommentsSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
 
     let feedItem: ChallengeFeedItemDTO
     let post: ChallengeFeedPostDTO?
@@ -55,7 +56,7 @@ struct ChallengeCommentsSheet: View {
                     .frame(maxHeight: .infinity)
 
                 VStack(alignment: .leading, spacing: 12) {
-                    commentCard(comment, isReply: true)
+                    commentCard(comment, depth: depth)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     if !replies.isEmpty {
@@ -130,7 +131,7 @@ struct ChallengeCommentsSheet: View {
                         } else {
                             ForEach(visibleTopLevel, id: \.id) { comment in
                                 VStack(alignment: .leading, spacing: 12) {
-                                    commentCard(comment, isReply: false)
+                                    commentCard(comment, depth: 0)
 
                                     let commentReplies = directReplies(for: comment)
                                     if !commentReplies.isEmpty {
@@ -208,7 +209,7 @@ struct ChallengeCommentsSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
@@ -232,7 +233,7 @@ struct ChallengeCommentsSheet: View {
 
     private var threadLine: some View {
         RoundedRectangle(cornerRadius: 2, style: .continuous)
-            .fill(LGradients.blue)
+            .fill(theme.palette.primaryAction)
             .frame(width: 2)
             .frame(maxHeight: .infinity)
     }
@@ -247,14 +248,15 @@ struct ChallengeCommentsSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 34, height: 34)
-                    .foregroundStyle(LColors.accents.secondary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 72, height: 72)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
+                                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             )
                     )
 
@@ -297,13 +299,14 @@ struct ChallengeCommentsSheet: View {
 
     // MARK: - Comment Card
 
-    private func commentCard(_ comment: ChallengeCommentDTO, isReply: Bool) -> some View {
+    private func commentCard(_ comment: ChallengeCommentDTO, depth: Int) -> some View {
         let liked = isCommentLiked?(comment) ?? false
+        let accent = commentAccent(for: depth)
 
-        return GlassCard(padding: 14, variant: .primary) {
+        return GlassCard(padding: 14, variant: .primary, borderColor: accent) {
             VStack(alignment: .leading, spacing: 13) {
                 HStack(alignment: .top, spacing: 11) {
-                    commentAvatar(for: comment, size: isReply ? 34 : 40)
+                    commentAvatar(for: comment, size: depth == 0 ? 40 : 34)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(displayName(for: comment))
@@ -328,7 +331,7 @@ struct ChallengeCommentsSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 16, height: 16)
-                                .foregroundStyle(LColors.textSecondary)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                                 .frame(width: 32, height: 32)
                                 .background(
                                     Circle()
@@ -341,27 +344,26 @@ struct ChallengeCommentsSheet: View {
                         }
                         .buttonStyle(.plain)
                     } else {
-                        Image(isReply ? "chatsparkle" : "starchat")
+                        Image(depth == 0 ? "starchat" : "chatsparkle")
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 16, height: 16)
-                            .foregroundStyle(LColors.accents.special)
+                            .bubblyIconMaterial(tint: accent)
                             .frame(width: 32, height: 32)
                             .background(
                                 Circle()
                                     .fill(LColors.glassSurface)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LColors.accents.secondary, lineWidth: 1)
+                                            .strokeBorder(accent, lineWidth: 1)
                                     )
                             )
                     }
                 }
 
-                Text(comment.text)
+                Text(styledCommentText(comment.text))
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: 14) {
@@ -376,9 +378,10 @@ struct ChallengeCommentsSheet: View {
                                 .frame(width: 20, height: 20)
                                 .foregroundStyle(
                                     liked
-                                    ? AnyShapeStyle(LColors.gradientPurple)
+                                    ? AnyShapeStyle(theme.palette.indicators)
                                     : AnyShapeStyle(LColors.textSecondary)
                                 )
+                                .bubblyIconMaterial(tint: liked ? theme.palette.indicators : theme.palette.secondaryAccent)
 
                             Text("\(comment.likeCount)")
                                 .font(.system(size: 14, weight: .black, design: .rounded))
@@ -396,22 +399,12 @@ struct ChallengeCommentsSheet: View {
                             commentText = "@\(displayName(for: comment)) "
                         }
                     } label: {
-                        HStack(spacing: 5) {
-                            Image("chatsparkle")
-                                .renderingMode(.template)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 20, height: 20)
-                                .foregroundStyle(
-                                    replyingTo?.id == comment.id
-                                    ? AnyShapeStyle(.white)
-                                    : AnyShapeStyle(LColors.textSecondary)
-                                )
-
-                            Text("Reply")
-                                .font(.system(size: 14, weight: .black, design: .rounded))
-                                .foregroundStyle(LColors.cardTitle)
-                        }
+                        Image("chatsparkle")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                     }
                     .buttonStyle(.plain)
 
@@ -420,7 +413,7 @@ struct ChallengeCommentsSheet: View {
                 .padding(.top, 2)
 
                 if replyingTo?.id == comment.id {
-                    commentComposer
+                    commentComposer(accent: accent)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -466,8 +459,8 @@ struct ChallengeCommentsSheet: View {
 
     // MARK: - Composer
 
-    private var commentComposer: some View {
-        GlassCard(padding: 14, variant: .secondary) {
+    private func commentComposer(accent: Color) -> some View {
+        GlassCard(padding: 14, variant: .secondary, borderColor: accent) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image("chatsparkle")
@@ -475,14 +468,14 @@ struct ChallengeCommentsSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 17, height: 17)
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: accent)
                         .frame(width: 38, height: 38)
                         .background(
                             Circle()
                                 .fill(LColors.glassSurface)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LColors.accents.special, lineWidth: 1)
+                                        .strokeBorder(accent, lineWidth: 1)
                                 )
                         )
 
@@ -509,7 +502,7 @@ struct ChallengeCommentsSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 13, height: 13)
-                                .foregroundStyle(LColors.textSecondary)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         }
                         .buttonStyle(.plain)
                     }
@@ -530,7 +523,7 @@ struct ChallengeCommentsSheet: View {
                         .fill(LColors.surface.nested)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(LColors.border.nested, lineWidth: 1)
+                                .strokeBorder(accent, lineWidth: 1)
                         )
                 )
 
@@ -550,10 +543,13 @@ struct ChallengeCommentsSheet: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(canSubmit ? AnyShapeStyle(LColors.accents.primary) : AnyShapeStyle(LColors.glassSurface))
-                    )
+                    .background {
+                        BubblyTileSurface(
+                            tint: accent.opacity(canSubmit ? 1 : 0.38),
+                            cornerRadius: 16
+                        )
+                    }
+                    .bubblyTileLift()
                 }
                 .buttonStyle(.plain)
                 .disabled(!canSubmit)
@@ -584,5 +580,24 @@ struct ChallengeCommentsSheet: View {
     private func displayName(for comment: ChallengeCommentDTO) -> String {
         let trimmed = comment.username.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? "Reader" : trimmed
+    }
+
+    private func commentAccent(for depth: Int) -> Color {
+        switch depth {
+        case 0: return theme.palette.primaryAction
+        case 1: return theme.palette.secondaryAccent
+        default: return theme.palette.indicators
+        }
+    }
+
+    private func styledCommentText(_ text: String) -> AttributedString {
+        var result = AttributedString(text)
+        result.foregroundColor = .white
+        guard text.hasPrefix("@"), let end = text.firstIndex(of: " ") else { return result }
+
+        let mentionLength = text.distance(from: text.startIndex, to: end)
+        let mentionEnd = result.index(result.startIndex, offsetByCharacters: mentionLength)
+        result[result.startIndex..<mentionEnd].foregroundColor = theme.palette.primaryAction
+        return result
     }
 }

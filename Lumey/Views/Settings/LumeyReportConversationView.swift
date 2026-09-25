@@ -13,6 +13,7 @@ struct LumeyReportConversationView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appTheme) private var theme
     @StateObject private var service = LumeyReportConversationService()
     @State private var draft = ""
     @State private var attachmentPreviewURL: URL?
@@ -28,7 +29,12 @@ struct LumeyReportConversationView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                LumeyReportHeader(eyebrow: "VOXIVERSE", title: "Private Conversation") {
+                LumeyReportHeader(
+                    eyebrow: "VOXIVERSE",
+                    title: "Private Conversation",
+                    eyebrowColor: theme.palette.secondaryAccent,
+                    bubbly: true
+                ) {
                     dismiss()
                 }
                 .padding(.horizontal, LSpacing.pageHorizontal)
@@ -139,12 +145,12 @@ struct LumeyReportConversationView: View {
     }
 
     private var reportContextCard: some View {
-        GlassCard(cornerRadius: 24) {
+        GlassCard(cornerRadius: 24, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(report.reportID)
                     .font(.system(size: 12, weight: .black, design: .rounded))
                     .tracking(2)
-                    .foregroundStyle(LinearGradient(colors: [LColors.accents.contrast, LColors.accents.contrast], startPoint: .leading, endPoint: .trailing))
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
                 Text(report.title)
                     .font(.system(size: 20, weight: .black, design: .rounded))
@@ -189,18 +195,18 @@ struct LumeyReportConversationView: View {
     }
 
     private var emptyState: some View {
-        GlassCard(cornerRadius: 24) {
+        GlassCard(cornerRadius: 24, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 10) {
                 Image("inbox")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 30, height: 30)
-                    .foregroundStyle(LinearGradient(colors: [LColors.accents.contrast, LColors.accents.contrast], startPoint: .leading, endPoint: .trailing))
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                     .accessibilityHidden(true)
                 Text("No invitation yet")
                     .font(.system(size: 18, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                 Text("If Voxiverse needs to privately discuss this report, the invitation and first message will appear here.")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
@@ -212,20 +218,20 @@ struct LumeyReportConversationView: View {
 
     private var invitationState: some View {
         VStack(alignment: .center, spacing: 14) {
-            GlassCard(cornerRadius: 24) {
+            GlassCard(cornerRadius: 24, borderColor: theme.palette.secondaryAccent) {
                 VStack(alignment: .center, spacing: 16) {
                     Image("chatstar")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 38, height: 38)
-                        .foregroundStyle(LGradients.header)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .accessibilityHidden(true)
 
                     VStack(spacing: 8) {
                         Text("Voxiverse sent you a message")
                             .font(.system(size: 20, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.accents.tertiary)
+                            .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -240,7 +246,7 @@ struct LumeyReportConversationView: View {
                         Text(report.reportID)
                             .font(.system(size: 11, weight: .black, design: .rounded))
                             .tracking(1.5)
-                            .foregroundStyle(LinearGradient(colors: [LColors.accents.contrast, LColors.accents.contrast], startPoint: .leading, endPoint: .trailing))
+                            .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                             .multilineTextAlignment(.center)
 
                         Text(report.title)
@@ -278,7 +284,9 @@ struct LumeyReportConversationView: View {
                                 .font(.system(size: 15, weight: .black, design: .rounded))
                                 .foregroundStyle(LColors.bg)
                                 .frame(maxWidth: .infinity, minHeight: 50)
-                                .background(LGradients.header, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                .background {
+                                    BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18)
+                                }
                         }
                         .buttonStyle(.plain)
                         .disabled(service.isUpdatingInvitation)
@@ -292,10 +300,8 @@ struct LumeyReportConversationView: View {
                                 .font(.system(size: 15, weight: .black, design: .rounded))
                                 .foregroundStyle(LColors.textPrimary)
                                 .frame(maxWidth: .infinity, minHeight: 50)
-                                .background(LColors.glassSurface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                        .strokeBorder(LColors.accents.special, lineWidth: 1.2)
+                                .background {
+                                    BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 18)
                                 }
                         }
                         .buttonStyle(.plain)
@@ -317,10 +323,10 @@ struct LumeyReportConversationView: View {
     private var messagesState: some View {
         VStack(alignment: .leading, spacing: 12) {
             if messages.isEmpty {
-                GlassCard(cornerRadius: 24) {
+                GlassCard(cornerRadius: 24, borderColor: theme.palette.secondaryAccent) {
                     Text("No messages yet.")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
@@ -343,17 +349,17 @@ struct LumeyReportConversationView: View {
     }
 
     private var declinedState: some View {
-        GlassCard(cornerRadius: 24) {
+        GlassCard(cornerRadius: 24, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 10) {
                 Image("xmarkwavy")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 24, height: 24)
-                    .foregroundStyle(LColors.accents.special)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                 Text("Invitation declined")
                     .font(.system(size: 18, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.textPrimary)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                 Text("This report conversation is closed on your side. Voxiverse can see that you declined.")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
@@ -403,10 +409,14 @@ struct LumeyReportConversationView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(message.isFromReporter ? LColors.accents.secondary : LColors.accents.contrast)
-                )
+                .background {
+                    BubblyTileSurface(
+                        tint: message.isFromReporter
+                            ? theme.palette.secondaryAccent
+                            : theme.palette.indicators,
+                        cornerRadius: 18
+                    )
+                }
 
                 ForEach(message.attachments) { attachment in
                     Button {
@@ -531,11 +541,9 @@ private struct LumeyConversationLoadingRing: View {
                 ForEach(0..<dotCount, id: \.self) { index in
                     let color = colors[index % colors.count]
                     let pulse = 0.72 + (0.28 * (cos((elapsed * 5.2) - (Double(index) * 0.48)) + 1) / 2)
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .overlay { Circle().fill(color.opacity(0.76)) }
-                        .overlay { Circle().strokeBorder(color.opacity(0.95), lineWidth: 1) }
+                    BubblyIconMaterial(tint: color)
                         .frame(width: 13, height: 13)
+                        .clipShape(Circle())
                         .scaleEffect(pulse)
                         .offset(y: -39)
                         .rotationEffect(.degrees(Double(index) * (360 / Double(dotCount))))

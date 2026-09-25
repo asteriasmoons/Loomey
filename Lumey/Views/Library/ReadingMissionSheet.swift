@@ -9,6 +9,7 @@ import SwiftUI
 struct ReadingMissionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
@@ -154,13 +155,13 @@ private extension ReadingMissionSheet {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
-                    .background(
-                        Circle()
-                            .fill(LColors.bg)
-                            .overlay(Circle().strokeBorder(LColors.accents.primary, lineWidth: 1.2))
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
-                    )
+                    .background(Circle().fill(theme.palette.raisedSurface))
+                    .overlay {
+                        BubblyIconMaterial(tint: theme.palette.primaryAction)
+                            .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                    }
             }
             .buttonStyle(.plain)
         }
@@ -181,7 +182,7 @@ private extension ReadingMissionSheet {
     }
 
     var missionIntroCard: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.rotation[0]) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 14) {
                     Image("wand")
@@ -189,10 +190,14 @@ private extension ReadingMissionSheet {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 28, height: 28)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 56, height: 56)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(Circle().strokeBorder(LColors.accents.contrast, lineWidth: 1))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                .mask { Circle().strokeBorder(lineWidth: 1) }
+                        }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Mission Setup")
@@ -212,9 +217,10 @@ private extension ReadingMissionSheet {
                         .font(.system(size: 14, weight: .black, design: .rounded))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .foregroundStyle(LColors.appBackground)
-                        .background(LGradients.header)
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
+                        .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18) }
+                        .bubblyTileLift()
                 }
                 .buttonStyle(.plain)
                 .disabled(isGenerating || eligibleBooks.isEmpty)
@@ -252,18 +258,24 @@ private extension ReadingMissionSheet {
                             .scaledToFit()
                             .frame(width: 13, height: 13)
                     }
-                    .foregroundStyle(readingBooks.isEmpty ? AnyShapeStyle(LColors.textSecondary) : AnyShapeStyle(LColors.accents.secondary))
+                    .foregroundStyle(readingBooks.isEmpty ? theme.palette.textSecondary : theme.palette.textPrimary)
+                    .shadow(
+                        color: readingBooks.isEmpty ? .clear : theme.palette.background.opacity(0.55),
+                        radius: 1,
+                        y: 2
+                    )
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 13)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(LColors.iconContainer.primary)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .strokeBorder(readingBooks.isEmpty ? LColors.border.nestedStrong : LColors.border.subtle, lineWidth: 1)
-                    )
+                    .background {
+                        if readingBooks.isEmpty {
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .fill(theme.palette.raisedSurface)
+                        } else {
+                            BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 18)
+                        }
+                    }
+                    .bubblyTileLift(isEnabled: !readingBooks.isEmpty)
                 }
                 .buttonStyle(.plain)
                 .disabled(isGenerating || readingBooks.isEmpty)
@@ -291,7 +303,8 @@ private extension ReadingMissionSheet {
                 .foregroundStyle(LColors.text.secondary)
 
             VStack(spacing: 8) {
-                ForEach(readingBooks) { book in
+                ForEach(Array(readingBooks.enumerated()), id: \.element.id) { index, book in
+                    let accent = theme.palette.rotation[index % theme.palette.rotation.count]
                     Button {
                         Task { await generateMission(for: book) }
                     } label: {
@@ -322,10 +335,14 @@ private extension ReadingMissionSheet {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 16, height: 16)
-                                .foregroundStyle(LColors.accents.secondary)
+                                .foregroundStyle(theme.palette.secondaryAccent)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                                 .frame(width: 34, height: 34)
-                                .background(Circle().fill(LColors.iconContainer.primary))
-                                .overlay(Circle().strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
+                                .background(Circle().fill(theme.palette.raisedSurface))
+                                .overlay {
+                                    BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                        .mask { Circle().strokeBorder(lineWidth: 1) }
+                                }
                         }
                         .padding(10)
                         .background(
@@ -334,7 +351,7 @@ private extension ReadingMissionSheet {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(LColors.border.nested, lineWidth: 1)
+                                .strokeBorder(accent, lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)
@@ -345,13 +362,20 @@ private extension ReadingMissionSheet {
     }
 
     var filtersCard: some View {
-        GlassCard(variant: .primary) {
+        GlassCard(variant: .primary, borderColor: theme.palette.rotation[1]) {
             VStack(alignment: .leading, spacing: 14) {
-                sectionHeader(title: "Randomization Filters", icon: "sparklesearch")
+                sectionHeader(
+                    title: "Randomization Filters",
+                    icon: "sparklesearch",
+                    tint: theme.palette.indicators
+                )
 
                 FlowLayout(spacing: 8) {
-                    ForEach(ReadingMissionFilterKind.allCases) { filter in
-                        filterChip(filter)
+                    ForEach(Array(ReadingMissionFilterKind.allCases.enumerated()), id: \.element.id) { index, filter in
+                        filterChip(
+                            filter,
+                            tint: theme.palette.rotation[index % theme.palette.rotation.count]
+                        )
                     }
                 }
 
@@ -380,7 +404,7 @@ private extension ReadingMissionSheet {
         }
     }
 
-    func filterChip(_ filter: ReadingMissionFilterKind) -> some View {
+    func filterChip(_ filter: ReadingMissionFilterKind, tint: Color) -> some View {
         let isSelected = criteria.activeKinds.contains(filter)
 
         return Button {
@@ -394,26 +418,26 @@ private extension ReadingMissionSheet {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 13, height: 13)
+                    .foregroundStyle(theme.palette.textPrimary)
+                    .bubblyIconMaterial(tint: theme.palette.textPrimary)
 
                 Text(filter.rawValue)
                     .lineLimit(1)
+                    .foregroundStyle(theme.palette.textPrimary)
+                    .bubblyIconMaterial(tint: theme.palette.textPrimary)
             }
             .font(.system(size: 12, weight: .black, design: .rounded))
-            .foregroundStyle(isSelected ? .white : LColors.textSecondary)
+            .foregroundStyle(theme.palette.textPrimary)
+            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(
-                        isSelected
-                        ? LColors.gradientBlue.opacity(0.34)
-                        : LColors.surface.nestedSoft
-                    )
-            )
-            .overlay(
-                Capsule(style: .continuous)
-                    .strokeBorder(isSelected ? LColors.accents.primary : LColors.border.subtle, lineWidth: 1)
-            )
+            .background { BubblyTileSurface(tint: tint, cornerRadius: 999) }
+            .overlay {
+                if isSelected {
+                    Capsule().strokeBorder(theme.palette.textPrimary.opacity(0.72), lineWidth: 1.25)
+                }
+            }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
     }
@@ -430,8 +454,9 @@ private extension ReadingMissionSheet {
                 .foregroundStyle(LColors.text.secondary)
 
             FlowLayout(spacing: 8) {
-                ForEach(values.prefix(36), id: \.self) { value in
+                ForEach(Array(values.prefix(36).enumerated()), id: \.element) { index, value in
                     let isSelected = selectedValues.contains(where: { $0.localizedCaseInsensitiveCompare(value) == .orderedSame })
+                    let tint = theme.palette.rotation[index % theme.palette.rotation.count]
                     Button {
                         withAnimation(.spring(response: 0.24, dampingFraction: 0.84)) {
                             toggle(value)
@@ -440,11 +465,18 @@ private extension ReadingMissionSheet {
                         Text(value)
                             .font(.system(size: 11, weight: .black, design: .rounded))
                             .lineLimit(1)
-                            .foregroundStyle(isSelected ? LColors.bg : LColors.textSecondary)
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .bubblyIconMaterial(tint: theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                             .padding(.horizontal, 11)
                             .padding(.vertical, 7)
-                            .background(Capsule(style: .continuous).fill(isSelected ? AnyShapeStyle(LColors.accents.special) : AnyShapeStyle(LColors.surface.nestedSoft)))
-                            .overlay(Capsule(style: .continuous).strokeBorder(isSelected ? LColors.border.subtle : LColors.border.nestedStrong, lineWidth: 1))
+                            .background { BubblyTileSurface(tint: tint, cornerRadius: 999) }
+                            .overlay {
+                                if isSelected {
+                                    Capsule().strokeBorder(theme.palette.textPrimary.opacity(0.72), lineWidth: 1.25)
+                                }
+                            }
+                            .bubblyTileLift()
                     }
                     .buttonStyle(.plain)
                 }
@@ -460,6 +492,7 @@ private extension ReadingMissionSheet {
 
             HStack(spacing: 8) {
                 ForEach(1...5, id: \.self) { rating in
+                    let tint = theme.palette.rotation[(rating - 1) % theme.palette.rotation.count]
                     Button {
                         withAnimation(.spring(response: 0.24, dampingFraction: 0.84)) {
                             criteria.minimumRating = rating
@@ -467,17 +500,19 @@ private extension ReadingMissionSheet {
                     } label: {
                         Text("\(rating)+")
                             .font(.system(size: 12, weight: .black, design: .rounded))
-                            .foregroundStyle(criteria.minimumRating == rating ? LColors.bg : LColors.textSecondary)
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .bubblyIconMaterial(tint: theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(criteria.minimumRating == rating ? AnyShapeStyle(LColors.accents.primary) : AnyShapeStyle(LColors.surface.nestedSoft))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(criteria.minimumRating == rating ? LColors.border.subtle : LColors.border.nestedStrong, lineWidth: 1)
-                            )
+                            .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+                            .overlay {
+                                if criteria.minimumRating == rating {
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .strokeBorder(theme.palette.textPrimary.opacity(0.72), lineWidth: 1.25)
+                                }
+                            }
+                            .bubblyTileLift()
                     }
                     .buttonStyle(.plain)
                 }
@@ -486,57 +521,70 @@ private extension ReadingMissionSheet {
     }
 
     var missionStatsCard: some View {
-        GlassCard(variant: .secondary) {
+        GlassCard(variant: .secondary, borderColor: theme.palette.rotation[2]) {
             VStack(alignment: .leading, spacing: 12) {
-                sectionHeader(title: "Mission Stats", icon: "sparkletrophy")
+                sectionHeader(
+                    title: "Mission Stats",
+                    icon: "sparkletrophy",
+                    tint: theme.palette.primaryAction
+                )
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                    missionStat(value: "\(missionStats.missionsGenerated)", label: "Joined")
-                    missionStat(value: "\(missionStats.missionsCompleted)", label: "Completed")
-                    missionStat(value: "\(Int((missionStats.completionPercentage * 100).rounded()))%", label: "Completion")
-                    missionStat(value: ReadingMissionStatsCalculator.formattedDuration(seconds: missionStats.averageCompletionTimeSeconds), label: "Average Time")
-                    missionStat(value: missionStats.favoriteMissionCategory, label: "Favorite Category")
-                    missionStat(value: "\(missionStats.currentMissionStreak) / \(missionStats.longestMissionStreak)", label: "Current / Longest")
+                    missionStat(value: "\(missionStats.missionsGenerated)", label: "Joined", tint: theme.palette.rotation[0])
+                    missionStat(value: "\(missionStats.missionsCompleted)", label: "Completed", tint: theme.palette.rotation[1])
+                    missionStat(value: "\(Int((missionStats.completionPercentage * 100).rounded()))%", label: "Completion", tint: theme.palette.rotation[2])
+                    missionStat(value: ReadingMissionStatsCalculator.formattedDuration(seconds: missionStats.averageCompletionTimeSeconds), label: "Average Time", tint: theme.palette.rotation[0])
+                    missionStat(value: missionStats.favoriteMissionCategory, label: "Favorite Category", tint: theme.palette.rotation[1])
+                    missionStat(value: "\(missionStats.currentMissionStreak) / \(missionStats.longestMissionStreak)", label: "Current / Longest", tint: theme.palette.rotation[2])
                 }
             }
         }
     }
 
-    func missionStat(value: String, label: String) -> some View {
+    func missionStat(value: String, label: String, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(value)
                 .font(.system(size: 16, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(theme.palette.textPrimary)
+                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                 .lineLimit(2)
                 .minimumScaleFactor(0.72)
 
             Text(label)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(theme.palette.textPrimary)
+                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.76)
         }
         .padding(12)
         .frame(maxWidth: .infinity, minHeight: 82, maxHeight: 82, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.surface.nested))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nested, lineWidth: 1))
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 
     var missionHistorySection: some View {
         Group {
             if !missions.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    sectionHeader(title: "Mission History", icon: "timebook")
+                    sectionHeader(
+                        title: "Mission History",
+                        icon: "timebook",
+                        tint: theme.palette.secondaryAccent
+                    )
 
                     VStack(spacing: 10) {
-                        ForEach(missions.prefix(8)) { mission in
+                        ForEach(Array(missions.prefix(8).enumerated()), id: \.element.id) { index, mission in
                             Button {
                                 withAnimation(.spring(response: 0.34, dampingFraction: 0.84)) {
                                     selectedMissionID = mission.id
                                     errorMessage = nil
                                 }
                             } label: {
-                                missionHistoryCard(mission)
+                                missionHistoryCard(
+                                    mission,
+                                    tint: theme.palette.rotation[index % theme.palette.rotation.count]
+                                )
                             }
                             .buttonStyle(.plain)
                         }
@@ -546,8 +594,8 @@ private extension ReadingMissionSheet {
         }
     }
 
-    func missionHistoryCard(_ mission: ReadingMission) -> some View {
-        GlassCard(cornerRadius: 18, padding: 14, variant: .featured) {
+    func missionHistoryCard(_ mission: ReadingMission, tint: Color) -> some View {
+        GlassCard(cornerRadius: 18, padding: 14, variant: .featured, borderColor: tint) {
             HStack(spacing: 12) {
                 ReadingMissionCover(book: localBook(for: mission), mission: mission, width: 42, height: 62)
 
@@ -571,10 +619,21 @@ private extension ReadingMissionSheet {
 
                 Text(mission.isCompleted ? "Complete" : "\(completedTaskCount(for: mission)) / 4")
                     .font(.system(size: 10, weight: .black, design: .rounded))
-                    .foregroundStyle(mission.isCompleted ? LColors.bg : .white)
+                    .foregroundStyle(theme.palette.textPrimary)
+                    .bubblyIconMaterial(
+                        tint: theme.palette.textPrimary,
+                        isEnabled: mission.isCompleted
+                    )
+                    .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 6)
-                    .background(Capsule(style: .continuous).fill(mission.isCompleted ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.border.nested)))
+                    .background {
+                        if mission.isCompleted {
+                            BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 999)
+                        } else {
+                            Capsule().fill(theme.palette.raisedSurface)
+                        }
+                    }
             }
         }
     }
@@ -584,7 +643,7 @@ private extension ReadingMissionSheet {
 
 private extension ReadingMissionSheet {
     var loadingState: some View {
-        GlassCard(variant: .tertiary) {
+        GlassCard(variant: .tertiary, borderColor: theme.palette.rotation[0]) {
             VStack(spacing: 22) {
                 ZStack {
                     Circle()
@@ -637,23 +696,29 @@ private extension ReadingMissionSheet {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12, height: 12)
+                        .foregroundStyle(theme.palette.textPrimary)
 
                     Text("Mission Setup")
                         .font(.system(size: 12, weight: .black, design: .rounded))
+                        .foregroundStyle(theme.palette.textPrimary)
                 }
-                .foregroundStyle(LColors.accents.primary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Capsule(style: .continuous).fill(LColors.iconContainer.primary))
-                .overlay(Capsule(style: .continuous).strokeBorder(LColors.accents.special, lineWidth: 1))
+                .background {
+                    BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                        .clipShape(Capsule())
+                }
             }
             .buttonStyle(.plain)
 
             missionHero(mission: mission, missionTasks: missionTasks)
 
             VStack(spacing: 12) {
-                ForEach(missionTasks) { task in
-                    ReadingMissionTaskCard(task: task) {
+                ForEach(Array(missionTasks.enumerated()), id: \.element.id) { index, task in
+                    ReadingMissionTaskCard(
+                        task: task,
+                        borderColor: theme.palette.rotation[(index + 1) % theme.palette.rotation.count]
+                    ) {
                         toggleTask(task, mission: mission)
                     } onNotesChanged: { notes in
                         task.notes = notes
@@ -663,10 +728,17 @@ private extension ReadingMissionSheet {
                 }
             }
 
-            missionScoringSection(mission: mission, missionTasks: missionTasks)
+            missionScoringSection(
+                mission: mission,
+                missionTasks: missionTasks,
+                borderColor: theme.palette.rotation[(missionTasks.count + 1) % theme.palette.rotation.count]
+            )
 
             if mission.isCompleted {
-                completedMissionCard(mission: mission)
+                completedMissionCard(
+                    mission: mission,
+                    borderColor: theme.palette.rotation[(missionTasks.count + 2) % theme.palette.rotation.count]
+                )
             }
 
             HStack(spacing: 10) {
@@ -677,9 +749,10 @@ private extension ReadingMissionSheet {
                         .font(.system(size: 14, weight: .black, design: .rounded))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .foregroundStyle(LColors.appBackground)
-                        .background(LGradients.header)
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
+                        .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18) }
+                        .bubblyTileLift()
                 }
                 .buttonStyle(.plain)
 
@@ -690,10 +763,13 @@ private extension ReadingMissionSheet {
                         .font(.system(size: 14, weight: .black, design: .rounded))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .foregroundStyle(.white)
-                        .background(LColors.iconContainer.primary)
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .background(theme.palette.raisedSurface)
                         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(LColors.border.subtle, lineWidth: 1))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
+                        }
                 }
                 .buttonStyle(.plain)
             }
@@ -704,7 +780,7 @@ private extension ReadingMissionSheet {
         let completeCount = missionTasks.filter(\.isCompleted).count
         let progress = missionTasks.isEmpty ? 0 : Double(completeCount) / Double(missionTasks.count)
 
-        return GlassCard(variant: .elevated) {
+        return GlassCard(variant: .elevated, borderColor: theme.palette.rotation[0]) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 15) {
                     ReadingMissionCover(book: localBook(for: mission), mission: mission, width: 82, height: 122)
@@ -730,7 +806,8 @@ private extension ReadingMissionSheet {
 
                         Text("\(completeCount) / 4 Missions Complete")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.accents.contrast)
+                            .foregroundStyle(theme.palette.secondaryAccent)
+                            .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                             .contentTransition(.numericText())
 
                         Text(mission.isCompleted ? "Mission Status: Complete" : "Mission Status: Active")
@@ -752,7 +829,8 @@ private extension ReadingMissionSheet {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("\(mission.score)")
                     .font(.system(size: 26, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.accents.secondary)
+                    .foregroundStyle(theme.palette.indicators)
+                    .bubblyIconMaterial(tint: theme.palette.indicators)
 
                 Text("/ 100")
                     .font(.system(size: 12, weight: .black, design: .rounded))
@@ -781,10 +859,19 @@ private extension ReadingMissionSheet {
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(LColors.accents.primary, lineWidth: 1))
     }
 
-    func missionScoringSection(mission: ReadingMission, missionTasks: [ReadingMissionTask]) -> some View {
+    func missionScoringSection(
+        mission: ReadingMission,
+        missionTasks: [ReadingMissionTask],
+        borderColor: Color
+    ) -> some View {
         let canScore = hasAllRequiredAnswers(missionTasks)
 
-        return GlassCard(cornerRadius: 18, padding: 16, variant: .primary) {
+        return GlassCard(
+            cornerRadius: 18,
+            padding: 16,
+            variant: .primary,
+            borderColor: borderColor
+        ) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image("sparkletrophy")
@@ -792,10 +879,14 @@ private extension ReadingMissionSheet {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(LColors.accents.special)
+                        .foregroundStyle(theme.palette.primaryAction)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .frame(width: 38, height: 38)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(Circle().strokeBorder(LColors.border.subtle, lineWidth: 1))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                .mask { Circle().strokeBorder(lineWidth: 1) }
+                        }
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Score Answers")
@@ -805,6 +896,10 @@ private extension ReadingMissionSheet {
                         Text(canScore ? "All four answers are ready." : "Answer all four prompts before scoring.")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundStyle(canScore ? AnyShapeStyle(LColors.accents.secondary) : AnyShapeStyle(LColors.text.tertiary))
+                            .bubblyIconMaterial(
+                                tint: theme.palette.secondaryAccent,
+                                isEnabled: canScore
+                            )
                     }
 
                     Spacer(minLength: 0)
@@ -824,26 +919,22 @@ private extension ReadingMissionSheet {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 17, height: 17)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(theme.palette.textPrimary)
+                                .bubblyIconMaterial(tint: theme.palette.textPrimary)
                         }
 
                         Text(isScoringMission ? "Scoring Answers..." : "Get Score")
                             .font(.system(size: 14, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
 
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 13)
                     .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(canScore ? AnyShapeStyle(LColors.accents.special) : AnyShapeStyle(LColors.border.nested))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(canScore ? AnyShapeStyle(LColors.border.nestedStrong) : AnyShapeStyle(LColors.border.nestedStrong), lineWidth: 1)
-                    )
+                    .background { BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 16) }
+                    .bubblyTileLift()
                 }
                 .buttonStyle(.plain)
                 .disabled(isScoringMission)
@@ -865,10 +956,14 @@ private extension ReadingMissionSheet {
         }
     }
 
-    func completedMissionCard(mission: ReadingMission) -> some View {
-        GlassCard(variant: .subtle) {
+    func completedMissionCard(mission: ReadingMission, borderColor: Color) -> some View {
+        GlassCard(variant: .subtle, borderColor: borderColor) {
             VStack(alignment: .leading, spacing: 10) {
-                sectionHeader(title: "Mission Complete", icon: "startrophy")
+                sectionHeader(
+                    title: "Mission Complete",
+                    icon: "startrophy",
+                    tint: theme.palette.secondaryAccent
+                )
 
                 if let completedAt = mission.completedAt {
                     Text("Date Completed: \(completedAt.formatted(date: .abbreviated, time: .shortened))")
@@ -1137,14 +1232,15 @@ private extension ReadingMissionSheet {
         .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
-    func sectionHeader(title: String, icon: String) -> some View {
+    func sectionHeader(title: String, icon: String, tint: Color) -> some View {
         HStack(spacing: 9) {
             Image(icon)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 17, height: 17)
-                .foregroundStyle(LColors.accents.secondary)
+                .foregroundStyle(tint)
+                .bubblyIconMaterial(tint: tint)
 
             Text(title)
                 .font(.system(size: 17, weight: .black, design: .rounded))
@@ -1154,23 +1250,29 @@ private extension ReadingMissionSheet {
 }
 
 private struct ReadingMissionProgressRing: View {
+    @Environment(\.appTheme) private var theme
+
     let progress: Double
     let completeCount: Int
 
     var body: some View {
         ZStack {
             Circle()
-                .stroke(LColors.border.nestedStrong, lineWidth: 7)
+                .stroke(theme.palette.raisedSurface, lineWidth: 7)
 
-            Circle()
-                .trim(from: 0, to: min(max(progress, 0), 1))
-                .stroke(LGradients.header, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+            BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 999)
+                .mask {
+                    Circle()
+                        .trim(from: 0, to: min(max(progress, 0), 1))
+                        .stroke(style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                }
                 .rotationEffect(.degrees(-90))
                 .animation(.spring(response: 0.32, dampingFraction: 0.82), value: progress)
 
             Text("\(completeCount)")
                 .font(.system(size: 17, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(theme.palette.textPrimary)
+                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                 .contentTransition(.numericText())
         }
         .frame(width: 54, height: 54)
@@ -1287,7 +1389,10 @@ private struct ReadingMissionBookPickerCover: View {
 }
 
 private struct ReadingMissionTaskCard: View {
+    @Environment(\.appTheme) private var theme
+
     let task: ReadingMissionTask
+    let borderColor: Color
     let onToggle: () -> Void
     let onNotesChanged: (String) -> Void
 
@@ -1299,7 +1404,12 @@ private struct ReadingMissionTaskCard: View {
     }
 
     var body: some View {
-        GlassCard(cornerRadius: 18, padding: 16, variant: .secondary) {
+        GlassCard(
+            cornerRadius: 18,
+            padding: 16,
+            variant: .secondary,
+            borderColor: borderColor
+        ) {
             VStack(alignment: .leading, spacing: 13) {
                 HStack(alignment: .top, spacing: 12) {
                     Image(task.iconName)
@@ -1307,16 +1417,21 @@ private struct ReadingMissionTaskCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(task.isCompleted ? AnyShapeStyle(LColors.bg) : AnyShapeStyle(LColors.accents.primary))
+                        .foregroundStyle(theme.palette.primaryAction)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .frame(width: 42, height: 42)
-                        .background(Circle().fill(task.isCompleted ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.surface.subtle.opacity(0.6))))
-                        .overlay(Circle().strokeBorder(task.isCompleted ? LColors.border.nestedStrong : LColors.border.nestedStrong, lineWidth: 1))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                .mask { Circle().strokeBorder(lineWidth: 1) }
+                        }
 
                     VStack(alignment: .leading, spacing: 5) {
                         HStack(spacing: 7) {
                             Text(task.categoryRawValue)
                                 .font(.system(size: 10, weight: .black, design: .rounded))
-                                .foregroundStyle(LColors.accents.special)
+                                .foregroundStyle(theme.palette.indicators)
+                                .bubblyIconMaterial(tint: theme.palette.indicators)
 
                             Text(task.difficulty)
                                 .font(.system(size: 10, weight: .black, design: .rounded))
@@ -1337,10 +1452,14 @@ private struct ReadingMissionTaskCard: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 17, height: 17)
-                            .foregroundStyle(task.isCompleted ? AnyShapeStyle(LColors.bg) : AnyShapeStyle(LColors.accents.secondary))
+                            .foregroundStyle(theme.palette.secondaryAccent)
+                            .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                             .frame(width: 38, height: 38)
-                            .background(Circle().fill(task.isCompleted ? AnyShapeStyle(LColors.accents.special) : AnyShapeStyle(LColors.surface.subtle.opacity(0.6))))
-                            .overlay(Circle().strokeBorder(task.isCompleted || hasAnswer ? AnyShapeStyle(LColors.accents.primary) : AnyShapeStyle(LColors.border.subtle), lineWidth: 1))
+                            .background(Circle().fill(theme.palette.raisedSurface))
+                            .overlay {
+                                BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                    .mask { Circle().strokeBorder(lineWidth: 1) }
+                            }
                     }
                     .buttonStyle(.plain)
                 }
@@ -1370,7 +1489,10 @@ private struct ReadingMissionTaskCard: View {
                     .frame(minHeight: 72)
                     .padding(8)
                     .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.surface.nestedSoft))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(isNotesFocused ? LColors.gradientPurple.opacity(0.78) : LColors.border.nestedStrong, lineWidth: 1))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(theme.palette.primaryAction, lineWidth: isNotesFocused ? 1.4 : 1)
+                    }
 
                     if !task.isCompleted && !hasAnswer {
                         Text("Answer required")
@@ -1387,15 +1509,18 @@ private struct ReadingMissionTaskCard: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 13, height: 13)
-                                .foregroundStyle(LColors.accents.primary)
+                                .foregroundStyle(theme.palette.textPrimary)
+                                .bubblyIconMaterial(tint: theme.palette.textPrimary)
 
                             Text("\(task.aiScore)/100")
                                 .font(.system(size: 13, weight: .black, design: .rounded))
-                                .foregroundStyle(LColors.cardTitle)
+                                .foregroundStyle(theme.palette.textPrimary)
+                                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
 
                             Text("AI Score")
                                 .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(LColors.text.muted)
+                                .foregroundStyle(theme.palette.textPrimary)
+                                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
 
                             Spacer(minLength: 0)
                         }
@@ -1403,19 +1528,23 @@ private struct ReadingMissionTaskCard: View {
                         if !task.aiFeedback.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             Text(task.aiFeedback)
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .foregroundStyle(LColors.text.secondary)
+                                .foregroundStyle(theme.palette.textPrimary)
+                                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     .padding(11)
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.surface.nestedSoft))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.subtle, lineWidth: 1))
+                    .background {
+                        BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 14)
+                    }
+                    .bubblyTileLift()
                 }
 
                 if let completedAt = task.completedAt {
                     Text("Completed \(completedAt.formatted(date: .abbreviated, time: .shortened))")
                         .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.accents.contrast)
+                        .foregroundStyle(theme.palette.indicators)
+                        .bubblyIconMaterial(tint: theme.palette.indicators)
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
             }

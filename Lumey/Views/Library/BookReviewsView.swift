@@ -11,6 +11,7 @@ struct BookReviewsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @State private var showAddSheet = false
     @State private var editingReview: BookReview? = nil
@@ -77,6 +78,7 @@ struct BookReviewsView: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
@@ -85,7 +87,6 @@ struct BookReviewsView: View {
                                 Circle()
                                     .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -99,6 +100,7 @@ struct BookReviewsView: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.indicators)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
@@ -107,7 +109,6 @@ struct BookReviewsView: View {
                                 Circle()
                                     .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -120,8 +121,11 @@ struct BookReviewsView: View {
                 emptyState
             } else {
                 VStack(spacing: 14) {
-                    ForEach(reviews, id: \.id) { review in
-                        reviewCard(review)
+                    ForEach(Array(reviews.enumerated()), id: \.element.id) { index, review in
+                        reviewCard(
+                            review,
+                            tint: theme.palette.rotation[index % theme.palette.rotation.count]
+                        )
                     }
                 }
             }
@@ -137,6 +141,7 @@ struct BookReviewsView: View {
                     .scaledToFit()
                     .frame(width: 32, height: 32)
                     .foregroundStyle(LGradients.blue)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                 Text("No reviews yet")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
@@ -151,9 +156,13 @@ struct BookReviewsView: View {
         }
     }
 
-    private func reviewCard(_ review: BookReview) -> some View {
-        GlassCard(cornerRadius: 20, padding: 18, variant: .tertiary) {
-            VStack(alignment: .leading, spacing: 10) {
+    private func reviewCard(_ review: BookReview, tint: Color) -> some View {
+        GlassCard(cornerRadius: 20, padding: 0, variant: .tertiary, borderColor: tint) {
+            ZStack {
+                BubblyLightWash(colors: [tint], intensity: 0.34, fadeEnd: 0.82)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     if !review.title.isEmpty {
                         Text(review.title)
@@ -173,14 +182,15 @@ struct BookReviewsView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 14, height: 14)
-                                .foregroundStyle(LGradients.blue)
+                                .foregroundStyle(tint)
+                                .bubblyIconMaterial(tint: tint)
                                 .frame(width: 30, height: 30)
                                 .background(
                                     Circle()
                                         .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LGradients.blue, lineWidth: 1)
+                                                .strokeBorder(tint, lineWidth: 1)
                                         )
                                 )
                         }
@@ -195,14 +205,15 @@ struct BookReviewsView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 14, height: 14)
-                                .foregroundStyle(LGradients.blue)
+                                .foregroundStyle(tint)
+                                .bubblyIconMaterial(tint: tint)
                                 .frame(width: 30, height: 30)
                                 .background(
                                     Circle()
                                         .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LGradients.blue, lineWidth: 1)
+                                                .strokeBorder(tint, lineWidth: 1)
                                         )
                                 )
                         }
@@ -223,6 +234,11 @@ struct BookReviewsView: View {
                                     ? LColors.accents.secondary
                                     : LColors.border.nestedStrong
                                 )
+                                .bubblyIconMaterial(
+                                    tint: star <= Int(review.rating)
+                                    ? theme.palette.secondaryAccent
+                                    : LColors.border.nestedStrong
+                                )
                         }
                     }
                 }
@@ -236,8 +252,11 @@ struct BookReviewsView: View {
                 Text(review.dateCreated.formatted(date: .abbreviated, time: .omitted))
                     .font(.system(size: 10, weight: .bold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
+                }
+                .padding(18)
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .onTapGesture {
             selectedReview = review
         }
@@ -277,6 +296,7 @@ private extension View {
 struct BookReviewDetailSheet: View {
     let review: BookReview
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
 
     var body: some View {
         ZStack {
@@ -301,6 +321,7 @@ struct BookReviewDetailSheet: View {
                                 .scaledToFit()
                                 .frame(width: 18, height: 18)
                                 .foregroundStyle(LGradients.blue)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
@@ -329,6 +350,11 @@ struct BookReviewDetailSheet: View {
                                             .foregroundStyle(
                                                 star <= Int(review.rating)
                                                 ? LColors.accents.secondary
+                                                : LColors.border.nestedStrong
+                                            )
+                                            .bubblyIconMaterial(
+                                                tint: star <= Int(review.rating)
+                                                ? theme.palette.secondaryAccent
                                                 : LColors.border.nestedStrong
                                             )
                                     }
@@ -363,6 +389,7 @@ struct BookReviewEditorSheet: View {
     let review: BookReview?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     @State private var title = ""
     @State private var content = ""
@@ -392,7 +419,8 @@ struct BookReviewEditorSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 18, height: 18)
-                                .foregroundStyle(LGradients.blue)
+                                .foregroundStyle(theme.palette.secondaryAccent)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
@@ -402,8 +430,7 @@ struct BookReviewEditorSheet: View {
                         .buttonStyle(.plain)
                     }
 
-                    GlassCard(variant: .secondary) {
-                        VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Title (optional)")
                                     .font(.system(size: 11, weight: .black, design: .rounded))
@@ -418,7 +445,7 @@ struct BookReviewEditorSheet: View {
                                             .fill(LColors.surface.nested)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                    .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                                             )
                                     )
                             }
@@ -441,6 +468,11 @@ struct BookReviewEditorSheet: View {
                                                 .foregroundStyle(
                                                     star <= Int(rating)
                                                     ? LColors.accents.secondary
+                                                    : LColors.border.nestedStrong
+                                                )
+                                                .bubblyIconMaterial(
+                                                    tint: star <= Int(rating)
+                                                    ? theme.palette.secondaryAccent
                                                     : LColors.border.nestedStrong
                                                 )
                                                 .frame(width: 28, height: 28)
@@ -467,11 +499,10 @@ struct BookReviewEditorSheet: View {
                                             .fill(LColors.surface.nested)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                    .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                                             )
                                     )
                             }
-                        }
                     }
 
                     Button {
@@ -479,13 +510,12 @@ struct BookReviewEditorSheet: View {
                     } label: {
                         Text(isEditing ? "Save Changes" : "Add Review")
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(LGradients.blue)
-                            )
+                            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 16) }
+                            .bubblyTileLift()
                     }
                     .buttonStyle(.plain)
                     .opacity(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)

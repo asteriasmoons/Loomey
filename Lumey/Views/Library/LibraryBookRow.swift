@@ -7,14 +7,19 @@ import SwiftUI
 import SwiftData
 
 struct LibraryBookRow: View {
+    @Environment(\.appTheme) private var theme
+    @Environment(\.modelContext) private var modelContext
+
     let book: Book
     var variant: GlassCardVariant = .primary
     var accentIndex: Int = 0
     var onEdit: (() -> Void)? = nil
-    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
-        GlassCard(variant: variant) {
+        let rotation = theme.palette.rotation
+        let cardAccent = rotation[accentIndex % rotation.count]
+
+        return GlassCard(variant: variant, borderColor: cardAccent) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 13) {
                     LibraryBookCover(book: book)
@@ -38,18 +43,18 @@ struct LibraryBookRow: View {
                         }
                         
                         FlowLayout(spacing: 8) {
-                            LibraryStatusPill(text: book.status.rawValue)
-                            LibraryStatusPill(text: book.format.rawValue)
-                            LibraryStatusPill(text: book.ownership.rawValue)
+                            LibraryStatusPill(text: book.status.rawValue, tint: rotation[0])
+                            LibraryStatusPill(text: book.format.rawValue, tint: rotation[1])
+                            LibraryStatusPill(text: book.ownership.rawValue, tint: rotation[2])
                             
                             if book.isFavorite {
-                                LibraryStatusPill(text: "Favorite")
+                                LibraryStatusPill(text: "Favorite", tint: rotation[0])
                             }
                             if book.isReread {
-                                LibraryStatusPill(text: "Reread")
+                                LibraryStatusPill(text: "Reread", tint: rotation[1])
                             }
                             if book.isDNF {
-                                LibraryStatusPill(text: "DNF")
+                                LibraryStatusPill(text: "DNF", tint: rotation[2])
                             }
                         }
                     }
@@ -62,6 +67,7 @@ struct LibraryBookRow: View {
                         } label: {
                             LibraryBookIconButtonImage(
                                 iconName: "pencil",
+                                tint: rotation[0],
                                 accessibilityLabel: "Edit book"
                             )
                         }
@@ -70,38 +76,53 @@ struct LibraryBookRow: View {
                         NavigationLink {
                             ReadingBookDetailView(book: book)
                         } label: {
-                            LibraryBookIconButtonImage(iconName: "chevright")
+                            LibraryBookIconButtonImage(iconName: "chevright", tint: rotation[1])
                         }
                         .buttonStyle(.plain)
 
-                        Menu {
-                            ForEach(BookStatus.allCases) { status in
-                                Button {
-                                    setStatus(status)
-                                } label: {
-                                    Label {
-                                        Text(status.rawValue)
-                                    } icon: {
-                                        Image(status == book.status ? "checkwavy" : "starmark")
-                                            .renderingMode(.template)
-                                    }
-                                }
-                            }
-                        } label: {
+                        ZStack {
                             LibraryBookIconButtonImage(
                                 iconName: "starmark",
+                                tint: rotation[2],
                                 accessibilityLabel: "Change reading status"
                             )
+
+                            Menu {
+                                ForEach(BookStatus.allCases) { status in
+                                    Button {
+                                        setStatus(status)
+                                    } label: {
+                                        Label {
+                                            Text(status.rawValue)
+                                        } icon: {
+                                            Image(status == book.status ? "checkwavy" : "starmark")
+                                                .renderingMode(.template)
+                                        }
+                                    }
+                                }
+                            } label: {
+                                Circle()
+                                    .fill(Color.clear)
+                                    .frame(width: 34, height: 34)
+                                    .contentShape(Circle())
+                            }
+                            .menuIndicator(.hidden)
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Change reading status")
                         }
-                        .buttonStyle(.plain)
+                        .frame(width: 34, height: 34)
                     }
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    LibraryRatingRow(book: book)
+                    LibraryRatingRow(book: book, useBubblyMaterial: true)
                     
                     VStack(alignment: .leading, spacing: 6) {
-                        GradientProgressBar(value: book.calculatedProgress, isPaused: book.status == .paused)
+                        GradientProgressBar(
+                            value: book.calculatedProgress,
+                            isPaused: book.status == .paused,
+                            tint: theme.palette.secondaryAccent
+                        )
                             .frame(height: 8)
                         
                         Text(progressSummaryText)
@@ -137,7 +158,10 @@ struct LibraryBookRow: View {
 }
 
 private struct LibraryBookIconButtonImage: View {
+    @Environment(\.appTheme) private var theme
+
     let iconName: String
+    let tint: Color
     var accessibilityLabel: String? = nil
 
     var body: some View {
@@ -146,16 +170,14 @@ private struct LibraryBookIconButtonImage: View {
             .resizable()
             .scaledToFit()
             .frame(width: 18, height: 18)
-            .foregroundStyle(LColors.accents.primary)
+            .foregroundStyle(tint)
+            .bubblyIconMaterial(tint: tint)
             .frame(width: 34, height: 34)
-            .background(
-                Circle()
-                    .fill(LColors.iconContainer.primary)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                    )
-            )
+            .background(Circle().fill(theme.palette.raisedSurface))
+            .overlay {
+                BubblyIconMaterial(tint: tint)
+                    .mask { Circle().strokeBorder(lineWidth: 1.2) }
+            }
             .accessibilityLabel(accessibilityLabel ?? iconName)
     }
 }
@@ -417,6 +439,7 @@ struct LibrarySeriesDropdownPicker: View {
 struct GradientProgressBar: View {
     let value: Double
     var isPaused: Bool = false
+    var tint: Color? = nil
     
     private var clampedValue: Double {
         min(max(value, 0), 1)
@@ -440,9 +463,14 @@ struct GradientProgressBar: View {
                 Capsule(style: .continuous)
                     .fill(track)
                 
-                Capsule(style: .continuous)
-                    .fill(fill)
-                    .frame(width: proxy.size.width * clampedValue)
+                if let tint {
+                    BubblyTileSurface(tint: tint, cornerRadius: 999)
+                        .frame(width: proxy.size.width * clampedValue)
+                } else {
+                    Capsule(style: .continuous)
+                        .fill(fill)
+                        .frame(width: proxy.size.width * clampedValue)
+                }
             }
         }
         .clipShape(Capsule(style: .continuous))
@@ -481,52 +509,63 @@ struct LibraryBookCover: View {
 }
 
 struct LibraryStatusPill: View {
+    @Environment(\.appTheme) private var theme
+
     let text: String
     var usePurpleStyle: Bool = false
+    var tint: Color? = nil
     
     var body: some View {
         Text(text)
             .font(.system(size: 10, weight: .black, design: .rounded))
             .fixedSize(horizontal: true, vertical: false)
-            .foregroundStyle(.white)
+            .foregroundStyle(theme.palette.textPrimary)
+            .bubblyIconMaterial(tint: theme.palette.textPrimary, isEnabled: tint != nil)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: usePurpleStyle
-                            ? [
-                                LColors.gradientPurple.opacity(0.30),
-                                LColors.gradientPurple.opacity(0.18)
-                            ]
-                            : [
-                                LColors.gradientBlue.opacity(0.20),
-                                LColors.gradientPurple.opacity(0.20)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+            .background {
+                if let tint {
+                    BubblyTileSurface(tint: tint, cornerRadius: 999)
+                } else {
+                    Capsule(style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: usePurpleStyle
+                                ? [
+                                    LColors.gradientPurple.opacity(0.30),
+                                    LColors.gradientPurple.opacity(0.18)
+                                ]
+                                : [
+                                    LColors.gradientBlue.opacity(0.20),
+                                    LColors.gradientPurple.opacity(0.20)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-            )
-            .overlay(
-                Capsule(style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: usePurpleStyle
-                            ? [
-                                LColors.gradientPurple,
-                                LColors.gradientPurple.opacity(0.7)
-                            ]
-                            : [
-                                LColors.gradientBlue.opacity(0.7),
-                                LColors.gradientPurple.opacity(0.7)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.8
-                    )
-            )
+                }
+            }
+            .overlay {
+                if tint == nil {
+                    Capsule(style: .continuous)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: usePurpleStyle
+                                ? [
+                                    LColors.gradientPurple,
+                                    LColors.gradientPurple.opacity(0.7)
+                                ]
+                                : [
+                                    LColors.gradientBlue.opacity(0.7),
+                                    LColors.gradientPurple.opacity(0.7)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.8
+                        )
+                }
+            }
+            .bubblyTileLift(isEnabled: tint != nil)
     }
 }

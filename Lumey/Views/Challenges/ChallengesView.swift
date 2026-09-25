@@ -10,6 +10,7 @@ struct ChallengesView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     @Query(sort: \ReadingChallenge.createdDate)
@@ -180,16 +181,15 @@ struct ChallengesView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -202,16 +202,15 @@ struct ChallengesView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.secondary, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -226,14 +225,20 @@ struct ChallengesView: View {
             Button {
                 selectedChallenge = challenge
             } label: {
-                GlassCard(variant: .featured) {
+                GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
                     HStack(spacing: 14) {
                         Image(challenge.iconName)
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 36, height: 36)
-                            .foregroundStyle(LColors.accents.secondary)
+                            .frame(width: 26, height: 26)
+                            .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                            .frame(width: 48, height: 48)
+                            .background(Circle().fill(theme.palette.raisedSurface))
+                            .overlay {
+                                Circle()
+                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.2)
+                            }
 
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: 6) {
@@ -268,14 +273,15 @@ struct ChallengesView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Weekly Challenges")
 
-            ForEach(weeklyChallenges) { challenge in
+            ForEach(Array(weeklyChallenges.enumerated()), id: \.element.id) { index, challenge in
                 Button {
                     selectedChallenge = challenge
                 } label: {
                     ChallengeCardView(
                         challenge: challenge,
                         entry: entryFor(challenge),
-                        badgeType: .weekly
+                        badgeType: .weekly,
+                        accentIndex: index
                     )
                 }
                 .buttonStyle(.plain)
@@ -287,7 +293,7 @@ struct ChallengesView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Your Active Challenges")
 
-            ForEach(activeChallenges) { entry in
+            ForEach(Array(activeChallenges.enumerated()), id: \.element.id) { index, entry in
                 if let challenge = challenge(for: entry.challengeID) {
                     Button {
                         selectedChallenge = challenge
@@ -295,7 +301,8 @@ struct ChallengesView: View {
                         ChallengeCardView(
                             challenge: challenge,
                             entry: entry,
-                            badgeType: .active
+                            badgeType: .active,
+                            accentIndex: index
                         )
                     }
                     .buttonStyle(.plain)
@@ -313,7 +320,8 @@ struct ChallengesView: View {
                     filterChip(
                         title: "Photo Proof",
                         iconName: "image",
-                        isSelected: showingPhotoProofChallenges
+                        isSelected: showingPhotoProofChallenges,
+                        accentIndex: 0
                     ) {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             showingPhotoProofChallenges.toggle()
@@ -321,7 +329,7 @@ struct ChallengesView: View {
                         }
                     }
 
-                    ForEach(ChallengeCategory.allCases) { category in
+                    ForEach(Array(ChallengeCategory.allCases.enumerated()), id: \.element.id) { index, category in
                         Button {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                 showingPhotoProofChallenges = false
@@ -331,7 +339,8 @@ struct ChallengesView: View {
                             filterChipContent(
                                 title: category.displayName,
                                 iconName: category.iconName,
-                                isSelected: selectedCategory == category
+                                isSelected: selectedCategory == category,
+                                accentIndex: index + 1
                             )
                         }
                         .buttonStyle(.plain)
@@ -507,13 +516,15 @@ struct ChallengesView: View {
         title: String,
         iconName: String,
         isSelected: Bool,
+        accentIndex: Int,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             filterChipContent(
                 title: title,
                 iconName: iconName,
-                isSelected: isSelected
+                isSelected: isSelected,
+                accentIndex: accentIndex
             )
         }
         .buttonStyle(.plain)
@@ -522,34 +533,37 @@ struct ChallengesView: View {
     private func filterChipContent(
         title: String,
         iconName: String,
-        isSelected: Bool
+        isSelected: Bool,
+        accentIndex: Int
     ) -> some View {
-        HStack(spacing: 8) {
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return HStack(spacing: 8) {
             Image(iconName)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
+                .foregroundStyle(.white)
 
             Text(title)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.70), radius: 1, y: 1)
         }
-        .foregroundStyle(isSelected ? .white : LColors.textSecondary)
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-        .background(
-            Capsule(style: .continuous)
-                .fill(isSelected ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.glassSurface2))
-        )
-        .overlay(
+        .background {
+            BubblyIconMaterial(tint: tint)
+                .clipShape(Capsule(style: .continuous))
+        }
+        .overlay {
             Capsule(style: .continuous)
                 .strokeBorder(
-                    isSelected
-                        ? AnyShapeStyle(Color.clear)
-                        : AnyShapeStyle(LColors.glassBorder),
-                    lineWidth: 1
+                    isSelected ? Color.white : tint.opacity(0.72),
+                    lineWidth: isSelected ? 2.5 : 1
                 )
-        )
+        }
     }
 
     private func filterHeader(
@@ -563,14 +577,14 @@ struct ChallengesView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LColors.accents.special)
+                .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
-                        .fill(LColors.glassSurface)
+                        .fill(theme.palette.raisedSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(LColors.accents.special, lineWidth: 1)
+                                .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                         )
                 )
 
@@ -598,14 +612,14 @@ struct ChallengesView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LColors.accents.primary)
+                .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
-                        .fill(LColors.glassSurface)
+                        .fill(theme.palette.raisedSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(LColors.accents.primary, lineWidth: 1)
+                                .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                         )
                 )
 
@@ -625,14 +639,15 @@ struct ChallengesView: View {
 
     private func challengeList(_ challenges: [ReadingChallenge]) -> some View {
         VStack(spacing: 10) {
-            ForEach(challenges) { challenge in
+            ForEach(Array(challenges.enumerated()), id: \.element.id) { index, challenge in
                 Button {
                     selectedChallenge = challenge
                 } label: {
                     ChallengeCardView(
                         challenge: challenge,
                         entry: entryFor(challenge),
-                        badgeType: nil
+                        badgeType: nil,
+                        accentIndex: index
                     )
                 }
                 .buttonStyle(.plain)
@@ -643,13 +658,14 @@ struct ChallengesView: View {
     private var featuredBadge: some View {
         Text("FEATURED")
             .font(.system(size: 9, weight: .black, design: .rounded))
-            .foregroundStyle(LColors.cardTitle)
+            .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.72), radius: 1, y: 1)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(LGradients.header)
-            )
+            .background {
+                BubblyIconMaterial(tint: theme.palette.primaryAction)
+                    .clipShape(Capsule(style: .continuous))
+            }
     }
 
     private func pointsBadge(_ points: Int) -> some View {
@@ -659,10 +675,11 @@ struct ChallengesView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 10, height: 10)
+                .bubblyIconMaterial(tint: theme.palette.indicators)
             Text("\(points) pts")
                 .font(.system(size: 11, weight: .bold, design: .rounded))
+                .bubblyIconMaterial(tint: theme.palette.indicators)
         }
-        .foregroundStyle(LColors.gradientYellow)
     }
 
     private func durationBadge(_ text: String) -> some View {

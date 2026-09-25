@@ -10,6 +10,7 @@ struct ReadingTimerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @StateObject private var timer = ReadingTimerManager.shared
 
@@ -22,6 +23,7 @@ struct ReadingTimerSheet: View {
     @State private var selectedGoal: ReadingGoals? = nil
     @State private var showingSaveSheet = false
     @State private var finishedMinutes = 0
+    @State private var isBookPickerExpanded = false
 
     private var formattedElapsed: String {
         let m = timer.elapsedSeconds / 60
@@ -31,6 +33,10 @@ struct ReadingTimerSheet: View {
 
     private var readingBooks: [Book] {
         books.filter { $0.status == .reading && !$0.isArchived }
+    }
+
+    private var activeGoals: [ReadingGoals] {
+        goals.filter { $0.status == .active && !$0.isArchived }
     }
 
     var body: some View {
@@ -82,53 +88,67 @@ struct ReadingTimerSheet: View {
     // MARK: - Setup Card
 
     private var setupCard: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Before You Start")
                     .font(.system(size: 17, weight: .black, design: .rounded))
                     .foregroundStyle(LColors.cardTitle)
 
                 if !readingBooks.isEmpty {
-                    Menu {
-                        Button("No Book") {
-                            selectedBook = nil
-                        }
-                        
-                        ForEach(readingBooks) { book in
-                            Button(book.title) {
-                                selectedBook = book
-                                bookTitle = book.title
+                    VStack(spacing: 8) {
+                        Button {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                isBookPickerExpanded.toggle()
                             }
+                        } label: {
+                            HStack(spacing: 12) {
+                                Text(selectedBook?.title ?? "Select Reading Book")
+                                    .font(.system(size: 14, weight: .black, design: .rounded))
+                                    .lineLimit(1)
+
+                                Spacer()
+
+                                Image(isBookPickerExpanded ? "chevup" : "chevdown")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 13, height: 13)
+                            }
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 16) }
+                            .bubblyTileLift()
                         }
-                    } label: {
-                        HStack(spacing: 12) {
-                            Text(selectedBook?.title ?? "Select Reading Book")
-                                .font(.system(size: 14, weight: .black, design: .rounded))
-                                .foregroundStyle(selectedBook == nil ? LColors.textSecondary : .white)
-                                .lineLimit(1)
-                            
-                            Spacer()
-                            
-                            Image("chevdown")
-                                .renderingMode(.template)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 13, height: 13)
-                                .foregroundStyle(LColors.textSecondary)
+                        .buttonStyle(.plain)
+
+                        if isBookPickerExpanded {
+                            ScrollView(.vertical, showsIndicators: readingBooks.count + 1 > 4) {
+                                LazyVStack(spacing: 7) {
+                                    timerBookOption(title: "No Book", book: nil)
+
+                                    ForEach(readingBooks) { book in
+                                        timerBookOption(title: book.title, book: book)
+                                    }
+                                }
+                            }
+                            .frame(height: CGFloat(min(readingBooks.count + 1, 4)) * 48)
+                            .padding(9)
+                            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18) }
+                            .bubblyTileLift()
+                            .transition(.move(edge: .top).combined(with: .opacity))
                         }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(LColors.glassSurface2)
-                        )
                     }
-                    .buttonStyle(.plain)
                 }
                 
-                LumeyTextField(title: "Book or session title (optional)", text: $bookTitle)
+                LumeyTextField(
+                    title: "Book or session title (optional)",
+                    text: $bookTitle,
+                    borderColor: theme.palette.secondaryAccent
+                )
 
-                if !goals.filter({ $0.status == .active && !$0.isArchived }).isEmpty {
+                if !activeGoals.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Link to Goal")
                             .font(.system(size: 12, weight: .black, design: .rounded))
@@ -136,23 +156,27 @@ struct ReadingTimerSheet: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
-                                ForEach(goals.filter { $0.status == .active && !$0.isArchived }) { goal in
+                                ForEach(Array(activeGoals.enumerated()), id: \.element.id) { index, goal in
                                     let isSelected = selectedGoal?.id == goal.id
+                                    let tint = theme.palette.rotation[index % theme.palette.rotation.count]
                                     Button {
                                         selectedGoal = isSelected ? nil : goal
                                     } label: {
                                         Text(goal.displayTitle)
                                             .font(.system(size: 12, weight: .black, design: .rounded))
-                                            .foregroundStyle(LColors.cardTitle)
+                                            .foregroundStyle(.white)
+                                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 7)
-                                            .background(
-                                                Capsule().fill(
-                                                    isSelected
-                                                    ? LColors.accents.primary
-                                                    : LColors.glassSurface2
-                                                )
-                                            )
+                                            .background {
+                                                BubblyIconMaterial(tint: tint)
+                                                    .clipShape(Capsule(style: .continuous))
+                                            }
+                                            .overlay {
+                                                Capsule(style: .continuous)
+                                                    .strokeBorder(.white.opacity(isSelected ? 0.72 : 0.20), lineWidth: isSelected ? 1.3 : 0.8)
+                                            }
+                                            .opacity(isSelected ? 1 : 0.64)
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -168,16 +192,13 @@ struct ReadingTimerSheet: View {
     // MARK: - Timer Face
 
     private var timerCard: some View {
-        GlassCard(variant: .primary) {
+        GlassCard(variant: .primary, borderColor: theme.palette.secondaryAccent) {
             VStack(spacing: 20) {
                 // Elapsed
                 Text(formattedElapsed)
                     .font(.system(size: 72, weight: .black, design: .monospaced))
-                    .foregroundStyle(
-                        timer.isPaused
-                        ? LColors.text.muted
-                        : LColors.accents.primary
-                    )
+                    .foregroundStyle(timerAccent)
+                    .bubblyIconMaterial(tint: timerAccent)
                     .monospacedDigit()
                     .frame(maxWidth: .infinity)
                     .contentTransition(.numericText())
@@ -191,6 +212,7 @@ struct ReadingTimerSheet: View {
                     Text(statusLabel)
                         .font(.system(size: 13, weight: .black, design: .rounded))
                         .foregroundStyle(statusColor)
+                        .bubblyIconMaterial(tint: statusColor)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
@@ -202,29 +224,27 @@ struct ReadingTimerSheet: View {
     // MARK: - Controls
 
     private var controlCard: some View {
-        GlassCard(variant: .secondary) {
-            HStack(spacing: 12) {
-                if !timer.isActive {
-                    // Start
-                    primaryButton(label: "Start", icon: "play.fill") {
-                        let title = bookTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-                        timer.start(bookTitle: selectedBook?.title ?? (title.isEmpty ? (selectedGoal?.displayTitle ?? "") : title))
-                    }
-                } else if timer.isRunning {
-                    // Pause
-                    primaryButton(label: "Pause", icon: "pause.fill") {
-                        timer.pause()
-                    }
-                    // Stop
-                    stopButton
-                } else if timer.isPaused {
-                    // Resume
-                    primaryButton(label: "Resume", icon: "play.fill") {
-                        timer.resume()
-                    }
-                    // Stop
-                    stopButton
+        HStack(spacing: 12) {
+            if !timer.isActive {
+                // Start
+                primaryButton(label: "Start", icon: "playwavy") {
+                    let title = bookTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                    timer.start(bookTitle: selectedBook?.title ?? (title.isEmpty ? (selectedGoal?.displayTitle ?? "") : title))
                 }
+            } else if timer.isRunning {
+                // Pause
+                primaryButton(label: "Pause", icon: "pausewavy") {
+                    timer.pause()
+                }
+                // Stop
+                stopButton
+            } else if timer.isPaused {
+                // Resume
+                primaryButton(label: "Resume", icon: "playwavy") {
+                    timer.resume()
+                }
+                // Stop
+                stopButton
             }
         }
     }
@@ -236,8 +256,11 @@ struct ReadingTimerSheet: View {
             showingSaveSheet = true
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "stop.fill")
-                    .font(.system(size: 13, weight: .bold))
+                Image("stopwavy")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
                 Text("Finish")
                     .font(.system(size: 14, weight: .black, design: .rounded))
             }
@@ -259,20 +282,20 @@ struct ReadingTimerSheet: View {
     private func primaryButton(label: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 13, weight: .bold))
+                Image(icon)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
                 Text(label)
                     .font(.system(size: 14, weight: .black, design: .rounded))
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(
-                        LColors.accents.primary
-                    )
-            )
+            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 14) }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
     }
@@ -280,11 +303,15 @@ struct ReadingTimerSheet: View {
     // MARK: - Info card (while running)
 
     private var infoCard: some View {
-        GlassCard(variant: .tertiary) {
+        GlassCard(variant: .tertiary, borderColor: theme.palette.primaryAction) {
             HStack {
-                Image(systemName: "waveform")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(LColors.gradientBlue)
+                Image("timebook")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 Text("A Live Activity is showing your timer on the Dynamic Island and lock screen. You can dismiss this sheet — the timer keeps running.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
@@ -316,16 +343,16 @@ struct ReadingTimerSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                            )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
+                            .fill(theme.palette.raisedSurface)
+                            .overlay {
+                                BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                    .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                            }
                     )
             }
             .buttonStyle(.plain)
@@ -344,6 +371,55 @@ struct ReadingTimerSheet: View {
 
     // MARK: - Helpers
 
+    private func timerBookOption(title: String, book: Book?) -> some View {
+        let isSelected = selectedBook?.id == book?.id
+
+        return Button {
+            selectedBook = book
+            if let book {
+                bookTitle = book.title
+            }
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                isBookPickerExpanded = false
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(book == nil ? "xmarkwavy" : "books")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
+
+                Text(title)
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .lineLimit(1)
+
+                Spacer()
+
+                if isSelected {
+                    Image("checkwavy")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 13, height: 13)
+                }
+            }
+            .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isSelected ? theme.palette.raisedSurface : Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var timerAccent: Color {
+        timer.isPaused ? theme.palette.textSecondary : theme.palette.primaryAction
+    }
+
     private var statusLabel: String {
         if timer.isRunning { return "Running" }
         if timer.isPaused { return "Paused" }
@@ -351,9 +427,9 @@ struct ReadingTimerSheet: View {
     }
 
     private var statusColor: Color {
-        if timer.isRunning { return LColors.gradientBlue }
-        if timer.isPaused { return LColors.textSecondary }
-        return LColors.gradientPurple
+        if timer.isRunning { return theme.palette.primaryAction }
+        if timer.isPaused { return theme.palette.textSecondary }
+        return theme.palette.primaryAction
     }
 }
 

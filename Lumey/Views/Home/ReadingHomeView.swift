@@ -6,10 +6,40 @@
 import SwiftUI
 import SwiftData
 
+private extension View {
+    @ViewBuilder
+    func bubblyTextMaterial(tint: Color) -> some View {
+        self
+            .foregroundStyle(.clear)
+            .overlay {
+                BubblyIconMaterial(tint: tint)
+                    .mask { self }
+            }
+    }
+}
+
+@ViewBuilder
+private func readingHomePaletteCard<Content: View>(
+    theme: AppTheme,
+    color: Color,
+    cornerRadius: CGFloat = 24,
+    padding: CGFloat = LSpacing.cardPadding,
+    @ViewBuilder content: () -> Content
+) -> some View {
+    let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+    content()
+        .padding(padding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(shape.fill(theme.palette.surface))
+        .overlay(shape.strokeBorder(color, lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.18), radius: 10, y: 5)
+}
+
 struct ReadingHomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @EnvironmentObject private var appState: AppState
+    @Environment(\.appTheme) private var theme
     
     @State private var showingSignInSheet = false
 
@@ -227,7 +257,7 @@ private extension ReadingHomeView {
                     } label: {
                         Text("Sign In")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
+                            .foregroundStyle(theme.palette.textPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                             .background(
@@ -264,7 +294,6 @@ private extension ReadingHomeView {
                     ForEach(Array(currentlyReadingBooks.prefix(3).enumerated()), id: \.element.id) { index, book in
                         HomeCurrentReadingCard(
                             book: book,
-                            variant: GlassCardRotation.variant(for: index),
                             accentIndex: index
                         )
                     }
@@ -283,19 +312,19 @@ private extension ReadingHomeView {
         return VStack(alignment: .leading, spacing: 14) {
             sectionHeader("Library Pulse")
 
-            GlassCard(variant: .featured) {
+            readingHomePaletteCard(theme: theme, color: theme.palette.indicators) {
                 HStack(spacing: 16) {
                     VStack(spacing: 12) {
                         frostedStatBox(
                             value: "\(activeBooks.count)",
                             label: "Total Books",
-                            tint: LColors.accents.contrast
+                            tint: theme.palette.primaryAction
                         )
 
                         frostedStatBox(
                             value: "\(currentlyReadingBooks.count)",
                             label: "Currently Reading",
-                            tint: LColors.accents.primary
+                            tint: theme.palette.secondaryAccent
                         )
                     }
 
@@ -306,12 +335,14 @@ private extension ReadingHomeView {
                             progress: activeReadingRatio,
                             size: 120,
                             dotCount: 24,
-                            dotSize: 6
+                            dotSize: 6,
+                            tint: theme.palette.indicators,
+                            track: theme.palette.indicators.opacity(0.22)
                         )
 
                         Text("Reading Now")
                             .font(.system(size: 11, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
+                            .foregroundStyle(theme.palette.textPrimary)
 
                         Text("of active library")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -327,23 +358,19 @@ private extension ReadingHomeView {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
                 .font(.system(size: 26, weight: .black, design: .rounded))
-                .foregroundStyle(tint)
+                .foregroundStyle(theme.palette.textPrimary)
 
             Text(label)
                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.text.secondary)
+                .foregroundStyle(theme.palette.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nestedStrong)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(tint.opacity(0.35), lineWidth: 1)
-                )
-        )
+        .background {
+            BubblyTileSurface(tint: tint, cornerRadius: 14)
+        }
+        .bubblyTileLift()
     }
 }
 
@@ -371,46 +398,53 @@ private extension ReadingHomeView {
     /// Distributes accents across adjacent stat cards so three siblings show
     /// three different palette colors instead of one repeated accent.
     func writingStatCard(icon: String, title: String, count: Int, accentIndex: Int) -> some View {
-        let tint: Color = {
-            switch accentIndex % 3 {
-            case 0:  return LColors.accents.primary
-            case 1:  return LColors.accents.contrast
-            default: return LColors.accents.secondary
-            }
-        }()
-        let variant: GlassCardVariant = {
-            switch accentIndex % 3 {
-            case 0:  return .primary
-            case 1:  return .featured
-            default: return .secondary
-            }
-        }()
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
 
-        return GlassCard(cornerRadius: 18, padding: 14, variant: variant) {
-            VStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(LColors.iconContainer.primary)
-                        .overlay(Circle().strokeBorder(tint, lineWidth: 1))
-                        .frame(width: 40, height: 40)
+        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
 
-                    Image(icon)
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 18, height: 18)
-                        .foregroundStyle(tint)
+        return VStack(spacing: 8) {
+            Image(icon)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 36, height: 36)
+                .background {
+                    BubblyIconMaterial(tint: tint)
+                        .mask {
+                            Image(icon)
+                                .resizable()
+                                .scaledToFit()
+                        }
                 }
+                .foregroundStyle(.clear)
+                .frame(width: 40, height: 40)
 
-                Text("\(count)")
-                    .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(tint)
+            Text("\(count)")
+                .font(.system(size: 20, weight: .black, design: .rounded))
+                .bubblyTextMaterial(tint: tint)
 
-                Text(title)
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundStyle(LColors.text.secondary)
+            Text(title)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(LColors.text.secondary)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background {
+            ZStack(alignment: .top) {
+                shape.fill(theme.palette.surface)
+
+                BubblyLightWash(
+                    colors: [tint],
+                    intensity: 0.58,
+                    fadeEnd: 0.78
+                )
+                .frame(maxWidth: .infinity)
+                .frame(height: 82)
             }
-            .frame(maxWidth: .infinity)
+            .clipShape(shape)
+        }
+        .overlay {
+            shape.strokeBorder(tint, lineWidth: 1)
         }
     }
 }
@@ -422,7 +456,7 @@ private extension ReadingHomeView {
         VStack(alignment: .leading, spacing: 14) {
             sectionHeader("Reading Momentum")
 
-            GlassCard(variant: .tertiary) {
+            readingHomePaletteCard(theme: theme, color: theme.palette.primaryAction) {
                 VStack(spacing: 16) {
                     // Streak row — current in accent, best in contrast
                     HStack(alignment: .top) {
@@ -433,11 +467,19 @@ private extension ReadingHomeView {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 22, height: 22)
-                                    .foregroundStyle(LColors.accents.primary)
+                                    .background {
+                                        BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                            .mask {
+                                                Image("flame")
+                                                    .resizable()
+                                                    .scaledToFit()
+                                            }
+                                    }
+                                    .foregroundStyle(.clear)
 
                                 Text("\(currentStreak)")
                                     .font(.system(size: 32, weight: .black, design: .rounded))
-                                    .foregroundStyle(LColors.accents.primary)
+                                    .bubblyTextMaterial(tint: theme.palette.primaryAction)
                             }
 
                             Text("day streak")
@@ -449,8 +491,8 @@ private extension ReadingHomeView {
 
                         VStack(alignment: .trailing, spacing: 4) {
                             Text("\(bestStreak)")
-                                .font(.system(size: 20, weight: .black, design: .rounded))
-                                .foregroundStyle(LColors.accents.contrast)
+                                .font(.system(size: 32, weight: .black, design: .rounded))
+                                .bubblyTextMaterial(tint: theme.palette.secondaryAccent)
 
                             Text("best streak")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
@@ -467,14 +509,16 @@ private extension ReadingHomeView {
                             icon: "openbook",
                             value: "\(pagesReadToday)",
                             label: "pages today",
-                            tint: LColors.accents.secondary
+                            tint: theme.palette.secondaryAccent,
+                            iconTint: theme.palette.indicators
                         )
 
                         todayPill(
                             icon: "clockfill",
                             value: "\(minutesReadToday)",
                             label: "min today",
-                            tint: LColors.accents.contrast
+                            tint: theme.palette.indicators,
+                            iconTint: theme.palette.secondaryAccent
                         )
                     }
                 }
@@ -529,24 +573,28 @@ private extension ReadingHomeView {
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(LColors.border.subtle, lineWidth: 1)
-                )
-        )
+        .background {
+            BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 14)
+        }
+        .bubblyTileLift()
     }
 
-    func todayPill(icon: String, value: String, label: String, tint: Color = LColors.accents.primary) -> some View {
+    func todayPill(icon: String, value: String, label: String, tint: Color, iconTint: Color) -> some View {
         HStack(spacing: 8) {
             Image(icon)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 14, height: 14)
-                .foregroundStyle(tint)
+                .background {
+                    BubblyIconMaterial(tint: iconTint)
+                        .mask {
+                            Image(icon)
+                                .resizable()
+                                .scaledToFit()
+                        }
+                }
+                .foregroundStyle(.clear)
 
             Text(value)
                 .font(.system(size: 14, weight: .black, design: .rounded))
@@ -559,14 +607,10 @@ private extension ReadingHomeView {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
         .padding(.horizontal, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(LColors.surface.nested)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(tint.opacity(0.32), lineWidth: 1)
-                )
-        )
+        .background {
+            BubblyTileSurface(tint: tint, cornerRadius: 12)
+        }
+        .bubblyTileLift()
     }
 }
 
@@ -583,7 +627,7 @@ private extension ReadingHomeView {
                     message: "Create a reading goal to track your progress here."
                 )
             } else {
-                GlassCard(variant: .secondary) {
+                readingHomePaletteCard(theme: theme, color: theme.palette.secondaryAccent) {
                     VStack(spacing: 0) {
                         ForEach(Array(activeReadingGoals.prefix(3).enumerated()), id: \.element.id) { index, goal in
                             if index > 0 {
@@ -652,6 +696,8 @@ struct DottedProgressRing: View {
     let size: CGFloat
     let dotCount: Int
     let dotSize: CGFloat
+    let tint: Color
+    let track: Color
 
     private var clampedProgress: Double {
         min(max(progress, 0), 1)
@@ -670,12 +716,12 @@ struct DottedProgressRing: View {
                 let radius = (size - dotSize) / 2
 
                 Circle()
-                    .fill(
-                        isFilled
-                        ? AnyShapeStyle(LumeyProgressStyle.fill)
-                        : AnyShapeStyle(LumeyProgressStyle.track)
-                    )
+                    .fill(.clear)
                     .frame(width: dotSize, height: dotSize)
+                    .background {
+                        BubblyIconMaterial(tint: isFilled ? tint : track)
+                            .clipShape(Circle())
+                    }
                     .offset(
                         x: cos(radians) * radius,
                         y: sin(radians) * radius
@@ -684,7 +730,7 @@ struct DottedProgressRing: View {
 
             Text("\(Int(clampedProgress * 100))%")
                 .font(.system(size: 22, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.accents.primary)
+                .foregroundStyle(LColors.text.primary)
         }
         .frame(width: size, height: size)
     }
@@ -696,6 +742,9 @@ struct DottedProgressBar: View {
     let value: Double
     let dotCount: Int
     let dotSize: CGFloat
+    var tint: Color = LColors.accents.primary
+    var track: Color = LColors.surface.subtle
+    var usesBubblyMaterial: Bool = false
 
     private var clampedValue: Double {
         min(max(value, 0), 1)
@@ -708,13 +757,21 @@ struct DottedProgressBar: View {
     var body: some View {
         HStack(spacing: 4) {
             ForEach(0..<dotCount, id: \.self) { index in
-                Circle()
-                    .fill(
-                        index < filledDots
-                        ? AnyShapeStyle(LumeyProgressStyle.fill)
-                        : AnyShapeStyle(LumeyProgressStyle.track)
-                    )
-                    .frame(width: dotSize, height: dotSize)
+                let dotTint = index < filledDots ? tint : track
+
+                if usesBubblyMaterial {
+                    Circle()
+                        .fill(.clear)
+                        .frame(width: dotSize, height: dotSize)
+                        .background {
+                            BubblyIconMaterial(tint: dotTint)
+                                .clipShape(Circle())
+                        }
+                } else {
+                    Circle()
+                        .fill(dotTint)
+                        .frame(width: dotSize, height: dotSize)
+                }
             }
         }
     }
@@ -724,15 +781,11 @@ struct DottedProgressBar: View {
 
 struct HomeCurrentReadingCard: View {
     let book: Book
-    var variant: GlassCardVariant = .primary
     var accentIndex: Int = 0
+    @Environment(\.appTheme) private var theme
 
     private var accent: Color {
-        switch accentIndex % 3 {
-        case 0:  return LColors.accents.primary
-        case 1:  return LColors.accents.contrast
-        default: return LColors.accents.secondary
-        }
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
     }
 
     private var lastReadLabel: String {
@@ -765,19 +818,27 @@ struct HomeCurrentReadingCard: View {
     }
 
     var body: some View {
-        GlassCard(variant: variant) {
+        readingHomePaletteCard(theme: theme, color: accent) {
             HStack(alignment: .top, spacing: 12) {
                 Image("openbook")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 18, height: 18)
-                    .foregroundStyle(accent)
-                    .frame(width: 38, height: 38)
-                    .background(
+                    .frame(width: 22, height: 22)
+                    .background {
+                        BubblyIconMaterial(tint: accent)
+                            .mask {
+                                Image("openbook")
+                                    .resizable()
+                                    .scaledToFit()
+                            }
+                    }
+                    .foregroundStyle(.clear)
+                    .frame(width: 42, height: 42)
+                    .background(theme.palette.raisedSurface, in: Circle())
+                    .overlay(
                         Circle()
-                            .fill(LColors.iconContainer.primary)
-                            .overlay(Circle().strokeBorder(accent, lineWidth: 1))
+                            .strokeBorder(accent, lineWidth: 1)
                     )
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -794,11 +855,18 @@ struct HomeCurrentReadingCard: View {
                     }
 
                     HStack(spacing: 7) {
-                        DottedProgressBar(value: book.calculatedProgress, dotCount: 12, dotSize: 6)
+                        DottedProgressBar(
+                            value: book.calculatedProgress,
+                            dotCount: 12,
+                            dotSize: 6,
+                            tint: accent,
+                            track: accent.opacity(0.22),
+                            usesBubblyMaterial: true
+                        )
 
                         Text(percentText)
                             .font(.system(size: 12, weight: .black, design: .rounded))
-                            .foregroundStyle(accent)
+                            .bubblyTextMaterial(tint: accent)
                     }
                     .padding(.top, 2)
 
@@ -824,13 +892,10 @@ struct HomeCurrentReadingCard: View {
 struct CompactGoalRow: View {
     let goal: ReadingGoals
     var accentIndex: Int = 0
+    @Environment(\.appTheme) private var theme
 
-    private var accent: Color {
-        switch accentIndex % 3 {
-        case 0:  return LColors.accents.primary
-        case 1:  return LColors.accents.contrast
-        default: return LColors.accents.secondary
-        }
+    private var iconAccent: Color {
+        accentIndex.isMultiple(of: 2) ? theme.palette.primaryAction : theme.palette.secondaryAccent
     }
 
     private var isCompletedToday: Bool {
@@ -845,9 +910,17 @@ struct CompactGoalRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(accent)
+                .background {
+                    BubblyIconMaterial(tint: iconAccent)
+                        .mask {
+                            Image(goal.iconName)
+                                .resizable()
+                                .scaledToFit()
+                        }
+                }
+                .foregroundStyle(.clear)
                 .frame(width: 34, height: 34)
-                .background(Circle().fill(LColors.iconContainer.primary))
+                .overlay(Circle().strokeBorder(iconAccent, lineWidth: 1))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(goal.displayTitle)
@@ -869,7 +942,14 @@ struct CompactGoalRow: View {
                             .foregroundStyle(LColors.state.completionText)
                     }
                 } else {
-                    DottedProgressBar(value: goal.progressValue, dotCount: 12, dotSize: 5)
+                    DottedProgressBar(
+                        value: goal.progressValue,
+                        dotCount: 12,
+                        dotSize: 5,
+                        tint: theme.palette.indicators,
+                        track: theme.palette.indicators.opacity(0.22),
+                        usesBubblyMaterial: true
+                    )
                 }
             }
 
@@ -882,16 +962,16 @@ struct CompactGoalRow: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(accent)
+                        .foregroundStyle(theme.palette.textPrimary)
 
                     Text("\(goal.currentStreak)")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(accent)
+                        .foregroundStyle(theme.palette.textPrimary)
                 }
             } else {
                 Text("\(goal.progressPercentage)%")
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(accent)
+                    .foregroundStyle(theme.palette.textPrimary)
             }
         }
     }

@@ -11,6 +11,7 @@ struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
     @Query private var users: [AuthUser]
     @Query(sort: \Book.lastUpdated, order: .reverse)
@@ -677,7 +678,7 @@ struct ProfileView: View {
     }
 
     private func challengeProfileHero(_ profile: ChallengeUserProfile) -> some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             VStack(spacing: 16) {
                 challengeAvatarView(profile)
 
@@ -745,8 +746,16 @@ struct ProfileView: View {
                 }
 
                 HStack(spacing: 10) {
-                    socialMiniStat(title: "Followers", value: "\(profile.followersCount)")
-                    socialMiniStat(title: "Following", value: "\(profile.followingCount)")
+                    socialMiniStat(
+                        title: "Followers",
+                        value: "\(profile.followersCount)",
+                        tint: theme.palette.primaryAction
+                    )
+                    socialMiniStat(
+                        title: "Following",
+                        value: "\(profile.followingCount)",
+                        tint: theme.palette.secondaryAccent
+                    )
                 }
 
                 if isViewingCurrentChallengeProfile {
@@ -767,7 +776,8 @@ struct ProfileView: View {
 
                 Text(isSignedIn ? "Signed in with Apple" : "Sign in to sync your Loomey profile.")
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(isSignedIn ? AnyShapeStyle(LColors.accents.contrast) : AnyShapeStyle(LColors.textSecondary))
+                    .foregroundStyle(isSignedIn ? theme.palette.indicators : LColors.textSecondary)
+                    .bubblyIconMaterial(tint: theme.palette.indicators, isEnabled: isSignedIn)
                     .multilineTextAlignment(.center)
             }
 
@@ -785,22 +795,22 @@ struct ProfileView: View {
                         .scaledToFit()
                         .frame(width: 15, height: 15)
                         .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
                     Text(isSignedIn ? "Sign Out" : "Sign In")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 13)
-                .background(
-                    RoundedRectangle(cornerRadius: LSpacing.buttonRadius, style: .continuous)
-                        .fill(isSignedIn ? AnyShapeStyle(LColors.glassSurface2) : AnyShapeStyle(LColors.accentGradient))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: LSpacing.buttonRadius, style: .continuous)
-                        .strokeBorder(isSignedIn ? AnyShapeStyle(LColors.glassBorder) : AnyShapeStyle(LColors.accents.secondary), lineWidth: 1.5)
-                )
-                .shadow(color: isSignedIn ? Color.black.opacity(0.18) : LColors.gradientPurple.opacity(0.25), radius: 12, x: 0, y: 7)
+                .background {
+                    BubblyTileSurface(
+                        tint: theme.palette.indicators,
+                        cornerRadius: LSpacing.buttonRadius
+                    )
+                }
+                .bubblyTileLift()
             }
             .buttonStyle(.plain)
         }
@@ -818,14 +828,14 @@ struct ProfileView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 13, height: 13)
-                        .foregroundStyle(.white)
+                        .bubblyIconMaterial(tint: theme.palette.indicators)
                         .frame(width: 32, height: 32)
                         .background(
                             Circle()
-                                .fill(LGradients.completion)
+                                .fill(theme.palette.raisedSurface)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LColors.border.primary, lineWidth: 1)
+                                        .strokeBorder(theme.palette.indicators, lineWidth: 1)
                                 )
                         )
                 }
@@ -862,7 +872,7 @@ struct ProfileView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 13, height: 13)
-                    .foregroundStyle(LColors.textSecondary)
+                    .bubblyIconMaterial(tint: theme.palette.textSecondary)
             }
         }
     }
@@ -923,14 +933,14 @@ struct ProfileView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.special)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                     .frame(width: 38, height: 38)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.special, lineWidth: 1)
+                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                             )
                     )
             }
@@ -938,22 +948,22 @@ struct ProfileView: View {
         }
     }
 
-    private func socialMiniStat(title: String, value: String) -> some View {
+    private func socialMiniStat(title: String, value: String, tint: Color) -> some View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 
     private func challengeStatsGrid(_ profile: ChallengeUserProfile) -> some View {
@@ -974,7 +984,8 @@ struct ProfileView: View {
                     icon: "startrophyhands",
                     title: "Completed",
                     value: "\(profile.challengesCompleted)",
-                    subtitle: "Challenges"
+                    subtitle: "Challenges",
+                    accentIndex: 0
                 )
             }
             .buttonStyle(.plain)
@@ -984,21 +995,24 @@ struct ProfileView: View {
                 icon: "starfill",
                 title: "Points",
                 value: "\(profile.challengePoints)",
-                subtitle: "Earned"
+                subtitle: "Earned",
+                accentIndex: 1
             )
 
             challengeStatCard(
                 icon: "loveflame",
                 title: "Streak",
                 value: "\(displayedReadingStreak(for: profile))",
-                subtitle: displayedReadingStreak(for: profile) == 1 ? "Day" : "Days"
+                subtitle: displayedReadingStreak(for: profile) == 1 ? "Day" : "Days",
+                accentIndex: 2
             )
 
             challengeStatCard(
                 icon: "sparkle",
                 title: "Entries",
                 value: "\(displayedChallengeSubmissions.count)",
-                subtitle: "Recent"
+                subtitle: "Recent",
+                accentIndex: 3
             )
         }
     }
@@ -1007,39 +1021,48 @@ struct ProfileView: View {
         icon: String,
         title: String,
         value: String,
-        subtitle: String
+        subtitle: String,
+        accentIndex: Int
     ) -> some View {
-        GlassCard(padding: 14, variant: .secondary) {
-            VStack(alignment: .leading, spacing: 12) {
-                Image(icon)
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 17, height: 17)
-                    .foregroundStyle(LColors.accents.primary)
-                    .frame(width: 38, height: 38)
-                    .background(
-                        Circle()
-                            .fill(LColors.glassSurface)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1)
-                            )
-                    )
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(value)
-                        .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.headingPrimary)
+        return GlassCard(padding: 0, variant: .secondary, borderColor: tint) {
+            ZStack(alignment: .topLeading) {
+                BubblyLightWash(colors: [tint], intensity: 0.34, fadeEnd: 0.82)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
 
-                    Text(title)
-                        .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                VStack(alignment: .leading, spacing: 12) {
+                    Image(icon)
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 17, height: 17)
+                        .bubblyIconMaterial(tint: tint)
+                        .frame(width: 38, height: 38)
+                        .background(
+                            Circle()
+                                .fill(LColors.glassSurface)
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(tint, lineWidth: 1)
+                                )
+                        )
 
-                    Text(subtitle)
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(value)
+                            .font(.system(size: 22, weight: .black, design: .rounded))
+                            .foregroundStyle(LColors.headingPrimary)
+
+                        Text(title)
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .foregroundStyle(LColors.cardTitle)
+
+                        Text(subtitle)
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(LColors.textSecondary)
+                    }
                 }
+                .padding(14)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -1050,21 +1073,21 @@ struct ProfileView: View {
     }
 
     private func currentChallengeCard(_ title: String) -> some View {
-        GlassCard(variant: .primary) {
+        GlassCard(variant: .primary, borderColor: theme.palette.secondaryAccent) {
             HStack(spacing: 12) {
                 Image("stargoal")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.glassSurface)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1)
+                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                             )
                     )
 
@@ -1088,21 +1111,21 @@ struct ProfileView: View {
         Button {
             showingBookmarkedChallenges = true
         } label: {
-            GlassCard(variant: .secondary) {
+            GlassCard(variant: .secondary, borderColor: theme.palette.indicators) {
                 HStack(spacing: 12) {
                     Image("starmark")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(LColors.accents.secondary)
+                        .bubblyIconMaterial(tint: theme.palette.indicators)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
                                 .fill(LColors.glassSurface)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LColors.accents.secondary, lineWidth: 1)
+                                        .strokeBorder(theme.palette.indicators, lineWidth: 1)
                                 )
                         )
 
@@ -1123,7 +1146,7 @@ struct ProfileView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 13, height: 13)
-                        .foregroundStyle(LColors.textSecondary)
+                        .bubblyIconMaterial(tint: theme.palette.textSecondary)
                 }
             }
         }
@@ -1170,11 +1193,11 @@ struct ProfileView: View {
                 }
             } else {
                 VStack(spacing: 10) {
-                    ForEach(visibleChallengeSubmissions, id: \.id) { submission in
+                    ForEach(Array(visibleChallengeSubmissions.enumerated()), id: \.element.id) { index, submission in
                         Button {
                             onChallengeSubmissionTapped?(submission)
                         } label: {
-                            recentChallengeSubmissionRow(submission)
+                            recentChallengeSubmissionRow(submission, accentIndex: index)
                         }
                         .buttonStyle(.plain)
                     }
@@ -1207,33 +1230,33 @@ struct ProfileView: View {
                     .frame(width: 11, height: 11)
             }
             .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 13)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(LGradients.completion)
-            )
-            .shadow(color: LColors.gradientPurple.opacity(0.28), radius: 10, y: 4)
+            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 999) }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
         .padding(.top, 4)
     }
 
-    private func recentChallengeSubmissionRow(_ submission: ChallengeSubmission) -> some View {
-        HStack(alignment: .center, spacing: 12) {
+    private func recentChallengeSubmissionRow(_ submission: ChallengeSubmission, accentIndex: Int) -> some View {
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return HStack(alignment: .center, spacing: 12) {
             Image(statusIcon(for: submission.validationStatus))
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 15, height: 15)
-                .foregroundStyle(LColors.accents.primary)
+                .bubblyIconMaterial(tint: tint)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
                         .fill(LColors.glassSurface)
                         .overlay(
                             Circle()
-                                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
+                                .strokeBorder(tint, lineWidth: 1)
                         )
                 )
 
@@ -1256,7 +1279,7 @@ struct ProfileView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12, height: 12)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: theme.palette.indicators)
 
                     Text("\(submission.likeCount)")
                         .font(.system(size: 10, weight: .black, design: .rounded))
@@ -1269,7 +1292,7 @@ struct ProfileView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12, height: 12)
-                        .foregroundStyle(LColors.textSecondary)
+                        .bubblyIconMaterial(tint: theme.palette.textSecondary)
 
                     Text("\(submission.commentCount)")
                         .font(.system(size: 10, weight: .black, design: .rounded))
@@ -1278,14 +1301,14 @@ struct ProfileView: View {
             }
         }
         .padding(12)
-        .background(
+        .background {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .fill(LColors.surface.nested)
-                .overlay(
+                .overlay {
                     RoundedRectangle(cornerRadius: 15, style: .continuous)
-                        .strokeBorder(LColors.border.nested, lineWidth: 1)
-                )
-        )
+                        .strokeBorder(tint, lineWidth: 1)
+                }
+        }
     }
 
     private func profileSectionHeader(icon: String, title: String) -> some View {
@@ -1317,21 +1340,21 @@ struct ProfileView: View {
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(LColors.textSecondary)
 
-            GlassCard(variant: .subtle) {
+            GlassCard(variant: .subtle, borderColor: theme.palette.primaryAction) {
                 VStack(alignment: .leading, spacing: 12) {
-                    ReadingDNARow(iconName: "openbook", title: "Most Read Genre", value: mostReadGenre)
-                    ReadingDNARow(iconName: "xsmile", title: "Most Read Mood", value: mostReadMood)
-                    ReadingDNARow(iconName: "sparkle", title: "Most Read Trope", value: mostReadTrope)
-                    ReadingDNARow(iconName: "profilewavy", title: "Most Read Author", value: mostReadAuthor)
-                    ReadingDNARow(iconName: "starwavy", title: "Most Common Book Length", value: mostCommonBookLength)
-                    ReadingDNARow(iconName: "starfill", title: "Most Common Rating", value: mostCommonRating)
-                    ReadingDNARow(iconName: "clockfill", title: "Average Days To Finish", value: averageDaysToFinish)
-                    ReadingDNARow(iconName: "starmark", title: "Preferred Format", value: preferredFormat)
+                    ReadingDNARow(iconName: "openbook", title: "Most Read Genre", value: mostReadGenre, accentIndex: 0)
+                    ReadingDNARow(iconName: "xsmile", title: "Most Read Mood", value: mostReadMood, accentIndex: 1)
+                    ReadingDNARow(iconName: "sparkle", title: "Most Read Trope", value: mostReadTrope, accentIndex: 2)
+                    ReadingDNARow(iconName: "profilewavy", title: "Most Read Author", value: mostReadAuthor, accentIndex: 3)
+                    ReadingDNARow(iconName: "starwavy", title: "Most Common Book Length", value: mostCommonBookLength, accentIndex: 4)
+                    ReadingDNARow(iconName: "starfill", title: "Most Common Rating", value: mostCommonRating, accentIndex: 5)
+                    ReadingDNARow(iconName: "clockfill", title: "Average Days To Finish", value: averageDaysToFinish, accentIndex: 6)
+                    ReadingDNARow(iconName: "starmark", title: "Preferred Format", value: preferredFormat, accentIndex: 7)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            GlassCard(variant: .featured) {
+            GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Observations")
                         .font(.system(size: 16, weight: .black, design: .rounded))
@@ -1340,8 +1363,12 @@ struct ProfileView: View {
                     ForEach(readingDNAObservations, id: \.self) { observation in
                         HStack(alignment: .top, spacing: 10) {
                             Circle()
-                                .fill(LGradients.completion)
+                                .fill(.clear)
                                 .frame(width: 9, height: 9)
+                                .background {
+                                    BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                        .clipShape(Circle())
+                                }
                                 .padding(.top, 5)
 
                             Text(observation)
@@ -1368,7 +1395,7 @@ struct ProfileView: View {
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(LColors.textSecondary)
 
-            GlassCard(variant: .primary) {
+            GlassCard(variant: .primary, borderColor: theme.palette.secondaryAccent) {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(spacing: 14) {
                         Image("startrophyfill")
@@ -1376,7 +1403,7 @@ struct ProfileView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18, height: 18)
-                            .foregroundStyle(LColors.accents.special)
+                            .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             .frame(width: 40, height: 40)
                             .background(
                                 Circle()
@@ -1384,7 +1411,7 @@ struct ProfileView: View {
                             )
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.special, lineWidth: 1)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                             )
 
                         VStack(alignment: .leading, spacing: 4) {
@@ -1398,18 +1425,18 @@ struct ProfileView: View {
                         }
                     }
 
-                    DottedDivider()
+                    ProfileMaterialDottedDivider(tint: theme.palette.secondaryAccent)
 
                     VStack(alignment: .leading, spacing: 12) {
-                        ReadingDNARow(iconName: "openbook", title: "Books Read", value: yearlyBooksRead)
-                        ReadingDNARow(iconName: "bulletlovenote", title: "Pages Read", value: yearlyPagesRead)
-                        ReadingDNARow(iconName: "clockfill", title: "Hours Read", value: yearlyHoursRead)
-                        ReadingDNARow(iconName: "flame", title: "Longest Streak", value: yearlyLongestStreak)
-                        ReadingDNARow(iconName: "sparklesstarflag", title: "Highest Rated", value: yearlyHighestRated)
-                        ReadingDNARow(iconName: "heartfill", title: "Most Emotional", value: yearlyMostEmotional)
-                        ReadingDNARow(iconName: "loveflame", title: "Favorite Book", value: yearlyFavoriteBook)
-                        ReadingDNARow(iconName: "flatbook", title: "Longest Book", value: yearlyLongestBook)
-                        ReadingDNARow(iconName: "sparkbolt", title: "Fastest Finished", value: yearlyFastestFinished)
+                        ReadingDNARow(iconName: "openbook", title: "Books Read", value: yearlyBooksRead, accentIndex: 1)
+                        ReadingDNARow(iconName: "bulletlovenote", title: "Pages Read", value: yearlyPagesRead, accentIndex: 2)
+                        ReadingDNARow(iconName: "clockfill", title: "Hours Read", value: yearlyHoursRead, accentIndex: 3)
+                        ReadingDNARow(iconName: "flame", title: "Longest Streak", value: yearlyLongestStreak, accentIndex: 4)
+                        ReadingDNARow(iconName: "sparklesstarflag", title: "Highest Rated", value: yearlyHighestRated, accentIndex: 5)
+                        ReadingDNARow(iconName: "heartfill", title: "Most Emotional", value: yearlyMostEmotional, accentIndex: 6)
+                        ReadingDNARow(iconName: "loveflame", title: "Favorite Book", value: yearlyFavoriteBook, accentIndex: 7)
+                        ReadingDNARow(iconName: "flatbook", title: "Longest Book", value: yearlyLongestBook, accentIndex: 8)
+                        ReadingDNARow(iconName: "sparkbolt", title: "Fastest Finished", value: yearlyFastestFinished, accentIndex: 9)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1568,9 +1595,16 @@ struct ProfileView: View {
 }
 
 struct ReadingDNARow: View {
+    @Environment(\.appTheme) private var theme
+
     let iconName: String
     let title: String
     let value: String
+    let accentIndex: Int
+
+    private var tint: Color {
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -1579,7 +1613,7 @@ struct ReadingDNARow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(LColors.accents.primary)
+                .bubblyIconMaterial(tint: tint)
                 .frame(width: 38, height: 38)
                 .background(
                     Circle()
@@ -1587,7 +1621,7 @@ struct ReadingDNARow: View {
                 )
                 .overlay(
                     Circle()
-                        .strokeBorder(LColors.accents.primary, lineWidth: 1)
+                        .strokeBorder(tint, lineWidth: 1)
                 )
 
             VStack(alignment: .leading, spacing: 3) {
@@ -1603,6 +1637,26 @@ struct ReadingDNARow: View {
 
             Spacer(minLength: 0)
         }
+    }
+}
+
+private struct ProfileMaterialDottedDivider: View {
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<28, id: \.self) { _ in
+                Circle()
+                    .fill(.clear)
+                    .frame(width: 3, height: 3)
+                    .background {
+                        BubblyIconMaterial(tint: tint)
+                            .clipShape(Circle())
+                    }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, 2)
     }
 }
 

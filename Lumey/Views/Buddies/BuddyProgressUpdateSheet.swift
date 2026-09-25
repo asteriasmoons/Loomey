@@ -6,6 +6,8 @@
 import SwiftUI
 
 struct BuddyProgressUpdateSheet: View {
+    @Environment(\.appTheme) private var theme
+
     let userId: String
     let displayName: String
     let groupId: String
@@ -48,28 +50,34 @@ struct BuddyProgressUpdateSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack(spacing: 12) {
-                            GlassCard(variant: .featured) {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    fieldLabel("Chapter")
-                                    buddyTextField(placeholder: "5", text: $chapterText)
-                                        .keyboardType(.numberPad)
-                                }
+                            VStack(alignment: .leading, spacing: 12) {
+                                fieldLabel("Chapter")
+                                buddyTextField(
+                                    placeholder: "5",
+                                    text: $chapterText,
+                                    tint: theme.palette.primaryAction
+                                )
+                                .keyboardType(.numberPad)
                             }
 
-                            GlassCard(variant: .primary) {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    fieldLabel("Page")
-                                    buddyTextField(placeholder: "120", text: $pageText)
-                                        .keyboardType(.numberPad)
-                                }
+                            VStack(alignment: .leading, spacing: 12) {
+                                fieldLabel("Page")
+                                buddyTextField(
+                                    placeholder: "120",
+                                    text: $pageText,
+                                    tint: theme.palette.secondaryAccent
+                                )
+                                .keyboardType(.numberPad)
                             }
                         }
 
-                        GlassCard(variant: .secondary) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                fieldLabel("Add a Note Optional")
-                                buddyTextField(placeholder: "Can't believe that plot twist!", text: $noteText)
-                            }
+                        VStack(alignment: .leading, spacing: 12) {
+                            fieldLabel("Add a Note Optional")
+                            buddyTextField(
+                                placeholder: "Can't believe that plot twist!",
+                                text: $noteText,
+                                tint: theme.palette.indicators
+                            )
                         }
 
                         if let error = errorMessage {
@@ -110,22 +118,10 @@ struct BuddyProgressUpdateSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 24, height: 24)
-                    .foregroundStyle(
-                        LColors.accents.primary
-                    )
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 46, height: 46)
-                    .background(
-                        Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(
-                                        LColors.accents.primary,
-                                        lineWidth: 1.35
-                                    )
-                            )
-                            .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                    )
+                    .background(Circle().fill(LColors.bg))
+                    .overlay(Circle().strokeBorder(theme.palette.primaryAction, lineWidth: 1.35))
             }
             .buttonStyle(.plain)
         }
@@ -150,16 +146,19 @@ struct BuddyProgressUpdateSheet: View {
                 } else {
                     Text("Share Progress")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(canSend ? LColors.accents.contrast : LColors.surface.subtle)
-            )
-            .shadow(color: canSend ? LColors.accent.opacity(0.3) : .clear, radius: 12, y: 6)
+            .background {
+                BubblyTileSurface(
+                    tint: canSend ? theme.palette.primaryAction : theme.palette.primaryAction.opacity(0.34),
+                    cornerRadius: 16
+                )
+            }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
         .disabled(!canSend)
@@ -172,7 +171,7 @@ struct BuddyProgressUpdateSheet: View {
             .tracking(0.5)
     }
 
-    private func buddyTextField(placeholder: String, text: Binding<String>) -> some View {
+    private func buddyTextField(placeholder: String, text: Binding<String>, tint: Color) -> some View {
         TextField(placeholder, text: text)
             .font(.system(size: 14, weight: .semibold, design: .rounded))
             .foregroundStyle(.white)
@@ -184,7 +183,7 @@ struct BuddyProgressUpdateSheet: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(LColors.border.nested, lineWidth: 1)
+                    .strokeBorder(tint, lineWidth: 1.35)
             )
     }
 

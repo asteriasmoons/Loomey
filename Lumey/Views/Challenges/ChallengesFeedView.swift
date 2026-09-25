@@ -11,6 +11,7 @@ struct ChallengesFeedView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     @Query(sort: \ChallengeSubmission.submittedDate, order: .reverse)
@@ -152,8 +153,11 @@ struct ChallengesFeedView: View {
                         } else if feedItems.isEmpty {
                             emptyState
                         } else {
-                            ForEach(feedItems) { feedItem in
-                                feedCard(for: feedItem)
+                            ForEach(Array(feedItems.enumerated()), id: \.element.id) { index, feedItem in
+                                feedCard(
+                                    for: feedItem,
+                                    accent: theme.palette.rotation[index % theme.palette.rotation.count]
+                                )
                             }
                         }
                     }
@@ -249,14 +253,14 @@ struct ChallengesFeedView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                             )
                     )
             }
@@ -272,7 +276,7 @@ struct ChallengesFeedView: View {
     // MARK: - Announcement Composer (Admin Only)
 
     private var announcementComposerCard: some View {
-        GlassCard(padding: 14, variant: .secondary) {
+        GlassCard(padding: 14, variant: .secondary, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
                     Image("megaphone")
@@ -280,7 +284,7 @@ struct ChallengesFeedView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                     Text("Post Announcement")
                         .font(.system(size: 16, weight: .black, design: .rounded))
@@ -298,14 +302,14 @@ struct ChallengesFeedView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(LColors.accents.secondary)
+                            .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                             .frame(width: 30, height: 30)
                             .background(
                                 Circle()
                                     .fill(LColors.glassSurface)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LColors.accents.contrast, lineWidth: 1)
+                                            .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                                     )
                             )
                     }
@@ -323,7 +327,7 @@ struct ChallengesFeedView: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                                .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                         )
 
                     FormattingTextEditor(
@@ -341,7 +345,7 @@ struct ChallengesFeedView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                                .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
@@ -353,14 +357,15 @@ struct ChallengesFeedView: View {
                             .foregroundStyle(LColors.cardTitle)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
-                            .background(
-                                Capsule(style: .continuous)
-                                    .fill(
-                                        canPostAnnouncement && !isPostingAnnouncement
-                                        ? AnyShapeStyle(LColors.accents.contrast)
-                                        : AnyShapeStyle(LColors.glassSurface)
-                                    )
-                            )
+                            .background {
+                                BubblyTileSurface(
+                                    tint: theme.palette.secondaryAccent.opacity(
+                                        canPostAnnouncement && !isPostingAnnouncement ? 1 : 0.38
+                                    ),
+                                    cornerRadius: 16
+                                )
+                            }
+                            .bubblyTileLift()
                     }
                     .buttonStyle(.plain)
                     .disabled(!canPostAnnouncement || isPostingAnnouncement)
@@ -446,7 +451,7 @@ struct ChallengesFeedView: View {
     // MARK: - Feed Cards
 
     @ViewBuilder
-    private func feedCard(for feedItem: ChallengeFeedItemDTO) -> some View {
+    private func feedCard(for feedItem: ChallengeFeedItemDTO, accent: Color) -> some View {
         switch feedItem.feedType {
         case "post":
             ChallengeFeedPostCard(
@@ -455,6 +460,7 @@ struct ChallengesFeedView: View {
                 post: postDTO(for: feedItem),
                 linkedBookTitle: bookTitle(for: postDTO(for: feedItem)?.linkedBookID),
                 linkedChallengeTitle: challengeTitle(for: postDTO(for: feedItem)?.linkedChallengeID),
+                accentColor: accent,
                 isLiked: isLiked(feedItem),
                 onLikeTapped: {
                     Task {
@@ -492,6 +498,7 @@ struct ChallengesFeedView: View {
                     avatarURL: profileDTO(for: feedItem)?.avatarURL,
                     likeCount: feedItem.likeCount,
                     commentCount: feedItem.commentCount,
+                    accentColor: accent,
                     isLiked: isLiked(feedItem),
                     onLikeTapped: {
                         Task {
@@ -982,6 +989,7 @@ private struct InlineChallengeFeedPostComposer: View {
     let onPostCreated: ((ChallengeFeedItemDTO) -> Void)?
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     @Query(sort: \Book.title)
     private var books: [Book]
@@ -1010,7 +1018,7 @@ private struct InlineChallengeFeedPostComposer: View {
     }
 
     var body: some View {
-        GlassCard(padding: 14, variant: .tertiary) {
+        GlassCard(padding: 14, variant: .tertiary, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image("starchat")
@@ -1018,13 +1026,13 @@ private struct InlineChallengeFeedPostComposer: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 17, height: 17)
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 38, height: 38)
                         .background(
                             Circle()
                                 .fill(LColors.glassSurface)
                                 .overlay(
-                                    Circle().strokeBorder(LColors.accents.special, lineWidth: 1)
+                                    Circle().strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                                 )
                         )
 
@@ -1054,7 +1062,7 @@ private struct InlineChallengeFeedPostComposer: View {
                                 .fill(LColors.surface.nested)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .strokeBorder(LColors.border.nested, lineWidth: 1)
+                                        .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                                 )
                         )
 
@@ -1095,7 +1103,7 @@ private struct InlineChallengeFeedPostComposer: View {
 
                 WrappingHStack(horizontalSpacing: 10, verticalSpacing: 10) {
                     PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                        miniButton(icon: "image", title: selectedPhotoData == nil ? "Photo" : "Change")
+                        miniButton(icon: "image", title: selectedPhotoData == nil ? "Photo" : "Change", tint: theme.palette.primaryAction)
                     }
                     .buttonStyle(.plain)
 
@@ -1105,7 +1113,7 @@ private struct InlineChallengeFeedPostComposer: View {
                             selectedPhotoData = nil
                             photoCaption = ""
                         } label: {
-                            miniButton(icon: "trash", title: "Remove")
+                            miniButton(icon: "trash", title: "Remove", tint: theme.palette.secondaryAccent)
                         }
                         .buttonStyle(.plain)
                     }
@@ -1116,7 +1124,7 @@ private struct InlineChallengeFeedPostComposer: View {
                             Button(mood) { selectedMood = mood }
                         }
                     } label: {
-                        miniButton(icon: "sparkle", title: selectedMood.isEmpty ? "Mood" : selectedMood)
+                        miniButton(icon: "sparkle", title: selectedMood.isEmpty ? "Mood" : selectedMood, tint: theme.palette.secondaryAccent)
                     }
 
                     Menu {
@@ -1130,7 +1138,8 @@ private struct InlineChallengeFeedPostComposer: View {
                     } label: {
                         miniButton(
                             icon: "openbook",
-                            title: selectedBook == nil ? "Book" : "Book Linked"
+                            title: selectedBook == nil ? "Book" : "Book Linked",
+                            tint: theme.palette.indicators
                         )
                     }
 
@@ -1145,14 +1154,45 @@ private struct InlineChallengeFeedPostComposer: View {
                     } label: {
                         miniButton(
                             icon: "startrophyfill",
-                            title: selectedChallenge == nil ? "Challenge" : "Challenge Linked"
+                            title: selectedChallenge == nil ? "Challenge" : "Challenge Linked",
+                            tint: theme.palette.primaryAction
                         )
                     }
                 }
 
-                Toggle("Contains Spoilers", isOn: $containsSpoilers)
-                    .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+                Button {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.82)) {
+                        containsSpoilers.toggle()
+                    }
+                } label: {
+                    HStack {
+                        Text("Contains Spoilers")
+                            .font(.system(size: 12, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+
+                        Spacer()
+
+                        ZStack(alignment: containsSpoilers ? .trailing : .leading) {
+                            Capsule(style: .continuous)
+                                .fill(theme.palette.secondaryAccent.opacity(containsSpoilers ? 0.82 : 0.28))
+                                .frame(width: 48, height: 28)
+
+                            Circle()
+                                .fill(theme.palette.raisedSurface)
+                                .frame(width: 24, height: 24)
+                                .overlay {
+                                    Image("eyeslash")
+                                        .renderingMode(.template)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 12, height: 12)
+                                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                }
+                                .padding(2)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
 
                 Button {
                     Task { await submitPost() }
@@ -1162,10 +1202,13 @@ private struct InlineChallengeFeedPostComposer: View {
                         .foregroundStyle(LColors.cardTitle)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 13)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(canPost && !isPosting ? AnyShapeStyle(LColors.accents.secondary) : AnyShapeStyle(LColors.glassSurface))
-                        )
+                        .background {
+                            BubblyTileSurface(
+                                tint: theme.palette.indicators.opacity(canPost && !isPosting ? 1 : 0.38),
+                                cornerRadius: 16
+                            )
+                        }
+                        .bubblyTileLift()
                 }
                 .buttonStyle(.plain)
                 .disabled(!canPost || isPosting)
@@ -1199,13 +1242,14 @@ private struct InlineChallengeFeedPostComposer: View {
         }
     }
 
-    private func miniButton(icon: String, title: String) -> some View {
+    private func miniButton(icon: String, title: String, tint: Color) -> some View {
         HStack(spacing: 6) {
             Image(icon)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 12, height: 12)
+                .foregroundStyle(.white)
                 .layoutPriority(1)
 
             Text(title)
@@ -1215,17 +1259,18 @@ private struct InlineChallengeFeedPostComposer: View {
                 .layoutPriority(1)
         }
         .foregroundStyle(.white)
+        .shadow(color: theme.palette.background.opacity(0.72), radius: 1, y: 1)
         .fixedSize(horizontal: true, vertical: false)
         .padding(.horizontal, 11)
         .padding(.vertical, 8)
-        .background(
+        .background {
+            BubblyIconMaterial(tint: tint)
+                .clipShape(Capsule(style: .continuous))
+        }
+        .overlay {
             Capsule(style: .continuous)
-                .fill(LColors.glassSurface)
-                .overlay(
-                    Capsule(style: .continuous)
-                        .strokeBorder(LColors.accents.primary, lineWidth: 1)
-                )
-        )
+                .strokeBorder(tint, lineWidth: 1)
+        }
     }
 
     @MainActor

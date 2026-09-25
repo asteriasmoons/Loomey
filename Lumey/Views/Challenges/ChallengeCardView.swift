@@ -12,28 +12,45 @@ enum ChallengeBadgeType {
 }
 
 struct ChallengeCardView: View {
+    @Environment(\.appTheme) private var theme
+
     let challenge: ReadingChallenge
     let entry: ChallengeEntry?
     let badgeType: ChallengeBadgeType?
+    let accentIndex: Int
+
+    init(
+        challenge: ReadingChallenge,
+        entry: ChallengeEntry?,
+        badgeType: ChallengeBadgeType?,
+        accentIndex: Int = 0
+    ) {
+        self.challenge = challenge
+        self.entry = entry
+        self.badgeType = badgeType
+        self.accentIndex = accentIndex
+    }
 
     var body: some View {
-        GlassCard(padding: 14, variant: .featured) {
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        GlassCard(padding: 14, variant: .featured, borderColor: tint) {
             HStack(spacing: 12) {
                 // Icon
                 Image(challenge.iconName)
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 28, height: 28)
-                    .foregroundStyle(LColors.accents.primary)
+                    .frame(width: 24, height: 24)
+                    .bubblyIconMaterial(tint: tint)
                     .frame(width: 44, height: 44)
                     .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(LColors.glassSurface)
+                        Circle()
+                            .fill(theme.palette.raisedSurface)
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                        Circle()
+                            .strokeBorder(tint, lineWidth: 1.2)
                     )
 
                 // Content
@@ -71,10 +88,11 @@ struct ChallengeCardView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 9, height: 9)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                             Text("\(challenge.points)")
                                 .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         }
-                        .foregroundStyle(LColors.gradientYellow)
 
                         // Duration
                         HStack(spacing: 3) {
@@ -103,7 +121,7 @@ struct ChallengeCardView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 12, height: 12)
-                    .foregroundStyle(LColors.textSecondary)
+                    .bubblyIconMaterial(tint: theme.palette.textSecondary)
             }
         }
     }
@@ -116,18 +134,26 @@ struct ChallengeCardView: View {
         case .featured:
             Text("FEATURED")
                 .font(.system(size: 8, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.72), radius: 1, y: 1)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Capsule().fill(LGradients.blue))
+                .background {
+                    BubblyIconMaterial(tint: theme.palette.primaryAction)
+                        .clipShape(Capsule(style: .continuous))
+                }
 
         case .weekly:
             Text("WEEKLY")
                 .font(.system(size: 8, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.bg)
+                .foregroundStyle(.white)
+                .shadow(color: Color.black.opacity(0.90), radius: 1, y: 1)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Capsule().fill(Color.white))
+                .background {
+                    BubblyIconMaterial(tint: .black)
+                        .clipShape(Capsule(style: .continuous))
+                }
 
         case .active:
             Text("ACTIVE")
@@ -142,12 +168,22 @@ struct ChallengeCardView: View {
     private func statusBadge(for status: ChallengeSubmissionStatus) -> some View {
         Text(status.displayName)
             .font(.system(size: 9, weight: .bold, design: .rounded))
-            .foregroundStyle(LColors.cardTitle)
+            .foregroundStyle(status == .joined ? Color.white : LColors.cardTitle)
+            .shadow(
+                color: status == .joined ? theme.palette.background.opacity(0.72) : .clear,
+                radius: 1,
+                y: 1
+            )
             .padding(.horizontal, 7)
             .padding(.vertical, 2)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(Color(lumeyHex: status.badgeColor))
-            )
+            .background {
+                if status == .joined {
+                    BubblyIconMaterial(tint: theme.palette.indicators)
+                        .clipShape(Capsule(style: .continuous))
+                } else {
+                    Capsule(style: .continuous)
+                        .fill(Color(lumeyHex: status.badgeColor))
+                }
+            }
     }
 }

@@ -191,8 +191,11 @@ struct LumeyBackground: View {
 // MARK: - Gradient Time Drum Picker
 
 struct LumeyGradientTimeDrumPicker: View {
+    @Environment(\.appTheme) private var theme
+
     @Binding var hour: Int
     @Binding var minute: Int
+    var solidTint: Color? = nil
     
     @State private var displayHour: Int = 9
     @State private var meridiem: String = "AM"
@@ -212,7 +215,8 @@ struct LumeyGradientTimeDrumPicker: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 13, height: 13)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(solidTint.map { AnyShapeStyle($0) } ?? AnyShapeStyle(LGradients.header))
+                    .bubblyIconMaterial(tint: solidTint ?? theme.palette.secondaryAccent, isEnabled: solidTint != nil)
                 
                 Text(formattedPreview)
                     .font(.system(size: 18, weight: .black, design: .rounded))
@@ -222,19 +226,14 @@ struct LumeyGradientTimeDrumPicker: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(LColors.secondarySurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background { timePreviewBackground }
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(LColors.border.primary, lineWidth: 1)
+                    .strokeBorder(solidTint ?? LColors.border.primary, lineWidth: 1)
             )
             
             ZStack {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(LColors.primarySurface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .strokeBorder(LColors.border.primary, lineWidth: 1)
-                    )
+                timeDrumBackground
                 
                 VStack(spacing: 0) {
                     Spacer()
@@ -265,7 +264,7 @@ struct LumeyGradientTimeDrumPicker: View {
                     
                     Text(":")
                         .font(.system(size: 24, weight: .black, design: .rounded))
-                        .foregroundStyle(LGradients.header)
+                        .foregroundStyle(solidTint.map { AnyShapeStyle($0) } ?? AnyShapeStyle(LGradients.header))
                     
                     Picker("Minute", selection: $minute) {
                         ForEach(0..<60, id: \.self) { value in
@@ -302,6 +301,30 @@ struct LumeyGradientTimeDrumPicker: View {
         .onChange(of: meridiem) { syncStoredHour() }
         .onChange(of: hour) { syncDisplayValuesFromStoredHour() }
     }
+
+    @ViewBuilder
+    private var timePreviewBackground: some View {
+        if let solidTint {
+            BubblyTileSurface(tint: solidTint, cornerRadius: 16)
+        } else {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(LColors.secondarySurface)
+        }
+    }
+
+    @ViewBuilder
+    private var timeDrumBackground: some View {
+        if let solidTint {
+            BubblyTileSurface(tint: solidTint, cornerRadius: 24)
+        } else {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LColors.primarySurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(LColors.border.primary, lineWidth: 1)
+                )
+        }
+    }
     
     private func syncDisplayValuesFromStoredHour() {
         isSyncingFromStoredHour = true
@@ -328,10 +351,11 @@ struct LumeyGradientTimeDrumPicker: View {
     }
 }
 
-// MARK: - Gradient Date Drum Picker
+// MARK: - Date Drum Picker
 
-struct LumeyGradientDateDrumPicker: View {
+struct LumeyDateDrumPicker: View {
     @Binding var date: Date
+    var solidTint: Color? = nil
 
     var yearRange: ClosedRange<Int> = {
         let currentYear = Calendar.current.component(.year, from: Date())
@@ -382,7 +406,7 @@ struct LumeyGradientDateDrumPicker: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 14, height: 14)
-                    .foregroundStyle(LGradients.header)
+                    .foregroundStyle(solidTint.map { AnyShapeStyle($0) } ?? AnyShapeStyle(LGradients.header))
 
                 Text(formattedPreview)
                     .font(.system(size: 18, weight: .black, design: .rounded))
@@ -392,19 +416,14 @@ struct LumeyGradientDateDrumPicker: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(LColors.secondarySurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background { datePreviewBackground }
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(LColors.border.primary, lineWidth: 1)
+                    .strokeBorder(solidTint ?? LColors.border.primary, lineWidth: 1)
             )
 
             ZStack {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(LColors.primarySurface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .strokeBorder(LColors.border.primary, lineWidth: 1)
-                    )
+                dateDrumBackground
 
                 VStack(spacing: 0) {
                     Spacer()
@@ -413,7 +432,7 @@ struct LumeyGradientDateDrumPicker: View {
                         .frame(height: 38)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(LColors.strongBorder, lineWidth: 1)
+                                .strokeBorder(solidTint ?? LColors.strongBorder, lineWidth: 1)
                         )
                     Spacer()
                 }
@@ -470,6 +489,30 @@ struct LumeyGradientDateDrumPicker: View {
         .onChange(of: date) { syncPickersFromDate() }
     }
 
+    @ViewBuilder
+    private var datePreviewBackground: some View {
+        if let solidTint {
+            BubblyTileSurface(tint: solidTint, cornerRadius: 16)
+        } else {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(LColors.secondarySurface)
+        }
+    }
+
+    @ViewBuilder
+    private var dateDrumBackground: some View {
+        if let solidTint {
+            BubblyTileSurface(tint: solidTint, cornerRadius: 24)
+        } else {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LColors.primarySurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(LColors.border.primary, lineWidth: 1)
+                )
+        }
+    }
+
     private func syncPickersFromDate() {
         isSyncingFromDate = true
         selectedMonth = calendar.component(.month, from: date)
@@ -498,10 +541,14 @@ struct LumeyGradientDateDrumPicker: View {
     }
 }
 
+typealias LumeyGradientDateDrumPicker = LumeyDateDrumPicker
+
 // MARK: - Gradient Date Time Drum Picker
 
 struct LumeyGradientDateTimeDrumPicker: View {
     @Binding var date: Date
+    var dateTint: Color? = nil
+    var timeTint: Color? = nil
 
     @State private var hour = Calendar.current.component(.hour, from: Date())
     @State private var minute = Calendar.current.component(.minute, from: Date())
@@ -511,9 +558,9 @@ struct LumeyGradientDateTimeDrumPicker: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            LumeyGradientDateDrumPicker(date: $date)
+            LumeyDateDrumPicker(date: $date, solidTint: dateTint)
 
-            LumeyGradientTimeDrumPicker(hour: $hour, minute: $minute)
+            LumeyGradientTimeDrumPicker(hour: $hour, minute: $minute, solidTint: timeTint)
         }
         .onAppear { syncTimeFromDate() }
         .onChange(of: hour) { syncDateFromTime() }
@@ -544,8 +591,11 @@ struct LumeyGradientDateTimeDrumPicker: View {
 // MARK: - Dotted Gradient Spinner
 
 struct LumeyDottedGradientSpinner: View {
+    @Environment(\.appTheme) private var theme
+
     var size: CGFloat = 58
     var dotCount: Int = 14
+    var useBubblyPalette: Bool = false
 
     @State private var rotation = 0.0
 
@@ -560,8 +610,17 @@ struct LumeyDottedGradientSpinner: View {
     var body: some View {
         ZStack {
             ForEach(0..<dotCount, id: \.self) { index in
-                Circle()
-                    .fill(LGradients.progress)
+                Group {
+                    if useBubblyPalette {
+                        let tint = theme.palette.rotation[index % theme.palette.rotation.count]
+                        Circle()
+                            .fill(tint)
+                            .bubblyIconMaterial(tint: tint)
+                    } else {
+                        Circle()
+                            .fill(LGradients.progress)
+                    }
+                }
                     .frame(width: dotSize, height: dotSize)
                     .opacity(dotOpacity(for: index))
                     .offset(y: -radius)
@@ -644,12 +703,13 @@ struct GlassCard<Content: View>: View {
     var selected: Bool = false
     var contentAlignment: Alignment? = nil
     var variant: GlassCardVariant = .primary
+    var borderColor: Color? = nil
     @ViewBuilder let content: Content
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         let baseFill = variant.fill
-        let baseBorder = variant.borderColor
+        let resolvedBorder = borderColor ?? (selected ? LColors.state.selectedBorder : variant.borderColor)
 
         Group {
             if let contentAlignment {
@@ -665,7 +725,7 @@ struct GlassCard<Content: View>: View {
                 .fill(selected ? LColors.state.selectedFill : baseFill)
                 .overlay(
                     shape.strokeBorder(
-                        selected ? LColors.state.selectedBorder : baseBorder,
+                        resolvedBorder,
                         lineWidth: selected ? 1.4 : 1
                     )
                 )

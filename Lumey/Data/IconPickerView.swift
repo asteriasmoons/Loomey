@@ -10,6 +10,7 @@ import SwiftUI
 struct IconPickerView: View {
     @Binding var selectedIcon: String
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
     
     @State private var searchText = ""
     @State private var selectedCategory = ""
@@ -88,14 +89,15 @@ struct IconPickerView: View {
     private var categoryTabs: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(groupedIcons, id: \.category) { group in
+                ForEach(Array(groupedIcons.enumerated()), id: \.element.category) { index, group in
                     Button {
                         selectedCategory = group.category
                     } label: {
                         categoryTab(
                             title: group.category,
                             count: group.icons.count,
-                            isSelected: selectedCategoryName == group.category
+                            isSelected: selectedCategoryName == group.category,
+                            tint: theme.palette.rotation[index % theme.palette.rotation.count]
                         )
                     }
                     .buttonStyle(.plain)
@@ -146,9 +148,12 @@ struct IconPickerView: View {
 
     private var emptyState: some View {
         VStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(LColors.textSecondary.opacity(0.75))
+            Image("searchwavy")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 22, height: 22)
+                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
             Text("No icons found")
                 .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -158,7 +163,7 @@ struct IconPickerView: View {
         .padding(.vertical, 34)
     }
 
-    private func categoryTab(title: String, count: Int, isSelected: Bool) -> some View {
+    private func categoryTab(title: String, count: Int, isSelected: Bool, tint: Color) -> some View {
         HStack(spacing: 6) {
             Text(title)
                 .font(.system(size: 11, weight: .black, design: .rounded))
@@ -166,18 +171,18 @@ struct IconPickerView: View {
 
             Text("\(count)")
                 .font(.system(size: 9, weight: .black, design: .rounded))
-                .foregroundStyle(isSelected ? LColors.bg.opacity(0.72) : LColors.textSecondary.opacity(0.8))
         }
-        .foregroundStyle(isSelected ? LColors.bg : LColors.textPrimary)
+        .foregroundStyle(.white)
+        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(
-            Capsule(style: .continuous)
-                .fill(isSelected ? AnyShapeStyle(LGradients.header) : AnyShapeStyle(LColors.glassSurface))
-        )
+        .background {
+            BubblyIconMaterial(tint: tint)
+                .clipShape(Capsule(style: .continuous))
+        }
         .overlay {
             Capsule(style: .continuous)
-                .strokeBorder(isSelected ? Color.white.opacity(0.18) : LColors.glassBorder, lineWidth: 1)
+                .strokeBorder(.white.opacity(isSelected ? 0.72 : 0.24), lineWidth: isSelected ? 1.4 : 1)
         }
     }
 
@@ -202,9 +207,12 @@ struct IconPickerView: View {
     
     private var searchField: some View {
         HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(LColors.textSecondary.opacity(0.7))
+            Image("searchwavy")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 15, height: 15)
+                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
             
             TextField("Search icons", text: $searchText)
                 .font(.system(size: 14, design: .rounded))
@@ -218,7 +226,7 @@ struct IconPickerView: View {
         )
         .overlay {
             RoundedRectangle(cornerRadius: LSpacing.inputRadius)
-                .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
         }
     }
     
@@ -226,11 +234,8 @@ struct IconPickerView: View {
         let isSelected = selectedIcon == icon.name
         
         return LumeyIconView(iconId: icon.name, size: 24)
-            .foregroundStyle(
-                isSelected
-                ? AnyShapeStyle(LGradients.header)
-                : AnyShapeStyle(LColors.textPrimary)
-            )
+            .foregroundStyle(isSelected ? theme.palette.primaryAction : theme.palette.textPrimary)
+            .bubblyIconMaterial(tint: theme.palette.primaryAction, isEnabled: isSelected)
             .frame(width: 48, height: 48)
             .background(
                 isSelected ? LColors.glassSurface2 : LColors.glassSurface,
@@ -239,7 +244,7 @@ struct IconPickerView: View {
             .overlay {
                 RoundedRectangle(cornerRadius: LSpacing.inputRadius)
                     .strokeBorder(
-                        isSelected ? LColors.glassBorderStrong : LColors.glassBorder,
+                        isSelected ? theme.palette.primaryAction : LColors.glassBorder,
                         lineWidth: isSelected ? 1.5 : 1
                     )
             }

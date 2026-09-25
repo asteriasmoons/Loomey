@@ -15,6 +15,7 @@ struct ContentView: View {
         MainTabView()
             .environmentObject(appState)
             .environmentObject(themeController)
+            .environment(\.appTheme, themeController.appTheme)
             .preferredColorScheme(.dark)
             .onOpenURL { url in
                 appState.handleReportConversationURL(url)

@@ -10,6 +10,7 @@ struct ReadingListDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     
     @Bindable var list: ReadingList
     
@@ -17,6 +18,7 @@ struct ReadingListDetailSheet: View {
     private var allBooks: [Book]
     
     @State private var showingEditSheet = false
+    @State private var showingBookEditor = false
     @State private var showingDeleteConfirm = false
     @State private var selectedBookForSummary: Book?
     
@@ -78,6 +80,11 @@ struct ReadingListDetailSheet: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.hidden)
         }
+        .adaptivePresentation(isPresented: $showingBookEditor, useFullScreenCover: horizontalSizeClass == .regular) {
+            AddEditListBook(list: list)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
+        }
         .sheet(item: $selectedBookForSummary) { book in
             ReadingListBookSummarySheet(book: book)
                 .presentationDetents([.medium, .large])
@@ -114,16 +121,16 @@ struct ReadingListDetailSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -134,16 +141,16 @@ struct ReadingListDetailSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .foregroundStyle(theme.palette.secondaryAccent)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -161,7 +168,7 @@ struct ReadingListDetailSheet: View {
     // MARK: - Overview
     
     private var overviewCard: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 14) {
                     Image(list.iconName)
@@ -169,10 +176,14 @@ struct ReadingListDetailSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 26, height: 26)
-                        .foregroundStyle(LColors.accents.secondary)
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 50, height: 50)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(Circle().strokeBorder(LColors.accents.secondary, lineWidth: 1.15))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                .mask { Circle().strokeBorder(lineWidth: 1.15) }
+                        }
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(list.displayTitle)
@@ -181,7 +192,16 @@ struct ReadingListDetailSheet: View {
                             .lineLimit(2)
                         
                         HStack(spacing: 6) {
-                            ReadingGoalPill(text: list.status.rawValue)
+                            Text(list.status.rawValue)
+                                .font(.system(size: 10, weight: .black, design: .rounded))
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 5)
+                                .background {
+                                    BubblyIconMaterial(tint: theme.palette.indicators)
+                                        .clipShape(Capsule(style: .continuous))
+                                }
                             
                             Text(effectiveProgressText)
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -194,7 +214,10 @@ struct ReadingListDetailSheet: View {
                 
                 if list.bookCount > 0 {
                     VStack(alignment: .leading, spacing: 6) {
-                        DottedGoalProgressBar(value: effectiveProgressValue)
+                        ReadingListMaterialProgressBar(
+                            value: effectiveProgressValue,
+                            tint: theme.palette.primaryAction
+                        )
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: 10)
                         
@@ -213,19 +236,29 @@ struct ReadingListDetailSheet: View {
                 }
                 
                 HStack(spacing: 10) {
-                    ListDetailMiniStat(title: "Books", value: "\(list.bookCount)")
-                    ListDetailMiniStat(title: "Read", value: "\(effectiveCompletedCount)")
+                    ListDetailMiniStat(
+                        title: "Books",
+                        value: "\(list.bookCount)",
+                        tint: theme.palette.rotation[0]
+                    )
+                    ListDetailMiniStat(
+                        title: "Read",
+                        value: "\(effectiveCompletedCount)",
+                        tint: theme.palette.rotation[1 % theme.palette.rotation.count]
+                    )
                     
                     if let days = list.daysRemaining {
                         ListDetailMiniStat(
                             title: "Due",
-                            value: days >= 0 ? "\(days)d" : "Late"
+                            value: days >= 0 ? "\(days)d" : "Late",
+                            tint: theme.palette.rotation[2 % theme.palette.rotation.count]
                         )
                     }
                     
                     ListDetailMiniStat(
                         title: "Created",
-                        value: list.createdAt.formatted(.dateTime.month(.abbreviated).day())
+                        value: list.createdAt.formatted(.dateTime.month(.abbreviated).day()),
+                        tint: theme.palette.rotation[(list.daysRemaining == nil ? 2 : 3) % theme.palette.rotation.count]
                     )
                 }
             }
@@ -254,9 +287,27 @@ struct ReadingListDetailSheet: View {
     
     private var booksSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Books")
-                .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.headingPrimary)
+            HStack {
+                Text("Books")
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.headingPrimary)
+
+                Spacer()
+
+                Button {
+                    showingBookEditor = true
+                } label: {
+                    Image("addwavy")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 22, height: 22)
+                        .foregroundStyle(theme.palette.primaryAction)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
+                        .frame(width: 42, height: 42)
+                }
+                .buttonStyle(.plain)
+            }
             
             if listBooks.isEmpty {
                 GlassCard(variant: .secondary) {
@@ -273,10 +324,11 @@ struct ReadingListDetailSheet: View {
                 }
             } else {
                 LazyVStack(spacing: 10) {
-                    ForEach(listBooks, id: \.item.id) { entry in
+                    ForEach(Array(listBooks.enumerated()), id: \.element.item.id) { index, entry in
                         ReadingListBookRow(
                             book: entry.book,
                             isCompleted: entry.item.isCompleted || entry.book.status == .finished,
+                            accentIndex: index,
                             onToggle: {
                                 list.toggleBookCompleted(bookID: entry.book.id)
                                 try? modelContext.save()
@@ -323,17 +375,14 @@ struct ReadingListDetailSheet: View {
             } label: {
                 Text("Delete List")
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.danger)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(LColors.danger.opacity(0.12))
-                    )
-                    .overlay(
-                        Capsule(style: .continuous)
-                            .strokeBorder(LColors.danger.opacity(0.3), lineWidth: 1)
-                    )
+                    .background {
+                        BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 999)
+                    }
+                    .bubblyTileLift()
             }
             .buttonStyle(.plain)
         }
@@ -344,14 +393,21 @@ struct ReadingListDetailSheet: View {
 // MARK: - Book Row
 
 struct ReadingListBookRow: View {
+    @Environment(\.appTheme) private var theme
+
     let book: Book
     let isCompleted: Bool
+    let accentIndex: Int
     let onToggle: () -> Void
     let onOpenSummary: () -> Void
+
+    private var accent: Color {
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+    }
     
     var body: some View {
         GeometryReader { geometry in
-            GlassCard(variant: .tertiary) {
+            GlassCard(variant: .tertiary, borderColor: accent) {
                 HStack(spacing: 12) {
                 Button(action: onToggle) {
                     Image(isCompleted ? "checkwavy" : "sparkle")
@@ -359,24 +415,15 @@ struct ReadingListBookRow: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
-                        .foregroundStyle(
-                            isCompleted
-                            ? AnyShapeStyle(LColors.accents.special)
-                            : AnyShapeStyle(LColors.text.muted)
-                        )
+                        .foregroundStyle(accent)
+                        .bubblyIconMaterial(tint: accent)
                         .frame(width: 36, height: 36)
                         .background(
-                            Circle()
-                                .fill(isCompleted ? LColors.border.nested : LColors.surface.subtle.opacity(0.5))
+                            Circle().fill(theme.palette.raisedSurface)
                         )
                         .overlay(
                             Circle()
-                                .strokeBorder(
-                                    isCompleted
-                                    ? AnyShapeStyle(LColors.accents.primary)
-                                    : AnyShapeStyle(LColors.border.nestedStrong),
-                                    lineWidth: 1
-                                )
+                                .strokeBorder(accent, lineWidth: 1)
                         )
                 }
                 .buttonStyle(.plain)
@@ -402,12 +449,16 @@ struct ReadingListBookRow: View {
                         
                         Text(book.status.rawValue)
                             .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                             .lineLimit(1)
                             .fixedSize(horizontal: true, vertical: false)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Capsule().fill(LColors.iconContainer.primary))
+                            .background {
+                                BubblyIconMaterial(tint: accent)
+                                    .clipShape(Capsule(style: .continuous))
+                            }
                     }
                     .contentShape(Rectangle())
                 }
@@ -426,6 +477,7 @@ struct ReadingListBookRow: View {
 struct ListDetailMiniStat: View {
     let title: String
     let value: String
+    let tint: Color
     
     var body: some View {
         VStack(spacing: 3) {
@@ -441,14 +493,8 @@ struct ListDetailMiniStat: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(LColors.border.nested, lineWidth: 1)
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 }
 

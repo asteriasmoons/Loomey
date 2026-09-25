@@ -14,6 +14,7 @@ struct SetDisplayNameSheet: View {
 
     @EnvironmentObject private var appState: AppState
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     @Query private var users: [AuthUser]
 
     @State private var nameText: String = ""
@@ -45,32 +46,30 @@ struct SetDisplayNameSheet: View {
                             }
                         }
 
-                        GlassCard(variant: .primary) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                fieldLabel("Display Name")
+                        VStack(alignment: .leading, spacing: 12) {
+                            fieldLabel("Display Name")
 
-                                TextField("e.g. Asteria", text: $nameText)
-                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.white)
-                                    .textInputAutocapitalization(.words)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .fill(LColors.surface.nestedSoft)
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .strokeBorder(LColors.border.nested, lineWidth: 1)
-                                    )
+                            TextField("e.g. Asteria", text: $nameText)
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
+                                .textInputAutocapitalization(.words)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .fill(LColors.surface.nestedSoft)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
+                                )
 
-                                HStack {
-                                    Spacer()
+                            HStack {
+                                Spacer()
 
-                                    Text("\(nameText.count)/30")
-                                        .font(.system(size: 11, weight: .black, design: .rounded))
-                                        .foregroundStyle(nameText.count > 30 ? Color.red : LColors.textSecondary)
-                                }
+                                Text("\(nameText.count)/30")
+                                    .font(.system(size: 11, weight: .black, design: .rounded))
+                                    .foregroundStyle(nameText.count > 30 ? Color.red : LColors.textSecondary)
                             }
                         }
 
@@ -118,21 +117,15 @@ struct SetDisplayNameSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(
-                            LColors.accents.primary
-                        )
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .frame(width: 36, height: 36)
                         .background(
                             Circle()
                                 .fill(LColors.bg)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(
-                                            LColors.accents.primary,
-                                            lineWidth: 1.35
-                                        )
+                                        .strokeBorder(theme.palette.primaryAction, lineWidth: 1.35)
                                 )
-                                .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
                         )
                 }
                 .buttonStyle(.plain)
@@ -154,27 +147,21 @@ struct SetDisplayNameSheet: View {
                 } else {
                     Text(isChanging ? "Save" : "Let's Go")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.70), radius: 1, y: 1)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        canSave
-                        ? LGradients.blue
-                        : LinearGradient(
-                            colors: [
-                                Color.gray.opacity(0.3),
-                                Color.gray.opacity(0.22)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            )
-            .shadow(color: canSave ? LColors.accent.opacity(0.3) : .clear, radius: 12, y: 6)
+            .background {
+                BubblyTileSurface(
+                    tint: canSave
+                        ? theme.palette.secondaryAccent
+                        : theme.palette.secondaryAccent.opacity(0.34),
+                    cornerRadius: 16
+                )
+            }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
         .disabled(!canSave)

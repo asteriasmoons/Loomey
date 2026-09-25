@@ -10,6 +10,7 @@ import PhotosUI
 struct AddEditBookSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     @Query(sort: \ReadingLibraryCustomFilter.sortIndex)
     private var customFilters: [ReadingLibraryCustomFilter]
@@ -66,51 +67,63 @@ struct AddEditBookSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         bookIdentityCard
 
-                        sectionCard(title: "Basic Info") {
-                            LumeyTextField(title: "Subtitle", text: $subtitle)
-                            LumeyTextField(title: "Series Name", text: $seriesName)
-                            LumeyTextField(title: "Series Number", text: $seriesNumber)
-                            LumeyTextField(title: "Publisher", text: $publisher)
-                            LumeyTextField(title: "Publication Year", text: $publicationYear)
-                            LumeyTextField(title: "ISBN", text: $isbn)
-                            LumeyTextEditor(title: "Summary", text: $summary, minHeight: 100)
-                            LumeyRatingPicker(title: "Rating", value: $rating)
-                            LumeyCoverPicker(selectedItem: $selectedCoverItem, coverImageData: $coverImageData)
+                        sectionCard(title: "Basic Info", accentIndex: 1) {
+                            LumeyTextField(title: "Subtitle", text: $subtitle, borderColor: theme.palette.primaryAction)
+                            LumeyTextField(title: "Series Name", text: $seriesName, borderColor: theme.palette.secondaryAccent)
+                            LumeyTextField(title: "Series Number", text: $seriesNumber, borderColor: theme.palette.indicators)
+                            LumeyTextField(title: "Publisher", text: $publisher, borderColor: theme.palette.primaryAction)
+                            LumeyTextField(title: "Publication Year", text: $publicationYear, borderColor: theme.palette.secondaryAccent)
+                            LumeyTextField(title: "ISBN", text: $isbn, borderColor: theme.palette.indicators)
+                            LumeyTextEditor(title: "Summary", text: $summary, minHeight: 100, borderColor: theme.palette.primaryAction)
+                            LumeyRatingPicker(title: "Rating", value: $rating, tint: theme.palette.primaryAction)
+                            LumeyCoverPicker(
+                                selectedItem: $selectedCoverItem,
+                                coverImageData: $coverImageData,
+                                tint: theme.palette.secondaryAccent
+                            )
                         }
                         
-                        sectionCard(title: "Reading Details") {
-                            LumeyEnumPicker(title: "Status", selection: $status, options: BookStatus.allCases)
-                            LumeyEnumPicker(title: "Format", selection: $format, options: BookFormat.allCases)
-                            LumeyEnumPicker(title: "Ownership", selection: $ownership, options: BookOwnership.allCases)
+                        sectionCard(title: "Reading Details", accentIndex: 2) {
+                            LumeyEnumPicker(title: "Status", selection: $status, options: BookStatus.allCases, tint: theme.palette.primaryAction)
+                            LumeyEnumPicker(title: "Format", selection: $format, options: BookFormat.allCases, tint: theme.palette.secondaryAccent)
+                            LumeyEnumPicker(title: "Ownership", selection: $ownership, options: BookOwnership.allCases, tint: theme.palette.indicators)
                         }
                         
-                        sectionCard(title: "Progress") {
-                            LumeyNumberField(title: "Current Page", text: $currentPage)
-                            LumeyNumberField(title: "Total Pages", text: $totalPages)
+                        sectionCard(title: "Progress", accentIndex: 3) {
+                            LumeyNumberField(title: "Current Page", text: $currentPage, borderColor: theme.palette.primaryAction)
+                            LumeyNumberField(title: "Total Pages", text: $totalPages, borderColor: theme.palette.secondaryAccent)
 
-                            LumeyNumberField(title: "Ebook Total Pages", text: $ebookTotalPagesText)
-                            LumeyNumberField(title: "Ebook Current Page", text: $ebookCurrentPageText)
+                            LumeyNumberField(title: "Ebook Total Pages", text: $ebookTotalPagesText, borderColor: theme.palette.indicators)
+                            LumeyNumberField(title: "Ebook Current Page", text: $ebookCurrentPageText, borderColor: theme.palette.primaryAction)
 
                             ebookConversionPreview
 
-                            LumeyNumberField(title: "Current Chapter", text: $currentChapter)
-                            LumeyNumberField(title: "Total Chapters", text: $totalChapters)
+                            LumeyNumberField(title: "Current Chapter", text: $currentChapter, borderColor: theme.palette.secondaryAccent)
+                            LumeyNumberField(title: "Total Chapters", text: $totalChapters, borderColor: theme.palette.indicators)
                         }
                         
-                        sectionCard(title: "Organization") {
-                            LumeyTextField(title: "Genres", text: $genre)
-                            LumeyTextField(title: "Moods", text: $mood)
-                            LumeyTextField(title: "Topics", text: $topicsText)
-                            LumeyTextField(title: "Tags", text: $tagsText)
-                            LumeyTextField(title: "Tropes", text: $tropesText)
+                        sectionCard(title: "Organization", accentIndex: 4) {
+                            LumeyTextField(title: "Genres", text: $genre, borderColor: theme.palette.primaryAction)
+                            LumeyTextField(title: "Moods", text: $mood, borderColor: theme.palette.secondaryAccent)
+                            LumeyTextField(title: "Topics", text: $topicsText, borderColor: theme.palette.indicators)
+                            LumeyTextField(title: "Tags", text: $tagsText, borderColor: theme.palette.primaryAction)
+                            LumeyTextField(title: "Tropes", text: $tropesText, borderColor: theme.palette.secondaryAccent)
                             customFilterPicker
                         }
                         
-                        sectionCard(title: "Flags") {
-                            Toggle("Favorite", isOn: $isFavorite)
-                                .tint(LColors.accent)
-                            Toggle("Reread", isOn: $isReread)
-                                .tint(LColors.accent)
+                        sectionCard(title: "Flags", accentIndex: 5) {
+                            LumeyIconToggle(
+                                title: "Favorite",
+                                iconName: "heartfill",
+                                isOn: $isFavorite,
+                                tint: theme.palette.primaryAction
+                            )
+                            LumeyIconToggle(
+                                title: "Reread",
+                                iconName: "repeat",
+                                isOn: $isReread,
+                                tint: theme.palette.secondaryAccent
+                            )
                         }
                     }
                     .padding(.horizontal, 20)
@@ -136,9 +149,9 @@ struct AddEditBookSheet: View {
     }
 
     private var bookIdentityCard: some View {
-        sectionCard(title: "Book Identity") {
-            LumeyTextField(title: "Title", text: $title)
-            LumeyTextField(title: "Author", text: $author)
+        sectionCard(title: "Book Identity", accentIndex: 0) {
+            LumeyTextField(title: "Title", text: $title, borderColor: theme.palette.primaryAction)
+            LumeyTextField(title: "Author", text: $author, borderColor: theme.palette.secondaryAccent)
 
             Button {
                 getBookDetails()
@@ -159,29 +172,17 @@ struct AddEditBookSheet: View {
 
                     Text(isFetchingBookDetails ? "Getting Details..." : "Get Details")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
 
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 15)
                 .padding(.vertical, 13)
                 .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: canGetBookDetails || isFetchingBookDetails
-                                ? [LColors.accents.secondary, LColors.accents.special]
-                                : [LColors.border.nestedStrong, LColors.iconContainer.primary],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(LColors.border.subtle, lineWidth: 1)
-                )
+                .background { BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 14) }
+                .bubblyTileLift()
+                .opacity(canGetBookDetails || isFetchingBookDetails ? 1 : 0.45)
             }
             .buttonStyle(.plain)
             .disabled(!canGetBookDetails)
@@ -255,15 +256,14 @@ struct AddEditBookSheet: View {
             } label: {
                 Text("Save")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.cardTitle)
+                    .foregroundStyle(theme.palette.textPrimary)
+                    .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 9)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(
-                                LColors.accents.secondary
-                            )
-                    )
+                    .background {
+                        BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                            .clipShape(Capsule(style: .continuous))
+                    }
             }
             .buttonStyle(.plain)
             
@@ -275,17 +275,17 @@ struct AddEditBookSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
-                    .background(
+                    .background {
                         Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                            )
+                            .fill(theme.palette.background)
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
-                    )
+
+                        BubblyIconMaterial(tint: theme.palette.primaryAction)
+                            .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                    }
             }
             .buttonStyle(.plain)
         }
@@ -301,8 +301,14 @@ struct AddEditBookSheet: View {
         .safeAreaPadding(.top)
     }
     
-    private func sectionCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        GlassCard(variant: .featured) {
+    private func sectionCard<Content: View>(
+        title: String,
+        accentIndex: Int,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        let accent = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return GlassCard(variant: .featured, borderColor: accent) {
             VStack(alignment: .leading, spacing: 13) {
                 Text(title)
                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -369,15 +375,21 @@ struct AddEditBookSheet: View {
                     .foregroundStyle(LColors.textSecondary)
 
                 FlowLayout(spacing: 8) {
-                    ForEach(customFilters) { filter in
-                        customFilterAssignmentChip(filter)
+                    ForEach(Array(customFilters.enumerated()), id: \.element.id) { index, filter in
+                        customFilterAssignmentChip(
+                            filter,
+                            tint: theme.palette.rotation[index % theme.palette.rotation.count]
+                        )
                     }
                 }
             }
         }
     }
 
-    private func customFilterAssignmentChip(_ filter: ReadingLibraryCustomFilter) -> some View {
+    private func customFilterAssignmentChip(
+        _ filter: ReadingLibraryCustomFilter,
+        tint: Color
+    ) -> some View {
         let isSelected = selectedCustomFilterIDs.contains(filter.id)
 
         return Button {
@@ -390,7 +402,8 @@ struct AddEditBookSheet: View {
             Text(filter.title)
                 .font(.system(size: 12, weight: .black, design: .rounded))
                 .lineLimit(1)
-                .foregroundStyle(isSelected ? .white : LColors.textSecondary)
+                .foregroundStyle(tint)
+                .bubblyIconMaterial(tint: tint)
                 .padding(.horizontal, 13)
                 .padding(.vertical, 8)
                 .background(
@@ -572,6 +585,7 @@ struct AddEditBookSheet: View {
 struct LumeyTextField: View {
     let title: String
     @Binding var text: String
+    var borderColor: Color? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -586,7 +600,10 @@ struct LumeyTextField: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 11)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(borderColor ?? LColors.border.nestedStrong, lineWidth: 1)
+                )
         }
     }
 }
@@ -594,9 +611,10 @@ struct LumeyTextField: View {
 struct LumeyNumberField: View {
     let title: String
     @Binding var text: String
+    var borderColor: Color? = nil
     
     var body: some View {
-        LumeyTextField(title: title, text: $text)
+        LumeyTextField(title: title, text: $text, borderColor: borderColor)
             .keyboardType(.numberPad)
     }
 }
@@ -605,6 +623,7 @@ struct LumeyTextEditor: View {
     let title: String
     @Binding var text: String
     var minHeight: CGFloat
+    var borderColor: Color? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -621,27 +640,129 @@ struct LumeyTextEditor: View {
                 .frame(minHeight: minHeight)
                 .padding(10)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(borderColor ?? LColors.border.nestedStrong, lineWidth: 1)
+                )
         }
     }
 }
 
 struct LumeyEnumPicker<Value: RawRepresentable & CaseIterable & Hashable & Identifiable>: View where Value.RawValue == String, Value.AllCases: RandomAccessCollection {
+    @Environment(\.appTheme) private var theme
+
     let title: String
     @Binding var selection: Value
     let options: Value.AllCases
-    
+    var tint: Color? = nil
+    @State private var isExpanded = false
+
     var body: some View {
+        if let tint {
+            customDropdown(tint: tint)
+        } else {
+            legacyPicker
+        }
+    }
+
+    private func customDropdown(tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(title)
                 .font(.system(size: 12, weight: .black, design: .rounded))
                 .foregroundStyle(LColors.textSecondary)
-            
+
+            Button {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Text(selection.rawValue)
+                        .font(.system(size: 14, weight: .black, design: .rounded))
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
+
+                    Spacer()
+
+                    Image(isExpanded ? "chevup" : "chevdown")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 11, height: 11)
+                        .bubblyIconMaterial(tint: theme.palette.textPrimary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 11)
+                .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+                .bubblyTileLift()
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 7) {
+                    ForEach(options) { option in
+                        Button {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                selection = option
+                                isExpanded = false
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Circle()
+                                    .fill(selection == option ? theme.palette.textPrimary : theme.palette.raisedSurface)
+                                    .frame(width: 12, height: 12)
+                                    .overlay {
+                                        Circle()
+                                            .fill(selection == option ? tint : Color.clear)
+                                            .frame(width: 4, height: 4)
+                                    }
+
+                                Text(option.rawValue)
+                                    .font(.system(size: 13, weight: .black, design: .rounded))
+                                    .foregroundStyle(theme.palette.textPrimary)
+                                    .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
+
+                                Spacer()
+
+                                if selection == option {
+                                    Image("checkwavy")
+                                        .renderingMode(.template)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 14, height: 14)
+                                        .foregroundStyle(theme.palette.textPrimary)
+                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 9)
+                            .background {
+                                if selection == option {
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(theme.palette.raisedSurface)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(9)
+                .background { BubblyTileSurface(tint: tint, cornerRadius: 16) }
+                .bubblyTileLift()
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+    }
+
+    private var legacyPicker: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title)
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundStyle(LColors.textSecondary)
+
             Menu {
                 ForEach(options) { option in
-                    Button(option.rawValue) {
-                        selection = option
-                    }
+                    Button(option.rawValue) { selection = option }
                 }
             } label: {
                 HStack {
@@ -668,8 +789,11 @@ struct LumeyEnumPicker<Value: RawRepresentable & CaseIterable & Hashable & Ident
 }
 
 struct LumeyRatingPicker: View {
+    @Environment(\.appTheme) private var theme
+
     let title: String
     @Binding var value: Double
+    var tint: Color? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -691,10 +815,10 @@ struct LumeyRatingPicker: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 22, height: 22)
-                            .foregroundStyle(
-                                number <= Int(value)
-                                ? LColors.accents.secondary
-                                : LColors.border.nestedStrong
+                            .foregroundStyle(number <= Int(value) ? (tint ?? LColors.accents.secondary) : LColors.border.nestedStrong)
+                            .bubblyIconMaterial(
+                                tint: number <= Int(value) ? (tint ?? theme.palette.primaryAction) : LColors.border.nestedStrong,
+                                isEnabled: tint != nil
                             )
                     }
                     .buttonStyle(.plain)
@@ -709,14 +833,71 @@ struct LumeyRatingPicker: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 11)
             .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(LColors.iconContainer.primary))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(LColors.border.nestedStrong, lineWidth: 1))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(tint ?? LColors.border.nestedStrong, lineWidth: 1)
+            )
         }
     }
 }
 
+struct LumeyIconToggle: View {
+    @Environment(\.appTheme) private var theme
+
+    let title: String
+    let iconName: String
+    @Binding var isOn: Bool
+    let tint: Color
+
+    var body: some View {
+        Button {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.78)) {
+                isOn.toggle()
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(theme.palette.textPrimary)
+
+                Spacer()
+
+                ZStack(alignment: isOn ? .trailing : .leading) {
+                    RoundedRectangle(cornerRadius: 999, style: .continuous)
+                        .fill(isOn ? tint.opacity(0.28) : theme.palette.raisedSurface)
+
+                    Circle()
+                        .fill(theme.palette.background)
+                        .frame(width: 26, height: 26)
+                        .overlay {
+                            Image(iconName)
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 13, height: 13)
+                                .bubblyIconMaterial(tint: tint)
+                        }
+                        .padding(2)
+                }
+                .frame(width: 54, height: 30)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 999, style: .continuous)
+                        .strokeBorder(tint, lineWidth: 1.2)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(isOn ? "On" : "Off")
+    }
+}
+
 struct LumeyCoverPicker: View {
+    @Environment(\.appTheme) private var theme
+
     @Binding var selectedItem: PhotosPickerItem?
     @Binding var coverImageData: Data?
+    var tint: Color? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -727,9 +908,7 @@ struct LumeyCoverPicker: View {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(
-                            LColors.gradientBlue.opacity(0.28)
-                        )
+                        .fill(tint == nil ? LColors.gradientBlue.opacity(0.28) : theme.palette.raisedSurface)
                     
                     if let coverImageData,
                        let image = UIImage(data: coverImageData) {
@@ -744,28 +923,31 @@ struct LumeyCoverPicker: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 30, height: 30)
-                            .foregroundStyle(LColors.text.primary)
+                            .foregroundStyle(tint ?? LColors.text.primary)
+                            .bubblyIconMaterial(tint: tint ?? theme.palette.secondaryAccent, isEnabled: tint != nil)
                     }
                 }
                 .frame(width: 72, height: 104)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
+                        .strokeBorder(tint ?? LColors.border.nestedStrong, lineWidth: 1)
                 )
                 
                 VStack(alignment: .leading, spacing: 10) {
                     PhotosPicker(selection: $selectedItem, matching: .images) {
                         Text(coverImageData == nil ? "Upload Cover" : "Replace Cover")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(
-                                Capsule(style: .continuous)
-                                    .fill(
-                                        LColors.accents.secondary
-                                    )
-                            )
+                            .background {
+                                BubblyTileSurface(
+                                    tint: tint ?? theme.palette.secondaryAccent,
+                                    cornerRadius: 999
+                                )
+                            }
+                            .bubblyTileLift()
                     }
                     
                     if coverImageData != nil {

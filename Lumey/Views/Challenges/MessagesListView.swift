@@ -8,6 +8,7 @@ import SwiftUI
 struct MessagesListView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     @State private var conversations: [ConversationDTO] = []
@@ -40,8 +41,8 @@ struct MessagesListView: View {
                         } else if conversations.isEmpty {
                             emptyCard
                         } else {
-                            ForEach(conversations) { conversation in
-                                conversationRow(conversation)
+                            ForEach(Array(conversations.enumerated()), id: \.element.id) { index, conversation in
+                                conversationRow(conversation, accentIndex: index)
                             }
                         }
                     }
@@ -112,14 +113,14 @@ struct MessagesListView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.2)
                             )
                     )
             }
@@ -133,14 +134,14 @@ struct MessagesListView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                             )
                     )
             }
@@ -155,15 +156,16 @@ struct MessagesListView: View {
 
     // MARK: - Conversation Row
 
-    private func conversationRow(_ conversation: ConversationDTO) -> some View {
+    private func conversationRow(_ conversation: ConversationDTO, accentIndex: Int) -> some View {
         let otherUsername = conversation.otherUsername(currentUserID: currentUserID)
         let unread = conversation.unreadCount(for: currentUserID)
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
 
         return Button {
             selectedConversationUser = messageableUser(for: conversation)
             selectedConversation = conversation
         } label: {
-            GlassCard(padding: 14, variant: .secondary) {
+            GlassCard(padding: 14, variant: .secondary, borderColor: tint) {
                 HStack(spacing: 12) {
                     UserAvatarView(
                         avatarURL: messageableUser(for: conversation)?.avatarURL,
@@ -328,6 +330,7 @@ private extension View {
 
 private struct NewConversationSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
 
     let messageableUsers: [MessageableUserDTO]
     let currentUserID: String
@@ -364,14 +367,14 @@ private struct NewConversationSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18, height: 18)
-                            .foregroundStyle(LColors.accents.special)
+                            .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             .frame(width: 40, height: 40)
                             .background(
                                 Circle()
                                     .fill(LColors.bg)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LColors.accents.special, lineWidth: 1.2)
+                                            .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                                     )
                             )
                     }
@@ -392,7 +395,7 @@ private struct NewConversationSheet: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                            .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                     )
                     .padding(.horizontal, 20)
                     .padding(.bottom, 10)
@@ -406,11 +409,13 @@ private struct NewConversationSheet: View {
                                 .padding(.top, 20)
                         }
 
-                        ForEach(filteredUsers) { user in
+                        ForEach(Array(filteredUsers.enumerated()), id: \.element.id) { index, user in
+                            let tint = theme.palette.rotation[index % theme.palette.rotation.count]
+
                             Button {
                                 Task { await startConversation(with: user) }
                             } label: {
-                                GlassCard(padding: 12, variant: .tertiary) {
+                                GlassCard(padding: 12, variant: .tertiary, borderColor: tint) {
                                     HStack(spacing: 12) {
                                         UserAvatarView(
                                             avatarURL: user.avatarURL,
@@ -439,7 +444,7 @@ private struct NewConversationSheet: View {
                                             .resizable()
                                             .scaledToFit()
                                             .frame(width: 14, height: 14)
-                                            .foregroundStyle(LColors.textSecondary)
+                                            .bubblyIconMaterial(tint: theme.palette.textSecondary)
                                     }
                                 }
                             }

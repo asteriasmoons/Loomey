@@ -6,6 +6,8 @@
 import SwiftUI
 
 struct SprintStartSheet: View {
+    @Environment(\.appTheme) private var theme
+
     let userId: String
     let displayName: String
     var onClose: (() -> Void)?
@@ -30,7 +32,7 @@ struct SprintStartSheet: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        GlassCard(variant: .featured) {
+                        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Duration")
 
@@ -41,28 +43,22 @@ struct SprintStartSheet: View {
                                     ),
                                     spacing: 10
                                 ) {
-                                    ForEach(durations, id: \.self) { duration in
+                                    ForEach(Array(durations.enumerated()), id: \.element) { index, duration in
+                                        let tint = theme.palette.rotation[index % theme.palette.rotation.count]
+
                                         Button {
                                             selectedDuration = duration
                                         } label: {
                                             Text("\(duration)m")
                                                 .font(.system(size: 13, weight: .black, design: .rounded))
-                                                .foregroundStyle(selectedDuration == duration ? .white : LColors.textSecondary)
+                                                .foregroundStyle(.white)
+                                                .shadow(color: theme.palette.background.opacity(0.70), radius: 1, y: 1)
                                                 .frame(maxWidth: .infinity)
                                                 .padding(.vertical, 12)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                        .fill(selectedDuration == duration ? LColors.glassSurface2 : LColors.surface.subtle.opacity(0.6))
-                                                )
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                        .strokeBorder(
-                                                            selectedDuration == duration
-                                                            ? LColors.accents.secondary
-                                                            : LColors.glassBorder,
-                                                            lineWidth: 1
-                                                        )
-                                                )
+                                                .background {
+                                                    BubblyTileSurface(tint: tint, cornerRadius: 14)
+                                                }
+                                                .opacity(selectedDuration == duration ? 1 : 0.62)
                                         }
                                         .buttonStyle(.plain)
                                     }
@@ -70,7 +66,7 @@ struct SprintStartSheet: View {
                             }
                         }
 
-                        GlassCard(variant: .primary) {
+                        GlassCard(variant: .primary, borderColor: theme.palette.secondaryAccent) {
                             VStack(alignment: .leading, spacing: 12) {
                                 fieldLabel("Your Start Page")
 
@@ -86,12 +82,12 @@ struct SprintStartSheet: View {
                                     )
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .strokeBorder(LColors.border.nested, lineWidth: 1)
+                                            .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                                     )
                             }
                         }
 
-                        GlassCard(variant: .secondary) {
+                        GlassCard(variant: .secondary, borderColor: theme.palette.indicators) {
                             Text("A 30 second join window opens before the sprint begins. Others can join during this time.")
                                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                                 .foregroundStyle(LColors.textSecondary)
@@ -136,21 +132,15 @@ struct SprintStartSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(
-                        LColors.accents.secondary
-                    )
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(
-                                        LColors.accents.secondary,
-                                        lineWidth: 1.35
-                                    )
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.35)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
                     )
             }
             .buttonStyle(.plain)
@@ -178,26 +168,15 @@ struct SprintStartSheet: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        canStart
-                        ? LGradients.blue
-                        : LinearGradient(
-                            colors: [
-                                Color.gray.opacity(0.3),
-                                Color.gray.opacity(0.22)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            )
-            .shadow(
-                color: canStart ? LColors.accent.opacity(0.3) : .clear,
-                radius: 12,
-                y: 6
-            )
+            .background {
+                BubblyTileSurface(
+                    tint: canStart
+                        ? theme.palette.primaryAction
+                        : theme.palette.primaryAction.opacity(0.34),
+                    cornerRadius: 16
+                )
+            }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
         .disabled(!canStart)

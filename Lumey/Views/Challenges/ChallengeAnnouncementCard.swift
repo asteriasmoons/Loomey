@@ -13,6 +13,7 @@ struct ChallengeAnnouncementCard: View {
     let onDeleteTapped: (() -> Void)?
     
     @State private var isCollapsed = false
+    @Environment(\.appTheme) private var theme
     
     private var resolvedAuthorAvatarURL: String? {
         let announcementURL = announcement.avatarURL?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -35,7 +36,7 @@ struct ChallengeAnnouncementCard: View {
     }
 
     var body: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Image("megaphone")
@@ -43,11 +44,11 @@ struct ChallengeAnnouncementCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
                     Text("ANNOUNCEMENT")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
                     Spacer()
 
@@ -67,14 +68,14 @@ struct ChallengeAnnouncementCard: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(LColors.accents.secondary)
+                            .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             .frame(width: 30, height: 30)
                             .background(
                                 Circle()
                                     .fill(LColors.glassSurface)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LColors.accents.primary, lineWidth: 1)
+                                            .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                                     )
                             )
                     }
@@ -119,14 +120,14 @@ struct ChallengeAnnouncementCard: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 15, height: 15)
-                                .foregroundStyle(LColors.accents.special)
+                                .bubblyIconMaterial(tint: theme.palette.primaryAction)
                                 .frame(width: 32, height: 32)
                                 .background(
                                     Circle()
                                         .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                                                .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                                         )
                                 )
                         }
@@ -135,13 +136,6 @@ struct ChallengeAnnouncementCard: View {
                 }
             }
         }
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(
-                    LColors.gradientBlue.opacity(0.6),
-                    lineWidth: 1.2
-                )
-        )
     }
 }
 
@@ -156,6 +150,7 @@ struct AnnouncementRichBodyView: View {
     var fontSize: CGFloat = 14
     var color: Color = LColors.textSecondary
     var iconSize: CGFloat = 16
+    @Environment(\.appTheme) private var theme
 
     private var blocks: [RichBlock] {
         Self.parseBlocks(bodyText)
@@ -171,9 +166,7 @@ struct AnnouncementRichBodyView: View {
                 case .quote(let segments):
                     HStack(alignment: .top, spacing: 10) {
                         RoundedRectangle(cornerRadius: 2, style: .continuous)
-                            .fill(
-                                LColors.accents.primary
-                            )
+                            .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             .frame(width: 3)
 
                         renderInline(segments)
@@ -212,7 +205,9 @@ struct AnnouncementRichBodyView: View {
     // MARK: - Inline Renderer
 
     private func renderInline(_ segments: [InlineSegment]) -> some View {
-        segments.reduce(Text("")) { result, segment in
+        var iconIndex = 0
+
+        return segments.reduce(Text("")) { result, segment in
             switch segment {
             case .plain(let str):
                 return result + Text(str)
@@ -253,7 +248,8 @@ struct AnnouncementRichBodyView: View {
                 }
 
             case .icon(let name):
-                if let img = Self.renderIcon(named: name, size: iconSize) {
+                defer { iconIndex += 1 }
+                if let img = Self.renderIcon(named: name, size: iconSize, accentIndex: iconIndex) {
                     return result + Text(Image(uiImage: img))
                 } else {
                     return result + Text("{{\(name)}}")
@@ -433,8 +429,11 @@ struct AnnouncementRichBodyView: View {
     // MARK: - Image Renderers
 
     @MainActor
-    private static func renderIcon(named iconName: String, size: CGFloat) -> UIImage? {
+    private static func renderIcon(named iconName: String, size: CGFloat, accentIndex: Int) -> UIImage? {
         let icon = LumeyIconLibrary.allIcons.first { $0.name == iconName }
+        let tint = accentIndex.isMultiple(of: 2)
+            ? LColors.accents.primary
+            : LColors.accents.contrast
 
         let view: AnyView
         if let icon {
@@ -445,14 +444,14 @@ struct AnnouncementRichBodyView: View {
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: tint)
                         .frame(width: size, height: size)
                 )
             case .sfSymbol:
                 view = AnyView(
                     Image(systemName: icon.name)
                         .font(.system(size: size * 0.75, weight: .semibold))
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: tint)
                         .frame(width: size, height: size)
                 )
             }
@@ -462,7 +461,7 @@ struct AnnouncementRichBodyView: View {
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .foregroundStyle(LColors.accents.secondary)
+                    .bubblyIconMaterial(tint: tint)
                     .frame(width: size, height: size)
             )
         } else {

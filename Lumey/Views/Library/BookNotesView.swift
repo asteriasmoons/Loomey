@@ -11,6 +11,7 @@ struct BookNotesView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @State private var showAddSheet = false
     @State private var editingNote: BookNote? = nil
@@ -96,6 +97,7 @@ struct BookNotesView: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
@@ -104,7 +106,6 @@ struct BookNotesView: View {
                                 Circle()
                                     .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -118,6 +119,7 @@ struct BookNotesView: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.indicators)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
@@ -126,7 +128,6 @@ struct BookNotesView: View {
                                 Circle()
                                     .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -140,8 +141,11 @@ struct BookNotesView: View {
             } else {
                 VStack(spacing: 18) {
                     LazyVGrid(columns: columns, spacing: 14) {
-                        ForEach(visibleNotes, id: \.id) { note in
-                            noteCard(note)
+                        ForEach(Array(visibleNotes.enumerated()), id: \.element.id) { index, note in
+                            noteCard(
+                                note,
+                                tint: theme.palette.rotation[index % theme.palette.rotation.count]
+                            )
                         }
                     }
 
@@ -162,6 +166,7 @@ struct BookNotesView: View {
                     .scaledToFit()
                     .frame(width: 32, height: 32)
                     .foregroundStyle(LGradients.blue)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                 Text("No notes yet")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
@@ -225,9 +230,13 @@ struct BookNotesView: View {
         .padding(.top, 2)
     }
 
-    private func noteCard(_ note: BookNote) -> some View {
-        GlassCard(cornerRadius: 18, padding: 14, variant: .tertiary) {
-            VStack(alignment: .leading, spacing: 10) {
+    private func noteCard(_ note: BookNote, tint: Color) -> some View {
+        GlassCard(cornerRadius: 18, padding: 0, variant: .tertiary, borderColor: tint) {
+            ZStack {
+                BubblyLightWash(colors: [tint], intensity: 0.34, fadeEnd: 0.82)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 10) {
                 Text(note.content)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.text.primary)
@@ -252,14 +261,15 @@ struct BookNotesView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(LGradients.blue)
+                            .foregroundStyle(tint)
+                            .bubblyIconMaterial(tint: tint)
                             .frame(width: 30, height: 30)
                             .background(
                                 Circle()
                                     .fill(LColors.iconContainer.primary)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LGradients.blue, lineWidth: 1)
+                                            .strokeBorder(tint, lineWidth: 1)
                                     )
                             )
                     }
@@ -274,23 +284,26 @@ struct BookNotesView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 14, height: 14)
-                            .foregroundStyle(LGradients.blue)
+                            .foregroundStyle(tint)
+                            .bubblyIconMaterial(tint: tint)
                             .frame(width: 30, height: 30)
                             .background(
                                 Circle()
                                     .fill(LColors.iconContainer.primary)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LGradients.blue, lineWidth: 1)
+                                            .strokeBorder(tint, lineWidth: 1)
                                     )
                             )
                     }
                     .buttonStyle(.plain)
                 }
+                }
+                .padding(14)
             }
-            .frame(maxWidth: .infinity, minHeight: 148, maxHeight: 148, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 176, maxHeight: 176, alignment: .topLeading)
         }
-        .frame(height: 176)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .onTapGesture {
             selectedNote = note
         }
@@ -330,6 +343,7 @@ private extension View {
 struct BookNoteDetailSheet: View {
     let note: BookNote
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
 
     var body: some View {
         ZStack {
@@ -354,6 +368,7 @@ struct BookNoteDetailSheet: View {
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
                                 .foregroundStyle(LColors.accents.secondary)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
@@ -362,7 +377,6 @@ struct BookNoteDetailSheet: View {
                                             Circle()
                                                 .strokeBorder(LColors.accents.secondary, lineWidth: 1.2)
                                         )
-                                        .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -398,6 +412,7 @@ struct BookNoteEditorSheet: View {
     let note: BookNote?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     @State private var content = ""
 
@@ -425,7 +440,8 @@ struct BookNoteEditorSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 18, height: 18)
-                                .foregroundStyle(LGradients.blue)
+                                .foregroundStyle(theme.palette.secondaryAccent)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
@@ -435,8 +451,7 @@ struct BookNoteEditorSheet: View {
                         .buttonStyle(.plain)
                     }
 
-                    GlassCard(variant: .secondary) {
-                        VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 12) {
                             Text("Note")
                                 .font(.system(size: 11, weight: .black, design: .rounded))
                                 .foregroundStyle(LColors.textSecondary)
@@ -452,10 +467,9 @@ struct BookNoteEditorSheet: View {
                                         .fill(LColors.surface.nested)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                                                .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                                         )
                                 )
-                        }
                     }
 
                     Button {
@@ -463,13 +477,12 @@ struct BookNoteEditorSheet: View {
                     } label: {
                         Text(isEditing ? "Save Changes" : "Add Note")
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(LGradients.blue)
-                            )
+                            .background { BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 16) }
+                            .bubblyTileLift()
                     }
                     .buttonStyle(.plain)
                     .opacity(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)

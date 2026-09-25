@@ -10,6 +10,7 @@ struct BookRecommendationsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
     private var books: [Book]
@@ -75,7 +76,7 @@ struct BookRecommendationsSheet: View {
         VStack {
             Spacer(minLength: 0)
 
-            LumeyDottedGradientSpinner(size: 62)
+            LumeyDottedGradientSpinner(size: 62, useBubblyPalette: true)
 
             Spacer(minLength: 0)
         }
@@ -105,17 +106,17 @@ struct BookRecommendationsSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
-                    .background(
+                    .background {
                         Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                            )
+                            .fill(theme.palette.background)
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
-                    )
+
+                        BubblyIconMaterial(tint: theme.palette.primaryAction)
+                            .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                    }
             }
             .buttonStyle(.plain)
         }
@@ -132,6 +133,10 @@ struct BookRecommendationsSheet: View {
                     .padding(14)
                     .background(.white.opacity(0.14))
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
+                    }
 
                 Text("Lumey will blend close matches, safer picks, hidden gems, recent releases, backlist, and adjacent reads.")
                     .font(.caption.weight(.semibold))
@@ -145,13 +150,14 @@ struct BookRecommendationsSheet: View {
                 } label: {
                     Text(isLoading ? "Finding Books..." : "Find Recommendations")
                         .font(.headline)
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(
-                            LColors.gradientBlue
-                        )
-                        .foregroundStyle(LColors.appBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .background {
+                            BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 18)
+                        }
+                        .bubblyTileLift()
                 }
                 .disabled(isLoading || searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .opacity(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.55 : 1)
@@ -167,7 +173,8 @@ struct BookRecommendationsSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 34, height: 34)
-                .foregroundStyle(LColors.text.secondary)
+                .foregroundStyle(theme.palette.indicators)
+                .bubblyIconMaterial(tint: theme.palette.indicators)
 
             Text("No recommendations yet")
                 .font(.headline)
@@ -193,14 +200,20 @@ struct BookRecommendationsSheet: View {
                             .foregroundStyle(LColors.cardTitle)
                             .padding(.top, 4)
 
-                        ForEach(section.books) { book in
-                            recommendationCard(book)
+                        ForEach(Array(section.books.enumerated()), id: \.element.id) { index, book in
+                            recommendationCard(
+                                book,
+                                accent: theme.palette.rotation[index % theme.palette.rotation.count]
+                            )
                         }
                     }
                 }
             } else {
-                ForEach(filteredRecommendations) { book in
-                    recommendationCard(book)
+                ForEach(Array(filteredRecommendations.enumerated()), id: \.element.id) { index, book in
+                    recommendationCard(
+                        book,
+                        accent: theme.palette.rotation[index % theme.palette.rotation.count]
+                    )
                 }
             }
         }
@@ -208,13 +221,16 @@ struct BookRecommendationsSheet: View {
 
     private var recommendationSummary: some View {
         HStack(spacing: 8) {
-            metadataPill("\(recommendations.count) books")
+            metadataPill("\(recommendations.count) books", tint: theme.palette.rotation[0])
 
             if let recommendationMeta {
-                metadataPill(requestTypeLabel(recommendationMeta.requestType))
+                metadataPill(
+                    requestTypeLabel(recommendationMeta.requestType),
+                    tint: theme.palette.rotation[1]
+                )
 
                 if recommendationMeta.seedResolved {
-                    metadataPill("Seed matched")
+                    metadataPill("Seed matched", tint: theme.palette.rotation[2])
                 }
             }
         }
@@ -223,12 +239,17 @@ struct BookRecommendationsSheet: View {
     private var strategyFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                strategyFilterButton(title: "All", strategy: "all")
+                strategyFilterButton(
+                    title: "All",
+                    strategy: "all",
+                    tint: theme.palette.rotation[0]
+                )
 
-                ForEach(availableStrategies, id: \.self) { strategy in
+                ForEach(Array(availableStrategies.enumerated()), id: \.element) { index, strategy in
                     strategyFilterButton(
                         title: strategyDisplayName(strategy),
-                        strategy: strategy
+                        strategy: strategy,
+                        tint: theme.palette.rotation[(index + 1) % theme.palette.rotation.count]
                     )
                 }
             }
@@ -269,7 +290,7 @@ struct BookRecommendationsSheet: View {
         return sections
     }
 
-    private func strategyFilterButton(title: String, strategy: String) -> some View {
+    private func strategyFilterButton(title: String, strategy: String, tint: Color) -> some View {
         let isSelected = selectedStrategy == strategy
 
         return Button {
@@ -279,22 +300,26 @@ struct BookRecommendationsSheet: View {
         } label: {
             Text(title)
                 .font(.caption.weight(.black))
-                .foregroundStyle(isSelected ? .black : .secondary)
+                .foregroundStyle(theme.palette.textPrimary)
+                .bubblyIconMaterial(tint: theme.palette.textPrimary)
+                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(isSelected ? LColors.accents.contrast : LColors.surface.subtle)
-                )
-                .overlay(
-                    Capsule()
-                        .stroke(.white.opacity(isSelected ? 0.22 : 0.14), lineWidth: 1)
-                )
+                .background { BubblyTileSurface(tint: tint, cornerRadius: 999) }
+                .overlay {
+                    if isSelected {
+                        Capsule().stroke(theme.palette.textPrimary.opacity(0.72), lineWidth: 1.25)
+                    }
+                }
+                .bubblyTileLift()
         }
         .buttonStyle(.plain)
     }
 
-    private func recommendationCard(_ book: LumeyBookRecommendation) -> some View {
+    private func recommendationCard(
+        _ book: LumeyBookRecommendation,
+        accent: Color
+    ) -> some View {
         let isExpanded = isRecommendationExpanded(book)
 
         return VStack(alignment: .leading, spacing: 12) {
@@ -314,22 +339,25 @@ struct BookRecommendationsSheet: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            metadataPill(strategyDisplayName(book.strategyLabel ?? book.strategy))
+                            metadataPill(
+                                strategyDisplayName(book.strategyLabel ?? book.strategy),
+                                tint: theme.palette.rotation[0]
+                            )
 
                             if let matchScore = book.matchScore {
-                                metadataPill("Match \(matchScore)")
+                                metadataPill("Match \(matchScore)", tint: theme.palette.rotation[1])
                             }
 
                             if let releaseYear = book.releaseYear {
-                                metadataPill("\(releaseYear)")
+                                metadataPill("\(releaseYear)", tint: theme.palette.rotation[2])
                             }
 
                             if let pages = book.pages {
-                                metadataPill("\(pages) pages")
+                                metadataPill("\(pages) pages", tint: theme.palette.rotation[0])
                             }
 
                             if let rating = book.rating {
-                                metadataPill(String(format: "%.1f", rating))
+                                metadataPill(String(format: "%.1f", rating), tint: theme.palette.rotation[1])
                             }
                         }
                     }
@@ -345,26 +373,19 @@ struct BookRecommendationsSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(
-                            LColors.accents.primary
-                        )
+                        .foregroundStyle(accent)
+                        .bubblyIconMaterial(tint: accent)
                         .frame(width: 34, height: 34)
-                        .background(
-                            Circle()
-                                .fill(LColors.iconContainer.primary)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(
-                                            LColors.accents.primary,
-                                            lineWidth: 1.2
-                                        )
-                                )
-                        )
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: accent)
+                                .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                        }
                 }
                 .buttonStyle(.plain)
             }
 
-            summaryOrGetDetails(for: book, isExpanded: isExpanded)
+            summaryOrGetDetails(for: book, isExpanded: isExpanded, tint: accent)
 
             if isExpanded, let rationale = book.rationale, !rationale.isEmpty {
                 Text(rationale)
@@ -380,26 +401,33 @@ struct BookRecommendationsSheet: View {
             if !readerLabels.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(readerLabels.prefix(8), id: \.self) { label in
-                            metadataPill(label)
+                        ForEach(Array(readerLabels.prefix(8).enumerated()), id: \.element) { index, label in
+                            metadataPill(
+                                label,
+                                tint: theme.palette.rotation[index % theme.palette.rotation.count]
+                            )
                         }
                     }
                 }
             }
 
-            addToLibraryButton(for: book)
+            addToLibraryButton(for: book, tint: accent)
         }
         .padding(14)
         .background(.white.opacity(0.10))
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(.white.opacity(0.16), lineWidth: 1)
+                .stroke(accent, lineWidth: 1)
         }
     }
 
     @ViewBuilder
-    private func summaryOrGetDetails(for book: LumeyBookRecommendation, isExpanded: Bool) -> some View {
+    private func summaryOrGetDetails(
+        for book: LumeyBookRecommendation,
+        isExpanded: Bool,
+        tint: Color
+    ) -> some View {
         let key = recommendationKey(book)
         let trimmed = book.summary.trimmingCharacters(in: .whitespacesAndNewlines)
         let effective = fetchedSummaries[key] ?? (trimmed.isEmpty ? "" : book.summary)
@@ -410,18 +438,22 @@ struct BookRecommendationsSheet: View {
                 .foregroundStyle(LColors.text.secondary)
                 .lineLimit(isExpanded ? nil : 5)
         } else if loadingSummaryKeys.contains(key) {
-            getDetailsLabel("Getting details\u{2026}", loading: true)
+            getDetailsLabel("Getting details\u{2026}", loading: true, tint: tint)
         } else {
             Button {
                 Task { await getBookSummary(for: book) }
             } label: {
-                getDetailsLabel(summaryErrorKeys.contains(key) ? "Try Again" : "Get Details", loading: false)
+                getDetailsLabel(
+                    summaryErrorKeys.contains(key) ? "Try Again" : "Get Details",
+                    loading: false,
+                    tint: tint
+                )
             }
             .buttonStyle(.plain)
         }
     }
 
-    private func getDetailsLabel(_ text: String, loading: Bool) -> some View {
+    private func getDetailsLabel(_ text: String, loading: Bool, tint: Color) -> some View {
         HStack(spacing: 8) {
             if loading {
                 ProgressView()
@@ -430,19 +462,14 @@ struct BookRecommendationsSheet: View {
             }
             Text(text)
                 .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(theme.palette.textPrimary)
+                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(
-            Capsule(style: .continuous)
-                .fill(LColors.iconContainer.primary)
-                .overlay(
-                    Capsule(style: .continuous)
-                        .strokeBorder(LColors.accents.contrast, lineWidth: 1)
-                )
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 999) }
+        .bubblyTileLift()
     }
 
     @MainActor
@@ -479,7 +506,10 @@ struct BookRecommendationsSheet: View {
         }
     }
 
-    private func addToLibraryButton(for recommendation: LumeyBookRecommendation) -> some View {
+    private func addToLibraryButton(
+        for recommendation: LumeyBookRecommendation,
+        tint: Color
+    ) -> some View {
         let alreadyAdded = isRecommendationInLibrary(recommendation)
 
         return Button {
@@ -495,17 +525,22 @@ struct BookRecommendationsSheet: View {
                 Text(alreadyAdded ? "Added to Library" : "Add to Library")
                     .font(.system(size: 13, weight: .black, design: .rounded))
             }
-            .foregroundStyle(alreadyAdded ? LColors.textSecondary : .black)
+            .foregroundStyle(alreadyAdded ? LColors.textSecondary : theme.palette.textPrimary)
+            .shadow(
+                color: alreadyAdded ? .clear : theme.palette.background.opacity(0.55),
+                radius: 1,
+                y: 2
+            )
             .frame(maxWidth: .infinity)
             .padding(.vertical, 11)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        alreadyAdded
-                            ? LColors.border.nestedStrong
-                            : LColors.gradientBlue
-                    )
-            )
+            .background {
+                if alreadyAdded {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(LColors.border.nestedStrong)
+                } else {
+                    BubblyTileSurface(tint: tint, cornerRadius: 16)
+                }
+            }
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(.white.opacity(alreadyAdded ? 0.14 : 0.22), lineWidth: 1)
@@ -658,14 +693,16 @@ struct BookRecommendationsSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    private func metadataPill(_ text: String) -> some View {
+    private func metadataPill(_ text: String, tint: Color) -> some View {
         Text(text)
             .font(.caption.weight(.semibold))
-            .foregroundStyle(LColors.text.secondary)
+            .foregroundStyle(theme.palette.textPrimary)
+            .bubblyIconMaterial(tint: theme.palette.textPrimary)
+            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
-            .background(.white.opacity(0.12))
-            .clipShape(Capsule())
+            .background { BubblyTileSurface(tint: tint, cornerRadius: 999) }
+            .bubblyTileLift()
     }
 
     private func recommendationLabels(for recommendation: LumeyBookRecommendation) -> [String] {

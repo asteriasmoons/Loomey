@@ -11,6 +11,7 @@ struct BuddyGroupView: View {
     let userId: String
     let displayName: String
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     @State private var messages: [BuddyMessage] = []
     @State private var messageText: String = ""
@@ -135,7 +136,7 @@ struct BuddyGroupView: View {
                 if let owner = currentGroup.ownerLabel(currentUserId: userId) {
                     Text(owner)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .lineLimit(1)
                 }
             }
@@ -178,22 +179,10 @@ struct BuddyGroupView: View {
             .resizable()
             .scaledToFit()
             .frame(width: 18, height: 18)
-            .foregroundStyle(
-                LColors.accents.contrast
-            )
+            .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
             .frame(width: 36, height: 36)
-            .background(
-                Circle()
-                    .fill(LColors.bg)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(
-                                LColors.accents.contrast,
-                                lineWidth: 1.35
-                            )
-                    )
-                    .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-            )
+            .background(Circle().fill(LColors.bg))
+            .overlay(Circle().strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.35))
     }
 
     // MARK: - Messages area
@@ -202,8 +191,12 @@ struct BuddyGroupView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 10) {
-                    ForEach(messages) { message in
-                        BuddyMessageBubble(message: message, currentUserId: userId)
+                    ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
+                        BuddyMessageBubble(
+                            message: message,
+                            currentUserId: userId,
+                            progressAccent: progressAccent(for: message, at: index)
+                        )
                             .id(message.id)
                     }
                 }
@@ -229,12 +222,20 @@ struct BuddyGroupView: View {
 
             HStack(spacing: 12) {
 
-                GlassCard(variant: .featured) {
-                    TextField("Message...", text: $messageText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
-                }
+                TextField("Message...", text: $messageText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 15)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(theme.palette.raisedSurface)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.35)
+                    )
                 .frame(maxWidth: .infinity)
 
                 Button {
@@ -245,26 +246,14 @@ struct BuddyGroupView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 24, height: 24)
-                        .foregroundStyle(
-                            messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                            ? AnyShapeStyle(LColors.textSecondary)
-                            : AnyShapeStyle(
-                                LColors.accents.contrast
-                            )
+                        .bubblyIconMaterial(
+                            tint: messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? theme.palette.secondaryAccent.opacity(0.45)
+                                : theme.palette.secondaryAccent
                         )
                         .frame(width: 46, height: 46)
-                        .background(
-                            Circle()
-                                .fill(LColors.bg)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(
-                                            LColors.accents.contrast,
-                                            lineWidth: 1.35
-                                        )
-                                )
-                                .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                        )
+                        .background(Circle().fill(LColors.bg))
+                        .overlay(Circle().strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.35))
                         .opacity(
                             messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending
                             ? 0.45
@@ -343,13 +332,22 @@ struct BuddyGroupView: View {
         _ = try? await BuddyService.shared.clearGroupMessages(groupId: group.id, userId: userId)
         messages = []
     }
+
+    private func progressAccent(for message: BuddyMessage, at index: Int) -> Color {
+        guard message.isProgressUpdate else { return theme.palette.primaryAction }
+        let progressIndex = messages[..<index].filter { $0.isProgressUpdate }.count
+        return theme.palette.rotation[progressIndex % theme.palette.rotation.count]
+    }
 }
 
 // MARK: - Message bubble
 
 struct BuddyMessageBubble: View {
+    @Environment(\.appTheme) private var theme
+
     let message: BuddyMessage
     let currentUserId: String
+    let progressAccent: Color
 
     private var isMe: Bool { message.senderUserId == currentUserId }
     private var isSystem: Bool { message.isSystem }
@@ -383,10 +381,16 @@ struct BuddyMessageBubble: View {
                 Text(message.text)
                     .font(.system(size: 14))
                     .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(isMe ? LColors.accent : LColors.border.subtle)
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .background {
+                        BubblyTileSurface(
+                            tint: isMe ? theme.palette.secondaryAccent : theme.palette.primaryAction,
+                            cornerRadius: 18
+                        )
+                    }
+                    .bubblyTileLift()
             }
 
             if !isMe { Spacer(minLength: 60) }
@@ -410,7 +414,7 @@ struct BuddyMessageBubble: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12, height: 12)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: progressAccent)
                     Text(message.text)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(LColors.textPrimary)
@@ -419,7 +423,7 @@ struct BuddyMessageBubble: View {
                 .padding(.vertical, 10)
                 .background(LColors.glassSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 18))
-                .overlay(RoundedRectangle(cornerRadius: 18).stroke(LColors.glassBorder, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(progressAccent, lineWidth: 1.35))
             }
 
             if !isMe { Spacer(minLength: 40) }

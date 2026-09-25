@@ -10,6 +10,7 @@ import UserNotifications
 struct SprintRoomView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @State private var messages: [SprintMessage] = []
     @State private var activeSprint: Sprint? = nil
@@ -231,89 +232,86 @@ struct SprintRoomView: View {
                 .foregroundStyle(LColors.headingPrimary)
             Spacer()
 
-            Menu {
-                Button {
-                    showLeaderboard = true
-                } label: {
-                    Label {
-                        Text("Leaderboard")
-                    } icon: {
-                        Image("startrophyfill")
-                    }
-                }
+            ZStack {
+                Image("dotswavy")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
+                    .frame(width: 40, height: 40)
+                    .background(
+                        Circle()
+                            .fill(LColors.bg)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.35)
+                            )
+                    )
 
-                Button {
-                    showMyPoints = true
-                } label: {
-                    Label {
-                        Text("My Points")
-                    } icon: {
-                        Image("starfill")
-                    }
-                }
-
-                Button {
-                    showChangeDisplayName = true
-                } label: {
-                    Label {
-                        Text("Change Username")
-                    } icon: {
-                        Image("profilewavy")
-                    }
-                }
-
-                Button {
-                    Task { await loadAll() }
-                } label: {
-                    Label {
-                        Text("Refresh")
-                    } icon: {
-                        Image("reset")
-                    }
-                }
-
-                if isAdminUser {
-                    Divider()
-                    Button(role: .destructive) {
-                        showClearConfirm = true
+                Menu {
+                    Button {
+                        showLeaderboard = true
                     } label: {
                         Label {
-                            Text("Clear Chat")
+                            Text("Leaderboard")
                         } icon: {
-                            Image("trash")
+                            Image("startrophyfill")
                         }
                     }
-                }
-            } label: {
-                ZStack {
+
+                    Button {
+                        showMyPoints = true
+                    } label: {
+                        Label {
+                            Text("My Points")
+                        } icon: {
+                            Image("starfill")
+                        }
+                    }
+
+                    Button {
+                        showChangeDisplayName = true
+                    } label: {
+                        Label {
+                            Text("Change Username")
+                        } icon: {
+                            Image("profilewavy")
+                        }
+                    }
+
+                    Button {
+                        Task { await loadAll() }
+                    } label: {
+                        Label {
+                            Text("Refresh")
+                        } icon: {
+                            Image("reset")
+                        }
+                    }
+
+                    if isAdminUser {
+                        Divider()
+                        Button(role: .destructive) {
+                            showClearConfirm = true
+                        } label: {
+                            Label {
+                                Text("Clear Chat")
+                            } icon: {
+                                Image("trash")
+                            }
+                        }
+                    }
+                } label: {
                     Circle()
-                        .fill(LColors.border.nested)
-                        .overlay(Circle().stroke(LColors.glassBorder, lineWidth: 1))
-                        .frame(width: 34, height: 34)
-                    Image("dotswavy")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                        .foregroundStyle(
-                            LColors.accents.special
-                        )
+                        .fill(Color.clear)
                         .frame(width: 40, height: 40)
-                        .background(
-                            Circle()
-                                .fill(LColors.bg)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(
-                                            LColors.accents.special,
-                                            lineWidth: 1.35
-                                        )
-                                )
-                                .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                        )
+                        .contentShape(Circle())
                 }
+                .menuIndicator(.hidden)
                 .buttonStyle(.plain)
             }
+            .frame(width: 40, height: 40)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 14)
@@ -396,8 +394,14 @@ struct SprintRoomView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 10) {
-                    ForEach(messages) { message in
-                        SprintMessageBubble(message: message, currentUserId: userId)
+                    ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
+                        let resultAccentIndex = messages.prefix(index).filter(\.isSprintResult).count
+
+                        SprintMessageBubble(
+                            message: message,
+                            currentUserId: userId,
+                            resultAccentIndex: resultAccentIndex
+                        )
                             .id(message.id)
                     }
                 }
@@ -422,38 +426,26 @@ struct SprintRoomView: View {
             HStack(spacing: 12) {
                 if activeSprint == nil {
                     Button { showStartSheet = true } label: {
-                        ZStack {
-                            Circle()
-                                .fill(LColors.border.nested)
-                                .overlay(Circle().stroke(LColors.glassBorder, lineWidth: 1))
-                                .frame(width: 40, height: 40)
-                            Image("sparkbolt")
-                                .renderingMode(.template)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 20, height: 20)
-                                .foregroundStyle(
-                                    LColors.accents.special
-                                )
-                                .frame(width: 40, height: 40)
-                                .background(
-                                    Circle()
-                                        .fill(LColors.bg)
-                                        .overlay(
-                                            Circle()
-                                                .strokeBorder(
-                                                    LColors.accents.special,
-                                                    lineWidth: 1.35
-                                                )
-                                        )
-                                        .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                                )
-                        }
-                        .buttonStyle(.plain)
+                        Image("sparkbolt")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                            .frame(width: 40, height: 40)
+                            .background(
+                                Circle()
+                                    .fill(LColors.bg)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.35)
+                                    )
+                            )
                     }
+                    .buttonStyle(.plain)
                 }
                 
-                GlassCard(variant: .featured) {
+                GlassCard(variant: .featured, borderColor: theme.palette.secondaryAccent) {
                     TextField("Message...", text: $messageText)
                         .textFieldStyle(.plain)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -467,21 +459,15 @@ struct SprintRoomView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(
-                            LColors.accents.special
-                        )
+                        .bubblyIconMaterial(tint: theme.palette.indicators)
                         .frame(width: 40, height: 40)
                         .background(
                             Circle()
                                 .fill(LColors.bg)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(
-                                            LColors.accents.special,
-                                            lineWidth: 1.35
-                                        )
+                                        .strokeBorder(theme.palette.indicators, lineWidth: 1.35)
                                 )
-                                .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
                         )
                         .opacity(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending ? 0.45 : 1)
                 }
@@ -749,6 +735,7 @@ private extension View {
 
 struct SprintMyPointsSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
 
     let initialEntry: SprintLeaderboardEntry?
     let userId: String
@@ -781,22 +768,21 @@ struct SprintMyPointsSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 17, height: 17)
-                            .foregroundStyle(LColors.accents.contrast)
+                            .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             .frame(width: 40, height: 40)
                             .background(
                                 Circle()
                                     .fill(LColors.bg)
                                     .overlay(
                                         Circle()
-                                            .strokeBorder(LColors.accents.primary, lineWidth: 1.35)
+                                            .strokeBorder(theme.palette.primaryAction, lineWidth: 1.35)
                                     )
-                                    .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
                             )
                     }
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, LSpacing.pageHorizontal)
-                .padding(.top, 10)
+                .padding(.top, 24)
 
                 Text("My Sprint Points")
                     .font(.system(size: 22, weight: .black, design: .rounded))
@@ -810,9 +796,9 @@ struct SprintMyPointsSheet: View {
                         .padding(.vertical, 20)
                 } else if let entry {
                     HStack(spacing: 16) {
-                        pointsStat(value: "\(entry.totalPoints)", label: "Total Points", icon: "starwavy", color: .white)
-                        pointsStat(value: "\(entry.totalPagesRead)", label: "Pages Read", icon: "flatbook", color: .white)
-                        pointsStat(value: "\(entry.sprintsParticipated)", label: "Sprints", icon: "sparkbolt", color: .white)
+                        pointsStat(value: "\(entry.totalPoints)", label: "Total Points", icon: "starwavy", accentIndex: 0)
+                        pointsStat(value: "\(entry.totalPagesRead)", label: "Pages Read", icon: "flatbook", accentIndex: 1)
+                        pointsStat(value: "\(entry.sprintsParticipated)", label: "Sprints", icon: "sparkbolt", accentIndex: 2)
                     }
                     .padding(.horizontal, LSpacing.pageHorizontal)
 
@@ -849,20 +835,26 @@ struct SprintMyPointsSheet: View {
         }
     }
 
-    private func pointsStat(value: String, label: String, icon: String, color: Color) -> some View {
-        GlassCard(padding: 14, variant: .secondary) {
+    private func pointsStat(value: String, label: String, icon: String, accentIndex: Int) -> some View {
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return GlassCard(padding: 14, variant: .secondary, borderColor: tint) {
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(color.opacity(0.15))
+                        .fill(theme.palette.raisedSurface)
                         .frame(width: 48, height: 48)
+                        .overlay {
+                            Circle()
+                                .strokeBorder(tint, lineWidth: 1.2)
+                        }
 
                     Image(icon)
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 22, height: 22)
-                        .foregroundStyle(LColors.accents.secondary)
+                        .bubblyIconMaterial(tint: tint)
                 }
 
                 Text(value)
@@ -884,6 +876,7 @@ struct SprintMyPointsSheet: View {
 struct SprintMessageBubble: View {
     let message: SprintMessage
     let currentUserId: String
+    let resultAccentIndex: Int
 
     private var isMe: Bool { message.senderUserId == currentUserId }
 
@@ -891,7 +884,7 @@ struct SprintMessageBubble: View {
         if message.isSystem {
             systemBubble
         } else if message.isSprintResult, let payload = message.resultPayload {
-            SprintResultCard(payload: payload)
+            SprintResultCard(payload: payload, accentIndex: resultAccentIndex)
         } else {
             regularBubble
         }
@@ -933,9 +926,14 @@ struct SprintMessageBubble: View {
 // MARK: - Sprint result card
 
 struct SprintResultCard: View {
+    @Environment(\.appTheme) private var theme
+
     let payload: SprintResultPayload
+    let accentIndex: Int
 
     var body: some View {
+        let accentColor = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image("loveflag")
@@ -943,7 +941,7 @@ struct SprintResultCard: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 14, height: 14)
-                    .foregroundStyle(LColors.accents.special)
+                    .bubblyIconMaterial(tint: theme.palette.indicators)
                 Text("Sprint Results — \(payload.durationMinutes) min")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(LColors.textPrimary)
@@ -955,69 +953,57 @@ struct SprintResultCard: View {
                     .foregroundStyle(LColors.textSecondary)
             } else {
                 ForEach(Array(payload.ranked.enumerated()), id: \.element.id) { index, entry in
-                    GlassCard(variant: .primary) {
-                        HStack(spacing: 10) {
-                            rankIcon(for: index)
+                    HStack(spacing: 10) {
+                        rankIcon(for: index)
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(entry.displayName)
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundStyle(LColors.textPrimary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.displayName)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
-                                Text("\(entry.pagesRead) pages · \(entry.pointsAwarded) pts")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(LColors.textSecondary)
-                            }
-
-                            Spacer()
-
-                            Text("#\(entry.rank)")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(LColors.textSecondary)
+                            Text("\(entry.pagesRead) pages · \(entry.pointsAwarded) pts")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Spacer()
+
+                        Text("#\(entry.rank)")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background {
+                        BubblyTileSurface(
+                            tint: accentColor,
+                            cornerRadius: 20
+                        )
+                    }
+                    .bubblyTileLift()
                 }
             }
         }
         .padding(14)
         .background(LColors.glassSurface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(LColors.glassBorder, lineWidth: 1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(accentColor, lineWidth: 1)
+        )
         .padding(.horizontal, 4)
     }
 
-    @ViewBuilder
     private func rankIcon(for index: Int) -> some View {
-        switch index {
-        case 0:
-            Image("startrophyfill")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-                .foregroundStyle(LColors.accents.primary)
-        case 1:
-            Image("startrophyfill")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-                .foregroundStyle(LColors.accents.contrast)
-        case 2:
-            Image("startrophyfill")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-                .foregroundStyle(LColors.accents.secondary)
-        default:
-            Image("sparklybook")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-                .foregroundStyle(LColors.accents.special)
-        }
+        Image(index < 3 ? "startrophyfill" : "sparklybook")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 18, height: 18)
+            .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
     }
 }

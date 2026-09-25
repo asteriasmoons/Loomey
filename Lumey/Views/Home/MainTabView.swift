@@ -71,7 +71,7 @@ enum LumeyTab: CaseIterable {
         case .home:
             return "Home"
         case .library:
-            return "Books"
+            return "Bookshelf"
         case .bingos:
             return "Bingos"
         case .stats:
@@ -163,6 +163,8 @@ struct MainTabView: View {
 // MARK: - Floating Tab Bar
 
 struct LumeyTabBar: View {
+    @Environment(\.appTheme) private var theme
+
     @Binding var selectedTab: LumeyTab
 
     @State private var showMoreTabs = false
@@ -211,7 +213,12 @@ struct LumeyTabBar: View {
                     Capsule(style: .continuous)
                         .fill(LColors.bg.opacity(0.88))
 
-                    GlassCard(cornerRadius: 999, padding: 0, variant: .featured) {
+                    GlassCard(
+                        cornerRadius: 999,
+                        padding: 0,
+                        variant: .featured,
+                        borderColor: theme.palette.secondaryAccent
+                    ) {
                         Color.clear
                     }
                 }
@@ -275,17 +282,17 @@ struct LumeyTabBar: View {
             }
         } label: {
             ZStack {
-                Circle()
-                    .fill(LColors.accents.primary)
+                BubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 44, height: 44)
-                    .shadow(color: LColors.accents.contrast.opacity(0.35), radius: 10, x: 0, y: 5)
+                    .clipShape(Circle())
+                    .shadow(color: theme.palette.secondaryAccent.opacity(0.35), radius: 10, x: 0, y: 5)
 
                 Image("addwavy")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 24, height: 24)
-                    .foregroundStyle(LColors.appBackground)
+                    .foregroundStyle(.black)
                     .rotationEffect(.degrees(showMoreTabs ? 45 : 0))
             }
             .frame(width: 54, height: 42)

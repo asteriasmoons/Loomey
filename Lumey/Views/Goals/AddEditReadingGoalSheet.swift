@@ -10,6 +10,7 @@ struct AddEditReadingGoalSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     
     let goal: ReadingGoals?
     
@@ -39,12 +40,22 @@ struct AddEditReadingGoalSheet: View {
     @State private var linkedSeriesName: String = ""
     
     @State private var showingIconPicker = false
+    @State private var isBookDropdownExpanded = false
+    @State private var isSeriesDropdownExpanded = false
     
     @Query(sort: \Book.lastUpdated, order: .reverse)
     private var allBooks: [Book]
     
     private var isEditing: Bool {
         goal != nil
+    }
+
+    private var startDateYearRange: ClosedRange<Int> {
+        yearRange(containing: startDate)
+    }
+
+    private var targetDateYearRange: ClosedRange<Int> {
+        yearRange(containing: targetDate)
     }
     
     var body: some View {
@@ -57,58 +68,124 @@ struct AddEditReadingGoalSheet: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
-                        sectionCard(title: "Goal Identity") {
-                            LumeyTextField(title: "Title", text: $title)
-                            LumeyTextEditor(title: "Description", text: $goalDescription, minHeight: 80)
-                            LumeyTextEditor(title: "Why This Matters", text: $goalReason, minHeight: 80)
-                            LumeyTextField(title: "Reward Idea", text: $rewardIdea)
+                        sectionCard(title: "Goal Identity", accentIndex: 0) {
+                            LumeyTextField(title: "Title", text: $title, borderColor: theme.palette.primaryAction)
+                            LumeyTextEditor(
+                                title: "Description",
+                                text: $goalDescription,
+                                minHeight: 80,
+                                borderColor: theme.palette.secondaryAccent
+                            )
+                            LumeyTextEditor(
+                                title: "Why This Matters",
+                                text: $goalReason,
+                                minHeight: 80,
+                                borderColor: theme.palette.indicators
+                            )
+                            LumeyTextField(title: "Reward Idea", text: $rewardIdea, borderColor: theme.palette.primaryAction)
                         }
                         
-                        sectionCard(title: "Goal Type") {
-                            LumeyEnumPicker(title: "Type", selection: $type, options: ReadingGoalType.allCases)
-                            LumeyEnumPicker(title: "Mode", selection: $mode, options: ReadingGoalMode.allCases)
+                        sectionCard(title: "Goal Type", accentIndex: 1) {
+                            GoalSheetDropdown(
+                                title: "Type",
+                                selection: $type,
+                                options: Array(ReadingGoalType.allCases),
+                                tint: theme.palette.primaryAction,
+                                label: { $0.rawValue }
+                            )
+                            GoalSheetDropdown(
+                                title: "Mode",
+                                selection: $mode,
+                                options: Array(ReadingGoalMode.allCases),
+                                tint: theme.palette.secondaryAccent,
+                                label: { $0.rawValue }
+                            )
                             
                             if mode == .recurring {
-                                LumeyEnumPicker(title: "Cadence", selection: $cadence, options: ReadingGoalCadence.allCases)
+                                GoalSheetDropdown(
+                                    title: "Cadence",
+                                    selection: $cadence,
+                                    options: Array(ReadingGoalCadence.allCases),
+                                    tint: theme.palette.indicators,
+                                    label: { $0.rawValue }
+                                )
                             }
                             
-                            LumeyEnumPicker(title: "Status", selection: $status, options: ReadingGoalStatus.allCases)
-                            LumeyEnumPicker(title: "Priority", selection: $priority, options: ReadingGoalPriority.allCases)
+                            GoalSheetDropdown(
+                                title: "Status",
+                                selection: $status,
+                                options: Array(ReadingGoalStatus.allCases),
+                                tint: theme.palette.primaryAction,
+                                label: { $0.rawValue }
+                            )
+                            GoalSheetDropdown(
+                                title: "Priority",
+                                selection: $priority,
+                                options: Array(ReadingGoalPriority.allCases),
+                                tint: theme.palette.secondaryAccent,
+                                label: { $0.rawValue }
+                            )
                         }
                         
-                        sectionCard(title: "Progress") {
-                            LumeyTextField(title: "Target Value", text: $targetValue)
+                        sectionCard(title: "Progress", accentIndex: 2) {
+                            LumeyTextField(title: "Target Value", text: $targetValue, borderColor: theme.palette.primaryAction)
                                 .keyboardType(.decimalPad)
                             
-                            LumeyTextField(title: "Current Value", text: $currentValue)
+                            LumeyTextField(title: "Current Value", text: $currentValue, borderColor: theme.palette.secondaryAccent)
                                 .keyboardType(.decimalPad)
                             
-                            LumeyTextField(title: "Unit Label", text: $unitLabel)
+                            LumeyTextField(title: "Unit Label", text: $unitLabel, borderColor: theme.palette.indicators)
                         }
                         
-                        sectionCard(title: "Dates") {
-                            DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                                .tint(LColors.accent)
-                            
-                            Toggle("Use Target Date", isOn: $hasTargetDate)
-                                .tint(LColors.accent)
+                        sectionCard(title: "Dates", accentIndex: 3) {
+                            VStack(alignment: .leading, spacing: 7) {
+                                Text("Start Date")
+                                    .font(.system(size: 12, weight: .black, design: .rounded))
+                                    .foregroundStyle(LColors.textSecondary)
+
+                                LumeyDateDrumPicker(
+                                    date: $startDate,
+                                    solidTint: theme.palette.primaryAction,
+                                    yearRange: startDateYearRange
+                                )
+                            }
+
+                            LumeyIconToggle(
+                                title: "Use Target Date",
+                                iconName: "lovecalendar",
+                                isOn: $hasTargetDate,
+                                tint: theme.palette.secondaryAccent
+                            )
                             
                             if hasTargetDate {
-                                DatePicker("Target Date", selection: $targetDate, displayedComponents: .date)
-                                    .tint(LColors.accent)
+                                VStack(alignment: .leading, spacing: 7) {
+                                    Text("Target Date")
+                                        .font(.system(size: 12, weight: .black, design: .rounded))
+                                        .foregroundStyle(LColors.textSecondary)
+
+                                    LumeyDateDrumPicker(
+                                        date: $targetDate,
+                                        solidTint: theme.palette.indicators,
+                                        yearRange: targetDateYearRange
+                                    )
+                                }
                             }
                         }
                         
-                        sectionCard(title: "Display") {
-                            GoalIconPickerRow(iconName: $iconName) {
+                        sectionCard(title: "Display", accentIndex: 4) {
+                            GoalIconPickerRow(iconName: $iconName, tint: theme.palette.primaryAction) {
                                 showingIconPicker = true
                             }
                             
-                            Toggle("Pin as Main Goal", isOn: $isPinned)
-                                .tint(LColors.accent)
+                            LumeyIconToggle(
+                                title: "Pin as Main Goal",
+                                iconName: "pin",
+                                isOn: $isPinned,
+                                tint: theme.palette.secondaryAccent
+                            )
                         }
                         
-                        sectionCard(title: "Related Content") {
+                        sectionCard(title: "Related Content", accentIndex: 5) {
                             bookLinkingSection
                             seriesLinkingSection
                         }
@@ -148,13 +225,14 @@ struct AddEditReadingGoalSheet: View {
             } label: {
                 Text("Save")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.cardTitle)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 9)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(LGradients.completion)
-                    )
+                    .background {
+                        BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                            .clipShape(Capsule(style: .continuous))
+                    }
             }
             .buttonStyle(.plain)
             
@@ -166,16 +244,16 @@ struct AddEditReadingGoalSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                            )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
+                            .fill(theme.palette.raisedSurface)
+                            .overlay {
+                                BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                    .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                            }
                     )
             }
             .buttonStyle(.plain)
@@ -194,9 +272,12 @@ struct AddEditReadingGoalSheet: View {
     
     private func sectionCard<Content: View>(
         title: String,
+        accentIndex: Int,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        GlassCard(variant: .featured) {
+        let accent = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return GlassCard(variant: .featured, borderColor: accent) {
             VStack(alignment: .leading, spacing: 13) {
                 Text(title)
                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -207,6 +288,12 @@ struct AddEditReadingGoalSheet: View {
                 }
             }
         }
+    }
+
+    private func yearRange(containing date: Date) -> ClosedRange<Int> {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        let selectedYear = Calendar.current.component(.year, from: date)
+        return min(currentYear - 20, selectedYear)...max(currentYear + 20, selectedYear)
     }
     
     // MARK: - Book & Series Linking
@@ -231,25 +318,30 @@ struct AddEditReadingGoalSheet: View {
             
             if !linkedBookIDs.isEmpty {
                 VStack(spacing: 8) {
-                    ForEach(linkedBookIDs, id: \.self) { bookID in
+                    ForEach(Array(linkedBookIDs.enumerated()), id: \.element) { index, bookID in
                         if let book = availableBooks.first(where: { $0.id == bookID }) {
+                            let accent = theme.palette.rotation[index % theme.palette.rotation.count]
+
                             HStack(spacing: 10) {
                                 Image("books")
                                     .renderingMode(.template)
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 14, height: 14)
-                                    .foregroundStyle(LColors.accents.contrast)
+                                    .foregroundStyle(.white)
+                                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(book.title)
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
-                                        .foregroundStyle(LColors.cardTitle)
+                                        .foregroundStyle(.white)
+                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                         .lineLimit(1)
                                     
                                     Text(book.author)
                                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                        .foregroundStyle(LColors.textSecondary)
+                                        .foregroundStyle(.white)
+                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                         .lineLimit(1)
                                 }
                                 
@@ -263,22 +355,17 @@ struct AddEditReadingGoalSheet: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 12, height: 12)
-                                        .foregroundStyle(LColors.textSecondary)
+                                        .foregroundStyle(.white)
+                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                         .frame(width: 28, height: 28)
-                                        .background(Circle().fill(LColors.iconContainer.primary))
+                                        .background(Circle().fill(theme.palette.raisedSurface))
                                 }
                                 .buttonStyle(.plain)
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(LColors.surface.nested)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(LColors.border.nested, lineWidth: 1)
-                            )
+                            .background { BubblyTileSurface(tint: accent, cornerRadius: 14) }
+                            .bubblyTileLift()
                         }
                     }
                 }
@@ -287,44 +374,95 @@ struct AddEditReadingGoalSheet: View {
             let unlinkableBooks = availableBooks.filter { !linkedBookIDs.contains($0.id) }
             
             if !unlinkableBooks.isEmpty {
-                Menu {
-                    ForEach(unlinkableBooks) { book in
-                        Button {
-                            linkedBookIDs.append(book.id)
-                        } label: {
-                            Text("\(book.title) — \(book.author)")
+                VStack(spacing: 8) {
+                    Button {
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                            isBookDropdownExpanded.toggle()
                         }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image("addwavy")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 13, height: 13)
+
+                            Text("Link a Book")
+                                .font(.system(size: 13, weight: .black, design: .rounded))
+
+                            Spacer()
+
+                            Image(isBookDropdownExpanded ? "chevup" : "chevdown")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 12, height: 12)
+                        }
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 16) }
+                        .bubblyTileLift()
                     }
-                } label: {
-                    HStack(spacing: 8) {
-                        Image("addwavy")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 13, height: 13)
-                            .foregroundStyle(LColors.accents.secondary)
-                        
-                        Text("Link a Book")
-                            .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
-                        
-                        Spacer()
-                        
-                        Image("chevdown")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 12, height: 12)
-                            .foregroundStyle(LColors.textSecondary)
+                    .buttonStyle(.plain)
+
+                    if isBookDropdownExpanded {
+                        ScrollView(.vertical, showsIndicators: unlinkableBooks.count > 4) {
+                            LazyVStack(spacing: 7) {
+                                ForEach(unlinkableBooks) { book in
+                                    Button {
+                                        linkedBookIDs.append(book.id)
+                                        if unlinkableBooks.count <= 1 {
+                                            isBookDropdownExpanded = false
+                                        }
+                                    } label: {
+                                        HStack(spacing: 10) {
+                                            Image("books")
+                                                .renderingMode(.template)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 14, height: 14)
+
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(book.title)
+                                                    .font(.system(size: 13, weight: .black, design: .rounded))
+                                                    .lineLimit(1)
+
+                                                Text(book.author)
+                                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                                    .opacity(0.82)
+                                                    .lineLimit(1)
+                                            }
+
+                                            Spacer()
+
+                                            Image("addwavy")
+                                                .renderingMode(.template)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 12, height: 12)
+                                        }
+                                        .foregroundStyle(.white)
+                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 9)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                                .fill(theme.palette.raisedSurface)
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        .frame(height: CGFloat(min(unlinkableBooks.count, 4)) * 54)
+                        .padding(10)
+                        .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18) }
+                        .bubblyTileLift()
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 11)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(LColors.glassSurface2)
-                    )
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -336,17 +474,21 @@ struct AddEditReadingGoalSheet: View {
                 .foregroundStyle(LColors.textSecondary)
             
             if !linkedSeriesName.isEmpty {
+                let accent = theme.palette.rotation[linkedBookIDs.count % theme.palette.rotation.count]
+
                 HStack(spacing: 10) {
                     Image("books")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(LColors.accents.special)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     
                     Text(linkedSeriesName)
                         .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                         .lineLimit(1)
                     
                     Spacer()
@@ -359,61 +501,103 @@ struct AddEditReadingGoalSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 12, height: 12)
-                            .foregroundStyle(LColors.textSecondary)
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                             .frame(width: 28, height: 28)
-                            .background(Circle().fill(LColors.iconContainer.primary))
+                            .background(Circle().fill(theme.palette.raisedSurface))
                     }
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(LColors.surface.nested)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(LColors.border.nested, lineWidth: 1)
-                )
+                .background { BubblyTileSurface(tint: accent, cornerRadius: 14) }
+                .bubblyTileLift()
             }
             
-            if linkedSeriesName.isEmpty && !availableSeriesNames.isEmpty {
-                Menu {
-                    ForEach(availableSeriesNames, id: \.self) { name in
-                        Button(name) {
-                            linkedSeriesName = name
+            if !availableSeriesNames.isEmpty || !linkedSeriesName.isEmpty {
+                VStack(spacing: 8) {
+                    Button {
+                        guard linkedSeriesName.isEmpty else { return }
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                            isSeriesDropdownExpanded.toggle()
                         }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image("addwavy")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 13, height: 13)
+
+                            Text("Link a Series")
+                                .font(.system(size: 13, weight: .black, design: .rounded))
+
+                            Spacer()
+
+                            Image(isSeriesDropdownExpanded ? "chevup" : "chevdown")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 12, height: 12)
+                        }
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .background { BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 16) }
+                        .bubblyTileLift()
                     }
-                } label: {
-                    HStack(spacing: 8) {
-                        Image("addwavy")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 13, height: 13)
-                            .foregroundStyle(LColors.accents.primary)
-                        
-                        Text("Link a Series")
-                            .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
-                        
-                        Spacer()
-                        
-                        Image("chevdown")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 12, height: 12)
-                            .foregroundStyle(LColors.textSecondary)
+                    .buttonStyle(.plain)
+                    .disabled(!linkedSeriesName.isEmpty)
+                    .opacity(linkedSeriesName.isEmpty ? 1 : 0.48)
+
+                    if isSeriesDropdownExpanded && linkedSeriesName.isEmpty {
+                        ScrollView(.vertical, showsIndicators: availableSeriesNames.count > 4) {
+                            LazyVStack(spacing: 7) {
+                                ForEach(availableSeriesNames, id: \.self) { name in
+                                    Button {
+                                        linkedSeriesName = name
+                                        isSeriesDropdownExpanded = false
+                                    } label: {
+                                        HStack(spacing: 10) {
+                                            Image("books")
+                                                .renderingMode(.template)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 14, height: 14)
+
+                                            Text(name)
+                                                .font(.system(size: 13, weight: .black, design: .rounded))
+                                                .lineLimit(1)
+
+                                            Spacer()
+
+                                            Image("checkwavy")
+                                                .renderingMode(.template)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 12, height: 12)
+                                        }
+                                        .foregroundStyle(.white)
+                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 10)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                                .fill(theme.palette.raisedSurface)
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        .frame(height: CGFloat(min(availableSeriesNames.count, 4)) * 48)
+                        .padding(10)
+                        .background { BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 18) }
+                        .bubblyTileLift()
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 11)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(LColors.glassSurface2)
-                    )
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -567,6 +751,107 @@ struct AddEditReadingGoalSheet: View {
         modelContext.insert(history)
         if eventType == .completed {
             ReadingXPService.awardGoalCompletion(goal: goal, modelContext: modelContext)
+        }
+    }
+}
+
+private struct GoalSheetDropdown<Value: Identifiable & Hashable>: View {
+    @Environment(\.appTheme) private var theme
+
+    let title: String
+    @Binding var selection: Value
+    let options: [Value]
+    let tint: Color
+    let label: (Value) -> String
+
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title)
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundStyle(LColors.textSecondary)
+
+            Button {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Text(label(selection))
+                        .font(.system(size: 14, weight: .black, design: .rounded))
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Image(isExpanded ? "chevup" : "chevdown")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 11, height: 11)
+                }
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 11)
+                .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+                .bubblyTileLift()
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                ScrollView(.vertical, showsIndicators: options.count > 4) {
+                    LazyVStack(spacing: 7) {
+                        ForEach(options) { option in
+                            Button {
+                                withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                    selection = option
+                                    isExpanded = false
+                                }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Circle()
+                                        .fill(selection == option ? .white : theme.palette.raisedSurface)
+                                        .frame(width: 12, height: 12)
+                                        .overlay {
+                                            Circle()
+                                                .fill(selection == option ? tint : Color.clear)
+                                                .frame(width: 4, height: 4)
+                                        }
+
+                                    Text(label(option))
+                                        .font(.system(size: 13, weight: .black, design: .rounded))
+                                        .lineLimit(1)
+
+                                    Spacer()
+
+                                    if selection == option {
+                                        Image("checkwavy")
+                                            .renderingMode(.template)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 14, height: 14)
+                                    }
+                                }
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 9)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(selection == option ? theme.palette.raisedSurface : Color.clear)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .frame(height: CGFloat(min(options.count, 4)) * 46)
+                .padding(9)
+                .background { BubblyTileSurface(tint: tint, cornerRadius: 16) }
+                .bubblyTileLift()
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
     }
 }

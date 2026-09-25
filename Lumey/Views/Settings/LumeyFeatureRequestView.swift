@@ -5,6 +5,7 @@ import SwiftUI
 struct LumeyFeatureRequestView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     @State private var featureTitle = ""
@@ -57,24 +58,38 @@ struct LumeyFeatureRequestView: View {
 
     var body: some View {
         LumeyReportFormScaffold {
-            LumeyReportHeader(eyebrow: "VOXIVERSE", title: "Feature Request") {
+            LumeyReportHeader(
+                eyebrow: "VOXIVERSE",
+                title: "Feature Request",
+                eyebrowColor: theme.palette.secondaryAccent,
+                bubbly: true
+            ) {
                 dismiss()
             }
             LumeyReportInfoCard(
                 title: "Send a feature request to Voxiverse",
-                message: "Describe the feature, where it should live, how it should work, and what it would make possible in Loomey."
+                message: "Describe the feature, where it should live, how it should work, and what it would make possible in Loomey.",
+                borderColor: theme.palette.primaryAction
             )
             featureDetailsSection
             featureProposalSection
             requirementsSection
-            LumeyReportAttachmentsPicker(title: "Reference Images", selectedPhotos: $selectedPhotos, attachmentData: attachmentData)
-            LumeyReportDiagnosticsCard(screenName: "Settings > Feature Request")
+            LumeyReportAttachmentsPicker(
+                title: "Reference Images",
+                selectedPhotos: $selectedPhotos,
+                attachmentData: attachmentData,
+                accentColor: theme.palette.indicators,
+                sectionColor: theme.palette.primaryAction,
+                bubbly: true
+            )
+            LumeyReportDiagnosticsCard(screenName: "Settings > Feature Request", borderColor: theme.palette.primaryAction)
             LumeyReportStatusCards(successTitle: "Feature Request Sent", reportID: nil, error: submissionError)
             LumeyReportSubmitButton(
                 title: "Submit Feature Request",
                 sendingTitle: "Sending...",
                 canSubmit: canSubmit,
-                isSubmitting: isSubmitting
+                isSubmitting: isSubmitting,
+                bubblyTint: theme.palette.secondaryAccent
             ) {
                 Task { await submitFeatureRequest() }
             }
@@ -86,35 +101,35 @@ struct LumeyFeatureRequestView: View {
 
     private var featureDetailsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            LumeyReportSectionHeader(title: "Feature Details")
-            LumeyReportTextField(title: "Feature Title", placeholder: "Short clear name for the feature", text: $featureTitle)
-            LumeyReportPickerField(title: "Area", options: areas, selection: $area)
-            LumeyReportPickerField(title: "Feature Type", options: featureTypes, selection: $featureType)
-            LumeyReportPickerField(title: "Importance", options: importanceOptions, selection: $importance)
-            LumeyReportPickerField(title: "Who Is This For?", options: audienceOptions, selection: $intendedAudience)
+            LumeyReportSectionHeader(title: "Feature Details", color: theme.palette.primaryAction, bubbly: true)
+            LumeyReportTextField(title: "Feature Title", placeholder: "Short clear name for the feature", text: $featureTitle, borderColor: theme.palette.secondaryAccent)
+            LumeyReportPickerField(title: "Area", options: areas, selection: $area, bubblyTint: theme.palette.primaryAction, textShadow: true)
+            LumeyReportPickerField(title: "Feature Type", options: featureTypes, selection: $featureType, bubblyTint: theme.palette.secondaryAccent, textShadow: true)
+            LumeyReportPickerField(title: "Importance", options: importanceOptions, selection: $importance, bubblyTint: theme.palette.indicators, textShadow: true)
+            LumeyReportPickerField(title: "Who Is This For?", options: audienceOptions, selection: $intendedAudience, bubblyTint: theme.palette.primaryAction, textShadow: true)
         }
     }
 
     private var featureProposalSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            LumeyReportSectionHeader(title: "Feature Proposal")
-            LumeyReportTextEditor(title: "What Should the Feature Do?", placeholder: "Describe the actual capability you want added and what you should be able to accomplish with it.", text: $featureDescription, minHeight: 130)
-            LumeyReportTextEditor(title: "How Should It Work?", placeholder: "Describe how you imagine using the feature from beginning to end, including what you would tap, enter, select, create, or receive.", text: $imaginedWorkflow, minHeight: 130)
-            LumeyReportPickerField(title: "Where Should It Live?", options: locationOptions, selection: $desiredLocation)
-            LumeyReportPickerField(title: "Related Existing Feature", options: relatedFeatureOptions, selection: $relatedExistingFeature)
-            LumeyReportTextEditor(title: "What Problem or Limitation Does It Address?", placeholder: "Explain what you currently cannot do, what feels limited, or what this feature would make easier or better.", text: $problemAddressed, minHeight: 130)
-            LumeyReportTextEditor(title: "Desired Result", placeholder: "Describe what should exist, happen, or become possible after successfully using the feature.", text: $desiredResult, minHeight: 120)
+            LumeyReportSectionHeader(title: "Feature Proposal", color: theme.palette.secondaryAccent, bubbly: true)
+            LumeyReportTextEditor(title: "What Should the Feature Do?", placeholder: "Describe the actual capability you want added and what you should be able to accomplish with it.", text: $featureDescription, minHeight: 130, borderColor: theme.palette.indicators)
+            LumeyReportTextEditor(title: "How Should It Work?", placeholder: "Describe how you imagine using the feature from beginning to end, including what you would tap, enter, select, create, or receive.", text: $imaginedWorkflow, minHeight: 130, borderColor: theme.palette.primaryAction)
+            LumeyReportPickerField(title: "Where Should It Live?", options: locationOptions, selection: $desiredLocation, bubblyTint: theme.palette.secondaryAccent, textShadow: true)
+            LumeyReportPickerField(title: "Related Existing Feature", options: relatedFeatureOptions, selection: $relatedExistingFeature, bubblyTint: theme.palette.indicators, textShadow: true)
+            LumeyReportTextEditor(title: "What Problem or Limitation Does It Address?", placeholder: "Explain what you currently cannot do, what feels limited, or what this feature would make easier or better.", text: $problemAddressed, minHeight: 130, borderColor: theme.palette.primaryAction)
+            LumeyReportTextEditor(title: "Desired Result", placeholder: "Describe what should exist, happen, or become possible after successfully using the feature.", text: $desiredResult, minHeight: 120, borderColor: theme.palette.secondaryAccent)
         }
     }
 
     private var requirementsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            LumeyReportSectionHeader(title: "Requirements")
-            LumeyReportPickerField(title: "Would This Require Saved Data?", options: yesNoUnsureOptions, selection: $requiresSavedData)
-            LumeyReportPickerField(title: "Would This Need Notifications?", options: yesNoOptionalUnsureOptions, selection: $needsNotifications)
-            LumeyReportPickerField(title: "Would This Need Sharing?", options: yesNoOptionalUnsureOptions, selection: $needsSharing)
-            LumeyReportPickerField(title: "Would This Need AI?", options: yesNoOptionalUnsureOptions, selection: $needsAI)
-            LumeyReportTextEditor(title: "Additional Details", placeholder: "Add anything else that would help explain the request.", text: $additionalDetails, minHeight: 100)
+            LumeyReportSectionHeader(title: "Requirements", color: theme.palette.indicators, bubbly: true)
+            LumeyReportPickerField(title: "Would This Require Saved Data?", options: yesNoUnsureOptions, selection: $requiresSavedData, bubblyTint: theme.palette.primaryAction, textShadow: true)
+            LumeyReportPickerField(title: "Would This Need Notifications?", options: yesNoOptionalUnsureOptions, selection: $needsNotifications, bubblyTint: theme.palette.secondaryAccent, textShadow: true)
+            LumeyReportPickerField(title: "Would This Need Sharing?", options: yesNoOptionalUnsureOptions, selection: $needsSharing, bubblyTint: theme.palette.indicators, textShadow: true)
+            LumeyReportPickerField(title: "Would This Need AI?", options: yesNoOptionalUnsureOptions, selection: $needsAI, bubblyTint: theme.palette.primaryAction, textShadow: true)
+            LumeyReportTextEditor(title: "Additional Details", placeholder: "Add anything else that would help explain the request.", text: $additionalDetails, minHeight: 100, borderColor: theme.palette.secondaryAccent)
         }
     }
 

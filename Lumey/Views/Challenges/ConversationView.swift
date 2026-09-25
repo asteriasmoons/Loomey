@@ -7,6 +7,7 @@ import SwiftUI
 
 struct ConversationView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
 
     let conversation: ConversationDTO
     let currentUserID: String
@@ -78,12 +79,18 @@ struct ConversationView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            UserAvatarView(
-                avatarURL: otherAvatarURL,
-                avatarName: otherAvatarName,
-                size: 36,
-                iconSize: 18
-            )
+            Image("profilewavy")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 18, height: 18)
+                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(theme.palette.background))
+                .overlay {
+                    Circle()
+                        .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.2)
+                }
 
             Text(otherUsername)
                 .font(.system(size: 22, weight: .black, design: .rounded))
@@ -99,14 +106,14 @@ struct ConversationView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                             )
                     )
             }
@@ -138,14 +145,13 @@ struct ConversationView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(
-                                isMine
-                                ? AnyShapeStyle(LColors.accents.contrast)
-                                : AnyShapeStyle(LColors.glassSurface2)
-                            )
-                    )
+                    .background {
+                        BubblyTileSurface(
+                            tint: isMine ? theme.palette.primaryAction : theme.palette.secondaryAccent,
+                            cornerRadius: 18
+                        )
+                    }
+                    .bubblyTileLift()
 
                 if let date = message.createdDate {
                     Text(date.formatted(date: .omitted, time: .shortened))
@@ -161,61 +167,80 @@ struct ConversationView: View {
     // MARK: - Input Bar
 
     private var inputBar: some View {
-        GlassCard(variant: .featured) {
-            HStack(alignment: .bottom, spacing: 10) {
-                TextField("Message...", text: $messageText, axis: .vertical)
-                    .focused($isInputFocused)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .lineLimit(1...10)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(LColors.surface.nested)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                    .strokeBorder(LColors.border.nested, lineWidth: 1)
-                            )
-                    )
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-
-                            Button {
-                                isInputFocused = false
-                            } label: {
-                                Text("Done")
-                                    .font(.system(size: 15, weight: .black, design: .rounded))
-                                    .foregroundStyle(LColors.accents.contrast)
-                            }
-                        }
-                    }
-
-                Button {
-                    Task { await sendMessage() }
-                } label: {
-                    Image("sendbutton")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 18, height: 18)
+        VStack(alignment: .trailing, spacing: 6) {
+            GlassCard(padding: 0, variant: .featured, borderColor: theme.palette.indicators) {
+                HStack(alignment: .center, spacing: 10) {
+                    TextField("Message...", text: $messageText, axis: .vertical)
+                        .focused($isInputFocused)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
-                        .frame(width: 42, height: 42)
-                        .background(
-                            Circle()
-                                .fill(canSend ? AnyShapeStyle(LColors.accents.secondary) : AnyShapeStyle(LColors.glassSurface))
-                        )
+                        .lineLimit(1...10)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 18)
+                        .padding(.vertical, 16)
+
+                    Button {
+                        Task { await sendMessage() }
+                    } label: {
+                        Image("sendbutton")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 18, height: 18)
+                            .foregroundStyle(.white)
+                            .frame(width: 42, height: 42)
+                            .background(
+                                Circle()
+                                    .fill(canSend ? AnyShapeStyle(LColors.accents.secondary) : AnyShapeStyle(LColors.glassSurface))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canSend || isSending)
                 }
-                .buttonStyle(.plain)
-                .disabled(!canSend || isSending)
+            }
+            .padding(.horizontal, 20)
+
+            if isInputFocused {
+                keyboardDoneButton
+                    .padding(.trailing, 20)
+                    .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .trailing)))
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.top, 12)
+        .padding(.bottom, isInputFocused ? 0 : 12)
         .background(LColors.bg.opacity(0.98))
-        .safeAreaPadding(.bottom)
+        .safeAreaPadding(.bottom, isInputFocused ? 0 : nil)
+        .animation(.easeOut(duration: 0.16), value: isInputFocused)
+    }
+
+    private var keyboardDoneButton: some View {
+        Button {
+            isInputFocused = false
+        } label: {
+            HStack(spacing: 5) {
+                Image("checkwavy")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 11, height: 11)
+                    .bubblyIconMaterial(tint: .white)
+
+                Text("Done")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .frame(height: 28)
+            .background {
+                BubblyTileSurface(
+                    tint: theme.palette.primaryAction,
+                    cornerRadius: 14
+                )
+            }
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
     }
 
     private var canSend: Bool {

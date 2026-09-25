@@ -7,6 +7,7 @@ import SwiftUI
 import SwiftData
 
 struct ReadingGoalHistoryView: View {
+    @Environment(\.appTheme) private var theme
     
     @Query(sort: \ReadingGoalHistory.createdAt, order: .reverse)
     private var historyItems: [ReadingGoalHistory]
@@ -59,6 +60,12 @@ struct ReadingGoalHistoryView: View {
     private var isToday: Bool {
         calendar.isDateInToday(selectedDate)
     }
+
+    private func dayAccent(for date: Date) -> Color {
+        let day = calendar.component(.day, from: date)
+        let index = ((day - 19) % theme.palette.rotation.count + theme.palette.rotation.count) % theme.palette.rotation.count
+        return theme.palette.rotation[index]
+    }
     
     var body: some View {
         ZStack {
@@ -71,6 +78,8 @@ struct ReadingGoalHistoryView: View {
                     topBar
 
                     dateRow
+
+                    monthHeader
                     
                     if historyItems.isEmpty && missionHistoryItems.isEmpty && completedDreams.isEmpty {
                         emptyState
@@ -128,10 +137,12 @@ struct ReadingGoalHistoryView: View {
                     }
                 }
             } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(LColors.accents.primary)
-                    .frame(width: 32, height: 52)
+                Image("chevleft")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 26, height: 26)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -140,6 +151,7 @@ struct ReadingGoalHistoryView: View {
             ForEach(weekDays, id: \.self) { day in
                 let isSelected = calendar.isDate(day, inSameDayAs: selectedDate)
                 let isTodayBubble = calendar.isDateInToday(day)
+                let accent = dayAccent(for: day)
 
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -154,18 +166,22 @@ struct ReadingGoalHistoryView: View {
                             .font(.system(size: 16, weight: .black, design: .rounded))
                     }
                     .foregroundStyle(isSelected ? .white : .white.opacity(isTodayBubble ? 0.8 : 0.5))
+                    .shadow(
+                        color: isSelected ? theme.palette.background.opacity(0.72) : .clear,
+                        radius: 1,
+                        y: 1
+                    )
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(
-                                isSelected
-                                ? AnyShapeStyle(
-                                    LColors.accents.special
-                                )
-                                : AnyShapeStyle(LColors.glassSurface2)
-                            )
-                    )
+                    .background {
+                        if isSelected {
+                            BubblyIconMaterial(tint: accent)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        } else {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(LColors.glassSurface2)
+                        }
+                    }
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .strokeBorder(
@@ -188,10 +204,12 @@ struct ReadingGoalHistoryView: View {
                     }
                 }
             } label: {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(LColors.accents.contrast)
-                    .frame(width: 32, height: 52)
+                Image("chevright")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 26, height: 26)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -199,17 +217,22 @@ struct ReadingGoalHistoryView: View {
     }
 
     // MARK: - Empty States
+
+    private var monthHeader: some View {
+        Text(selectedDate.formatted(.dateTime.month(.wide)))
+            .font(.system(size: 22, weight: .black, design: .rounded))
+            .bubblyIconMaterial(tint: theme.palette.primaryAction)
+    }
     
     private var emptyState: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             VStack(spacing: 14) {
                 Image("openbook")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 54, height: 54)
-                    .foregroundStyle(.white)
-                    .opacity(0.9)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                 
                 Text("No reading history yet")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -227,14 +250,14 @@ struct ReadingGoalHistoryView: View {
     }
 
     private var dayEmptyState: some View {
-        GlassCard(variant: .primary) {
+        GlassCard(variant: .primary, borderColor: theme.palette.primaryAction) {
             VStack(spacing: 14) {
                 Image("sparkle")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 40, height: 40)
-                    .foregroundStyle(LColors.accents.secondary)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                 Text(dayEmptyTitle)
                     .font(.system(size: 17, weight: .bold, design: .rounded))
@@ -303,7 +326,10 @@ struct ReadingGoalHistoryView: View {
                                 .padding(.vertical, 10)
                         }
 
-                        CompletedDreamRow(dream: dream)
+                        CompletedDreamRow(
+                            dream: dream,
+                            accent: theme.palette.rotation[index % theme.palette.rotation.count]
+                        )
                     }
                 }
             }
@@ -323,7 +349,8 @@ struct ReadingGoalHistoryView: View {
                     TimelineRow(
                         item: item,
                         isFirst: index == 0,
-                        isLast: index == filteredHistory.count - 1
+                        isLast: index == filteredHistory.count - 1,
+                        accent: theme.palette.rotation[index % theme.palette.rotation.count]
                     )
                 }
             }
@@ -341,7 +368,8 @@ struct ReadingGoalHistoryView: View {
                     MissionTimelineRow(
                         item: item,
                         isFirst: index == 0,
-                        isLast: index == filteredMissionHistory.count - 1
+                        isLast: index == filteredMissionHistory.count - 1,
+                        accent: theme.palette.rotation[index % theme.palette.rotation.count]
                     )
                 }
             }
@@ -353,6 +381,7 @@ private struct MissionTimelineRow: View {
     let item: ReadingMissionHistory
     let isFirst: Bool
     let isLast: Bool
+    let accent: Color
 
     private let nodeSize: CGFloat = 42
 
@@ -369,10 +398,10 @@ private struct MissionTimelineRow: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(item.eventType == .generated ? AnyShapeStyle(LColors.text.secondary) : AnyShapeStyle(LColors.accents.contrast))
+                    .bubblyIconMaterial(tint: accent)
                     .frame(width: nodeSize, height: nodeSize)
                     .background(Circle().fill(LColors.glassSurface2))
-                    .overlay(Circle().strokeBorder(item.eventType == .generated ? AnyShapeStyle(LColors.border.nestedStrong) : AnyShapeStyle(LColors.accents.secondary), lineWidth: 1))
+                    .overlay(Circle().strokeBorder(accent, lineWidth: 1))
 
                 Rectangle()
                     .fill(isLast ? Color.clear : LColors.border.subtle)
@@ -381,7 +410,7 @@ private struct MissionTimelineRow: View {
             }
             .frame(width: nodeSize)
 
-            ReadingMissionHistoryCard(item: item)
+            ReadingMissionHistoryCard(item: item, accent: accent)
                 .padding(.bottom, isLast ? 0 : 10)
         }
     }
@@ -400,14 +429,21 @@ private struct MissionTimelineRow: View {
 
 private struct ReadingMissionHistoryCard: View {
     let item: ReadingMissionHistory
+    let accent: Color
 
     var body: some View {
-        GlassCard(cornerRadius: 18, padding: 16, variant: .tertiary) {
+        GlassCard(cornerRadius: 18, padding: 16, variant: .tertiary, borderColor: accent) {
             VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(item.eventType == .generated ? AnyShapeStyle(Color.white) : AnyShapeStyle(LColors.accents.special))
+                    if item.eventType == .generated {
+                        Text(title)
+                            .font(.system(size: 16, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                    } else {
+                        Text(title)
+                            .font(.system(size: 16, weight: .black, design: .rounded))
+                            .bubblyIconMaterial(tint: accent)
+                    }
 
                     Text(item.bookTitle)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -421,18 +457,21 @@ private struct ReadingMissionHistoryCard: View {
                 HStack(spacing: 8) {
                     ReadingGoalPill(
                         text: pillText,
-                        usePurpleStyle: item.eventType != .generated
+                        usePurpleStyle: item.eventType != .generated,
+                        tint: accent
                     )
 
                     if item.eventType == .scored {
                         ReadingGoalPill(
                             text: "\(item.score)/100",
-                            usePurpleStyle: false
+                            usePurpleStyle: false,
+                            tint: accent
                         )
                     } else {
                         ReadingGoalPill(
                             text: ReadingMissionStatsCalculator.formattedDuration(seconds: item.durationSeconds),
-                            usePurpleStyle: false
+                            usePurpleStyle: false,
+                            tint: accent
                         )
                     }
                 }
@@ -482,6 +521,7 @@ private struct TimelineRow: View {
     let item: ReadingGoalHistory
     let isFirst: Bool
     let isLast: Bool
+    let accent: Color
 
     private let nodeSize: CGFloat = 42
 
@@ -507,7 +547,7 @@ private struct TimelineRow: View {
             .frame(width: nodeSize)
 
             // Card (no icon inside)
-            ReadingGoalHistoryCard(item: item)
+            ReadingGoalHistoryCard(item: item, accent: accent)
                 .padding(.bottom, isLast ? 0 : 10)
         }
     }
@@ -518,7 +558,7 @@ private struct TimelineRow: View {
             .resizable()
             .scaledToFit()
             .frame(width: 18, height: 18)
-            .foregroundStyle(iconForeground)
+            .bubblyIconMaterial(tint: accent)
             .frame(width: nodeSize, height: nodeSize)
             .background(
                 Circle()
@@ -526,28 +566,8 @@ private struct TimelineRow: View {
             )
             .overlay(
                 Circle()
-                    .strokeBorder(iconBorder, lineWidth: 1)
+                    .strokeBorder(accent, lineWidth: 1)
             )
-    }
-
-    private var iconForeground: some ShapeStyle {
-        switch item.eventType {
-        case .completed:
-            return AnyShapeStyle(LColors.accents.primary)
-        default:
-            return AnyShapeStyle(LColors.text.secondary)
-        }
-    }
-
-    private var iconBorder: some ShapeStyle {
-        switch item.eventType {
-        case .completed:
-            return AnyShapeStyle(
-                LColors.gradientBlue.opacity(0.6)
-            )
-        default:
-            return AnyShapeStyle(LColors.border.nestedStrong)
-        }
     }
 
     private var iconName: String {
@@ -567,11 +587,11 @@ private struct TimelineRow: View {
 // MARK: - History Card (Event-Specific, No Icon)
 
 private struct ReadingGoalHistoryCard: View {
-
     let item: ReadingGoalHistory
+    let accent: Color
 
     var body: some View {
-        GlassCard(cornerRadius: 18, padding: 16, variant: .elevated) {
+        GlassCard(cornerRadius: 18, padding: 16, variant: .elevated, borderColor: accent) {
             cardContent
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -630,9 +650,12 @@ private struct ReadingGoalHistoryCard: View {
                     .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(LColors.text.tertiary)
 
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(LColors.accents.special)
+                Image("arrowrightwavy")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 11, height: 11)
+                    .bubblyIconMaterial(tint: accent)
 
                 Text(formattedNumber(item.newValue))
                     .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -654,8 +677,7 @@ private struct ReadingGoalHistoryCard: View {
                             .fill(LColors.border.nested)
                             .frame(height: 6)
 
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(LGradients.header)
+                        BubblyTileSurface(tint: accent, cornerRadius: 3)
                             .frame(
                                 width: max(0, geo.size.width * item.progressPercentage),
                                 height: 6
@@ -681,7 +703,7 @@ private struct ReadingGoalHistoryCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Completed")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: accent)
 
                 Text(goalTitle)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -706,7 +728,7 @@ private struct ReadingGoalHistoryCard: View {
 
             Text("Goal completed!")
                 .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.accents.contrast)
+                .bubblyIconMaterial(tint: accent)
 
             if !item.note.isEmpty {
                 Text(item.note)
@@ -734,9 +756,12 @@ private struct ReadingGoalHistoryCard: View {
                             .font(.system(size: 15, weight: .bold, design: .rounded))
                             .foregroundStyle(LColors.text.tertiary)
 
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(LColors.accents.secondary)
+                        Image("arrowrightwavy")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 10, height: 10)
+                            .bubblyIconMaterial(tint: accent)
 
                         Text("\(item.newStreak)")
                             .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -779,7 +804,7 @@ private struct ReadingGoalHistoryCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
-                        .foregroundStyle(LColors.accents.special)
+                        .bubblyIconMaterial(tint: accent)
 
                     Text(item.rewardEarned)
                         .font(.system(size: 14, weight: .bold, design: .rounded))
@@ -869,6 +894,7 @@ private struct ReadingGoalHistoryCard: View {
 
 struct CompletedDreamRow: View {
     let dream: ReadingDream
+    let accent: Color
 
     var body: some View {
         HStack(spacing: 12) {
@@ -877,7 +903,7 @@ struct CompletedDreamRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LColors.accents.primary)
+                .bubblyIconMaterial(tint: accent)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
@@ -885,7 +911,7 @@ struct CompletedDreamRow: View {
                 )
                 .overlay(
                     Circle()
-                        .strokeBorder(LColors.accents.primary, lineWidth: 1)
+                        .strokeBorder(accent, lineWidth: 1)
                 )
 
             VStack(alignment: .leading, spacing: 5) {
@@ -915,7 +941,7 @@ struct CompletedDreamRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 14, height: 14)
-                .foregroundStyle(LColors.accents.contrast)
+                .bubblyIconMaterial(tint: accent)
         }
     }
 }

@@ -6,24 +6,30 @@
 import SwiftUI
 
 struct LibraryMiniStatCard: View {
+    @Environment(\.appTheme) private var theme
+
     let title: String
     let value: String
+    let tint: Color
     
     var body: some View {
-        GlassCard(cornerRadius: 18, padding: 12, variant: .featured) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.accents.primary)
-                
-                Text(title)
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value)
+                .font(.system(size: 20, weight: .black, design: .rounded))
+                .foregroundStyle(theme.palette.textPrimary)
+                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
+
+            Text(title)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(theme.palette.textPrimary)
+                .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 18) }
+        .bubblyTileLift()
     }
 }
 
@@ -65,7 +71,11 @@ struct LibraryDetailBlock: View {
 }
 
 struct LibraryRatingRow: View {
+    @Environment(\.appTheme) private var theme
+
     let book: Book
+    var useBubblyMaterial: Bool = false
+    var tint: Color? = nil
     
     var body: some View {
         HStack(spacing: 2) {
@@ -78,6 +88,7 @@ struct LibraryRatingRow: View {
                     }
                     book.lastUpdated = Date()
                 } label: {
+                    let activeTint = tint ?? theme.palette.primaryAction
                     Image("starfill")
                         .renderingMode(.template)
                         .resizable()
@@ -85,8 +96,14 @@ struct LibraryRatingRow: View {
                         .frame(width: 18, height: 18)
                         .foregroundStyle(
                             number <= Int(book.rating)
-                            ? LColors.accents.primary
+                            ? activeTint
                             : LColors.border.nestedStrong
+                        )
+                        .bubblyIconMaterial(
+                            tint: number <= Int(book.rating)
+                            ? activeTint
+                            : LColors.border.nestedStrong,
+                            isEnabled: useBubblyMaterial
                         )
                         .frame(width: 22, height: 22)
                         .contentShape(Rectangle())

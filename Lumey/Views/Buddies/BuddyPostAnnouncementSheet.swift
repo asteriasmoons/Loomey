@@ -7,6 +7,8 @@ import SwiftUI
 import SwiftData
 
 struct BuddyPostAnnouncementSheet: View {
+    @Environment(\.appTheme) private var theme
+
     let userId: String
     let displayName: String
     var onClose: (() -> Void)?
@@ -21,6 +23,7 @@ struct BuddyPostAnnouncementSheet: View {
     @State private var currentChapterText: String = ""
     @State private var isPosting = false
     @State private var errorMessage: String? = nil
+    @State private var isReadingDropdownExpanded = false
 
     private var readingBooks: [Book] {
         books.filter { $0.status == .reading && $0.deletedAt == nil }
@@ -45,105 +48,76 @@ struct BuddyPostAnnouncementSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         if !readingBooks.isEmpty {
-                            GlassCard(variant: .featured) {
-                                VStack(alignment: .leading, spacing: 10) {
-                                    fieldLabel("Currently Reading")
+                            currentlyReadingDropdown
+                        }
 
-                                    LazyVGrid(
-                                        columns: [
-                                            GridItem(.adaptive(minimum: 120), spacing: 10)
-                                        ],
-                                        alignment: .leading,
-                                        spacing: 10
-                                    ) {
-                                        ForEach(readingBooks) { book in
-                                            Button {
-                                                bookTitle = book.title
-                                                bookAuthor = book.author
-                                                currentChapterText = "\(book.currentPage)"
-                                            } label: {
-                                                Text(book.title)
-                                                    .font(.system(size: 13, weight: .black, design: .rounded))
-                                                    .foregroundStyle(LColors.cardTitle)
-                                                    .lineLimit(1)
-                                                    .padding(.horizontal, 14)
-                                                    .padding(.vertical, 10)
-                                                    .frame(maxWidth: .infinity)
-                                                    .background(
-                                                        Capsule(style: .continuous)
-                                                            .fill(LColors.iconContainer.primary)
-                                                    )
-                                                    .overlay(
-                                                        Capsule(style: .continuous)
-                                                            .strokeBorder(LColors.glassBorder, lineWidth: 1)
-                                                    )
+                        VStack(alignment: .leading, spacing: 12) {
+                            fieldLabel("Book Title")
+                            buddyTextField(
+                                placeholder: "Book title",
+                                text: $bookTitle,
+                                tint: theme.palette.secondaryAccent
+                            )
+                        }
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            fieldLabel("Author")
+                            buddyTextField(
+                                placeholder: "Author (optional)",
+                                text: $bookAuthor,
+                                tint: theme.palette.indicators
+                            )
+                        }
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            fieldLabel("Current Page")
+                            buddyTextField(
+                                placeholder: "e.g. 42",
+                                text: $currentChapterText,
+                                tint: theme.palette.primaryAction
+                            )
+                            .keyboardType(.numberPad)
+                        }
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            fieldLabel("Max Buddies")
+
+                            HStack(spacing: 10) {
+                                ForEach(Array((2...4).enumerated()), id: \.element) { index, count in
+                                    let accent = theme.palette.rotation[index % theme.palette.rotation.count]
+                                    Button {
+                                        maxMembers = count
+                                    } label: {
+                                        Text("\(count)")
+                                            .font(.system(size: 14, weight: .black, design: .rounded))
+                                            .foregroundStyle(.white)
+                                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                                            .frame(width: 46, height: 44)
+                                            .background {
+                                                BubblyIconMaterial(tint: accent)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                                             }
-                                            .buttonStyle(.plain)
-                                        }
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                                    .strokeBorder(
+                                                        maxMembers == count ? Color.white : Color.white.opacity(0.18),
+                                                        lineWidth: maxMembers == count ? 2.5 : 1
+                                                    )
+                                            )
                                     }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                        GlassCard(variant: .primary) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                fieldLabel("Book Title")
-                                buddyTextField(placeholder: "Book title", text: $bookTitle)
-                            }
-                        }
-
-                        GlassCard(variant: .secondary) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                fieldLabel("Author")
-                                buddyTextField(placeholder: "Author (optional)", text: $bookAuthor)
-                            }
-                        }
-
-                        GlassCard(variant: .tertiary) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                fieldLabel("Current Page")
-                                buddyTextField(placeholder: "e.g. 42", text: $currentChapterText)
-                                    .keyboardType(.numberPad)
-                            }
-                        }
-
-                        GlassCard(variant: .elevated) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                fieldLabel("Max Buddies")
-
-                                HStack(spacing: 10) {
-                                    ForEach(2...4, id: \.self) { count in
-                                        Button {
-                                            maxMembers = count
-                                        } label: {
-                                            Text("\(count)")
-                                                .font(.system(size: 14, weight: .black, design: .rounded))
-                                                .foregroundStyle(maxMembers == count ? .white : LColors.textSecondary)
-                                                .frame(width: 46, height: 44)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                        .fill(maxMembers == count ? LColors.glassSurface2 : LColors.surface.subtle.opacity(0.6))
-                                                )
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                        .strokeBorder(
-                                                            maxMembers == count ? LColors.accents.contrast : LColors.glassBorder,
-                                                            lineWidth: 1
-                                                        )
-                                                )
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-
-                        GlassCard(variant: .subtle) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                fieldLabel("Note Optional")
-                                buddyTextEditor(placeholder: "e.g. Looking to discuss themes and theories!", text: $message)
-                            }
+                        VStack(alignment: .leading, spacing: 12) {
+                            fieldLabel("Note Optional")
+                            buddyTextEditor(
+                                placeholder: "e.g. Looking to discuss themes and theories!",
+                                text: $message,
+                                tint: theme.palette.secondaryAccent
+                            )
                         }
 
                         if let error = errorMessage {
@@ -158,6 +132,105 @@ struct BuddyPostAnnouncementSheet: View {
                     .padding(.top, 18)
                     .padding(.bottom, 34)
                 }
+            }
+        }
+    }
+
+    private var currentlyReadingDropdown: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            fieldLabel("Currently Reading")
+
+            Button {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                    isReadingDropdownExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Image("books")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 15, height: 15)
+
+                    Text(bookTitle.isEmpty ? "Choose a Book" : bookTitle)
+                        .font(.system(size: 14, weight: .black, design: .rounded))
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Image(isReadingDropdownExpanded ? "chevup" : "chevdown")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 12, height: 12)
+                }
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 16) }
+                .bubblyTileLift()
+            }
+            .buttonStyle(.plain)
+
+            if isReadingDropdownExpanded {
+                ScrollView(.vertical, showsIndicators: readingBooks.count > 4) {
+                    LazyVStack(spacing: 7) {
+                        ForEach(readingBooks) { book in
+                            Button {
+                                bookTitle = book.title
+                                bookAuthor = book.author
+                                currentChapterText = "\(book.currentPage)"
+                                withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                    isReadingDropdownExpanded = false
+                                }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image("books")
+                                        .renderingMode(.template)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 14, height: 14)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(book.title)
+                                            .font(.system(size: 13, weight: .black, design: .rounded))
+                                            .lineLimit(1)
+
+                                        Text(book.author)
+                                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                            .opacity(0.82)
+                                            .lineLimit(1)
+                                    }
+
+                                    Spacer()
+
+                                    if bookTitle == book.title && bookAuthor == book.author {
+                                        Image("checkwavy")
+                                            .renderingMode(.template)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 14, height: 14)
+                                    }
+                                }
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                        .fill(theme.palette.raisedSurface)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(10)
+                }
+                .frame(height: CGFloat(min(readingBooks.count, 4)) * 58)
+                .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18) }
+                .bubblyTileLift()
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
     }
@@ -184,22 +257,10 @@ struct BuddyPostAnnouncementSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(
-                        LColors.accents.contrast
-                    )
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 36, height: 36)
-                    .background(
-                        Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(
-                                        LColors.accents.contrast,
-                                        lineWidth: 1.35
-                                    )
-                            )
-                            .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                    )
+                    .background(Circle().fill(LColors.bg))
+                    .overlay(Circle().strokeBorder(theme.palette.primaryAction, lineWidth: 1.35))
             }
             .buttonStyle(.plain)
         }
@@ -219,16 +280,19 @@ struct BuddyPostAnnouncementSheet: View {
                 } else {
                     Text("Post to Board")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(canPost ? LColors.accents.contrast : LColors.surface.subtle)
-            )
-            .shadow(color: canPost ? LColors.accent.opacity(0.3) : .clear, radius: 12, y: 6)
+            .background {
+                BubblyTileSurface(
+                    tint: canPost ? theme.palette.indicators : theme.palette.indicators.opacity(0.34),
+                    cornerRadius: 16
+                )
+            }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
         .disabled(!canPost)
@@ -241,7 +305,7 @@ struct BuddyPostAnnouncementSheet: View {
             .tracking(0.5)
     }
 
-    private func buddyTextField(placeholder: String, text: Binding<String>) -> some View {
+    private func buddyTextField(placeholder: String, text: Binding<String>, tint: Color) -> some View {
         TextField(placeholder, text: text)
             .font(.system(size: 14, weight: .semibold, design: .rounded))
             .foregroundStyle(.white)
@@ -254,11 +318,11 @@ struct BuddyPostAnnouncementSheet: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(LColors.border.nested, lineWidth: 1)
+                    .strokeBorder(tint, lineWidth: 1.35)
             )
     }
 
-    private func buddyTextEditor(placeholder: String, text: Binding<String>) -> some View {
+    private func buddyTextEditor(placeholder: String, text: Binding<String>, tint: Color) -> some View {
         ZStack(alignment: .topLeading) {
             if text.wrappedValue.isEmpty {
                 Text(placeholder)
@@ -282,7 +346,7 @@ struct BuddyPostAnnouncementSheet: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(LColors.border.nested, lineWidth: 1)
+                .strokeBorder(tint, lineWidth: 1.35)
         )
     }
 

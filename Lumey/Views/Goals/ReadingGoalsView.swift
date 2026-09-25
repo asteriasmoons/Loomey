@@ -9,6 +9,7 @@ import SwiftData
 struct ReadingGoalsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     @StateObject private var timer = ReadingTimerManager.shared
     
     @Query(sort: \ReadingGoals.updatedAt, order: .reverse)
@@ -168,7 +169,7 @@ private extension ReadingGoalsView {
                 
                 addGoalButton
             }
-            
+
             Text("Track your reading momentum, rituals, themes, and long-term reader identity.")
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(LColors.textSecondary)
@@ -187,14 +188,13 @@ private extension ReadingGoalsView {
                             .font(.system(size: 13, weight: .black, design: .rounded))
                     }
                     .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .padding(.horizontal, 13)
                     .padding(.vertical, 8)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(
-                                LColors.accents.primary
-                            )
-                    )
+                    .background {
+                        BubblyIconMaterial(tint: theme.palette.primaryAction)
+                            .clipShape(Capsule(style: .continuous))
+                    }
                 }
                 .buttonStyle(.plain)
 
@@ -207,22 +207,14 @@ private extension ReadingGoalsView {
                         Text("Timer")
                             .font(.system(size: 13, weight: .black, design: .rounded))
                     }
-                    .foregroundStyle(timer.isActive ? LColors.gradientBlue : LColors.textSecondary)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .padding(.horizontal, 13)
                     .padding(.vertical, 8)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(LColors.glassSurface)
-                            .overlay(
-                                Capsule(style: .continuous)
-                                    .strokeBorder(
-                                        timer.isActive
-                                        ? LColors.accents.primary
-                                        : LColors.glassBorder,
-                                        lineWidth: 1
-                                    )
-                            )
-                    )
+                    .background {
+                        BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                            .clipShape(Capsule(style: .continuous))
+                    }
                 }
                 .buttonStyle(.plain)
 
@@ -238,20 +230,14 @@ private extension ReadingGoalsView {
                         Text("Check-In")
                             .font(.system(size: 13, weight: .black, design: .rounded))
                     }
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .padding(.horizontal, 13)
                     .padding(.vertical, 8)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(LColors.glassSurface)
-                            .overlay(
-                                Capsule(style: .continuous)
-                                    .strokeBorder(
-                                        LColors.glassBorder,
-                                        lineWidth: 1
-                                    )
-                            )
-                    )
+                    .background {
+                        BubblyIconMaterial(tint: theme.palette.indicators)
+                            .clipShape(Capsule(style: .continuous))
+                    }
                 }
                 .buttonStyle(.plain)
             }
@@ -269,17 +255,14 @@ private extension ReadingGoalsView {
                     Text("Catch Up")
                         .font(.system(size: 13, weight: .black, design: .rounded))
                 }
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 .padding(.horizontal, 13)
                 .padding(.vertical, 8)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(LColors.glassSurface)
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .strokeBorder(LColors.accents.secondary, lineWidth: 1)
-                        )
-                )
+                .background {
+                    BubblyIconMaterial(tint: theme.palette.primaryAction)
+                        .clipShape(Capsule(style: .continuous))
+                }
             }
             .buttonStyle(.plain)
         }
@@ -295,21 +278,16 @@ private extension ReadingGoalsView {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 24, height: 24)
-                .foregroundStyle(
-                    LColors.accents.primary
-                )
+                .foregroundStyle(theme.palette.primaryAction)
+                .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 .frame(width: 46, height: 46)
                 .background(
                     Circle()
-                        .fill(LColors.bg)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    LColors.accents.primary,
-                                    lineWidth: 1.35
-                                )
-                        )
-                        .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
+                        .fill(theme.palette.raisedSurface)
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                .mask { Circle().strokeBorder(lineWidth: 1.35) }
+                        }
                 )
         }
         .buttonStyle(.plain)
@@ -333,6 +311,8 @@ private extension ReadingGoalsView {
 }
 
 struct ReadingGoalsHeroSummaryCard: View {
+    @Environment(\.appTheme) private var theme
+
     let activeCount: Int
     let completedCount: Int
     let totalBooksCount: Int
@@ -340,7 +320,7 @@ struct ReadingGoalsHeroSummaryCard: View {
     let onAddGoal: () -> Void
 
     var body: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(alignment: .center, spacing: 14) {
                     Image("achievement")
@@ -348,10 +328,14 @@ struct ReadingGoalsHeroSummaryCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 24, height: 24)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 48, height: 48)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(Circle().strokeBorder(LColors.accents.contrast, lineWidth: 1.15))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                .mask { Circle().strokeBorder(lineWidth: 1.15) }
+                        }
 
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Goals in Motion")
@@ -368,10 +352,10 @@ struct ReadingGoalsHeroSummaryCard: View {
                 }
 
                 HStack(spacing: 10) {
-                    ReadingGoalsHeroMiniStat(title: "Active",    value: "\(activeCount)",        tint: LColors.accents.primary)
-                    ReadingGoalsHeroMiniStat(title: "Completed", value: "\(completedCount)",     tint: LColors.accents.contrast)
-                    ReadingGoalsHeroMiniStat(title: "Books",     value: "\(totalBooksCount)",    tint: LColors.accents.secondary)
-                    ReadingGoalsHeroMiniStat(title: "Sessions",  value: "\(totalSessionsCount)", tint: LColors.accents.special)
+                    ReadingGoalsHeroMiniStat(title: "Active",    value: "\(activeCount)",        tint: theme.palette.rotation[0])
+                    ReadingGoalsHeroMiniStat(title: "Completed", value: "\(completedCount)",     tint: theme.palette.rotation[1])
+                    ReadingGoalsHeroMiniStat(title: "Books",     value: "\(totalBooksCount)",    tint: theme.palette.rotation[2])
+                    ReadingGoalsHeroMiniStat(title: "Sessions",  value: "\(totalSessionsCount)", tint: theme.palette.rotation[0])
                 }
                 
                 Button(action: onAddGoal) {
@@ -386,13 +370,11 @@ struct ReadingGoalsHeroSummaryCard: View {
                             .font(.system(size: 13, weight: .black, design: .rounded))
                     }
                     .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 11)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(LGradients.header)
-                    )
-                    .shadow(color: LColors.gradientBlue.opacity(0.22), radius: 12, y: 6)
+                    .background { BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 999) }
+                    .bubblyTileLift()
                 }
                 .buttonStyle(.plain)
             }
@@ -402,6 +384,8 @@ struct ReadingGoalsHeroSummaryCard: View {
 }
 
 struct ReadingGoalsHeroMiniStat: View {
+    @Environment(\.appTheme) private var theme
+
     let title: String
     let value: String
     var tint: Color = LColors.accents.primary
@@ -410,24 +394,20 @@ struct ReadingGoalsHeroMiniStat: View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(tint)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
 
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.text.secondary)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(tint.opacity(0.30), lineWidth: 1)
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 }
 
@@ -456,10 +436,11 @@ private extension ReadingGoalsView {
             if achievements.isEmpty {
                 EmptyGoalCard(
                     title: "Achievements are loading",
-                    message: "Lumey creates built-in reading achievements automatically from your reading progress."
+                    message: "Lumey creates built-in reading achievements automatically from your reading progress.",
+                    borderColor: theme.palette.secondaryAccent
                 )
             } else {
-                GlassCard(variant: .tertiary) {
+                GlassCard(variant: .tertiary, borderColor: theme.palette.secondaryAccent) {
                     VStack(spacing: 0) {
                         ForEach(Array(displayAchievements.enumerated()), id: \.element.id) { index, achievement in
                             if index > 0 {
@@ -479,17 +460,16 @@ private extension ReadingGoalsView {
 }
 
 struct CompactAchievementRow: View {
+    @Environment(\.appTheme) private var theme
+
     let achievement: ReadingAchievement
     var accentIndex: Int = 0
 
     private var accent: Color {
-        switch accentIndex % 4 {
-        case 0:  return LColors.accents.primary
-        case 1:  return LColors.accents.contrast
-        case 2:  return LColors.accents.secondary
-        default: return LColors.accents.special
-        }
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
     }
+
+    private var silver: Color { Color(red: 0.72, green: 0.74, blue: 0.80) }
 
     private var progress: Double {
         guard achievement.targetValue > 0 else { return 0 }
@@ -503,15 +483,14 @@ struct CompactAchievementRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(achievement.isUnlocked ? accent : LColors.text.muted)
+                .foregroundStyle(achievement.isUnlocked ? accent : silver)
+                .bubblyIconMaterial(tint: achievement.isUnlocked ? accent : silver)
                 .frame(width: 38, height: 38)
-                .background(Circle().fill(achievement.isUnlocked ? accent.opacity(0.15) : LColors.iconContainer.primary))
-                .overlay(
-                    Circle().strokeBorder(
-                        achievement.isUnlocked ? accent : LColors.border.nested,
-                        lineWidth: 1
-                    )
-                )
+                .background(Circle().fill(theme.palette.raisedSurface))
+                .overlay {
+                    BubblyIconMaterial(tint: achievement.isUnlocked ? accent : silver)
+                        .mask { Circle().strokeBorder(lineWidth: 1) }
+                }
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
@@ -529,14 +508,16 @@ struct CompactAchievementRow: View {
                             .scaledToFit()
                             .frame(width: 14, height: 14)
                             .foregroundStyle(accent)
+                            .bubblyIconMaterial(tint: accent)
                     } else {
                         Text("\(min(achievement.currentValue, achievement.targetValue))/\(achievement.targetValue)")
                             .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.text.tertiary)
+                            .foregroundStyle(silver)
+                            .bubblyIconMaterial(tint: silver)
                     }
                 }
 
-                DottedGoalProgressBar(value: progress)
+                DottedGoalProgressBar(value: progress, tint: accent)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -561,16 +542,17 @@ private extension ReadingGoalsView {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(LColors.accents.primary)
+                        .foregroundStyle(theme.palette.primaryAction)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .frame(width: 32, height: 32)
                         .background(
                             Circle()
-                                .fill(LColors.iconContainer.primary)
+                                .fill(theme.palette.raisedSurface)
                         )
-                        .overlay(
-                            Circle()
-                                .strokeBorder(LColors.accents.primary, lineWidth: 1)
-                        )
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                .mask { Circle().strokeBorder(lineWidth: 1) }
+                        }
                 }
                 .buttonStyle(.plain)
             }
@@ -580,10 +562,11 @@ private extension ReadingGoalsView {
             if activeDreams.isEmpty {
                 EmptyGoalCard(
                     title: "No reading dreams yet",
-                    message: "Add big-picture aspirations like finishing a series, building a fantasy library, or reading more classics."
+                    message: "Add big-picture aspirations like finishing a series, building a fantasy library, or reading more classics.",
+                    borderColor: theme.palette.indicators
                 )
             } else {
-                GlassCard(variant: .secondary) {
+                GlassCard(variant: .secondary, borderColor: theme.palette.indicators) {
                     VStack(alignment: .leading, spacing: 14) {
                         ForEach(Array(activeDreams.prefix(6).enumerated()), id: \.element.id) { index, dream in
                             ReadingDreamBulletRow(dream: dream, accentIndex: index) {
@@ -608,17 +591,14 @@ private extension ReadingGoalsView {
 }
 
 struct ReadingDreamBulletRow: View {
+    @Environment(\.appTheme) private var theme
+
     let dream: ReadingDream
     var accentIndex: Int = 0
     let onComplete: () -> Void
 
     private var accent: Color {
-        switch accentIndex % 4 {
-        case 0:  return LColors.accents.primary
-        case 1:  return LColors.accents.contrast
-        case 2:  return LColors.accents.secondary
-        default: return LColors.accents.special
-        }
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
     }
 
     var body: some View {
@@ -629,9 +609,13 @@ struct ReadingDreamBulletRow: View {
                 .scaledToFit()
                 .frame(width: 16, height: 16)
                 .foregroundStyle(accent)
+                .bubblyIconMaterial(tint: accent)
                 .frame(width: 32, height: 32)
-                .background(Circle().fill(LColors.iconContainer.primary))
-                .overlay(Circle().strokeBorder(accent, lineWidth: 1))
+                .background(Circle().fill(theme.palette.raisedSurface))
+                .overlay {
+                    BubblyIconMaterial(tint: accent)
+                        .mask { Circle().strokeBorder(lineWidth: 1) }
+                }
                 .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 5) {
@@ -656,16 +640,17 @@ struct ReadingDreamBulletRow: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 15, height: 15)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .foregroundStyle(accent)
+                    .bubblyIconMaterial(tint: accent)
                     .frame(width: 34, height: 34)
                     .background(
                         Circle()
-                            .fill(LColors.iconContainer.primary)
+                            .fill(theme.palette.raisedSurface)
                     )
-                    .overlay(
-                        Circle()
-                            .strokeBorder(LColors.border.nested, lineWidth: 1)
-                    )
+                    .overlay {
+                        BubblyIconMaterial(tint: accent)
+                            .mask { Circle().strokeBorder(lineWidth: 1) }
+                    }
             }
             .buttonStyle(.plain)
         }
@@ -832,7 +817,8 @@ private extension ReadingGoalsView {
             } else {
                 EmptyGoalCard(
                     title: "No active goal yet",
-                    message: "Create a yearly book goal, daily reading ritual, genre challenge, streak goal, or custom Lumey goal."
+                    message: "Create a yearly book goal, daily reading ritual, genre challenge, streak goal, or custom Lumey goal.",
+                    borderColor: theme.palette.primaryAction
                 )
             }
         }
@@ -848,8 +834,8 @@ private extension ReadingGoalsView {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(ReadingGoalType.allCases) { type in
-                        ReadingGoalTypeCard(type: type)
+                    ForEach(Array(ReadingGoalType.allCases.enumerated()), id: \.element.id) { index, type in
+                        ReadingGoalTypeCard(type: type, accentIndex: index)
                     }
                 }
                 .padding(.horizontal, 2)
@@ -881,16 +867,18 @@ private extension ReadingGoalsView {
             if activeGoals.isEmpty {
                 EmptyGoalCard(
                     title: "Nothing active yet",
-                    message: "Your active reading goals will appear here."
+                    message: "Your active reading goals will appear here.",
+                    borderColor: theme.palette.secondaryAccent
                 )
             } else {
                 LazyVStack(spacing: 12) {
-                    ForEach(activeGoals) { goal in
+                    ForEach(Array(activeGoals.enumerated()), id: \.element.id) { index, goal in
                         NavigationLink {
                             ReadingGoalDetailView(goal: goal)
                         } label: {
                             ReadingGoalRow(
                                 goal: goal,
+                                accentIndex: index,
                                 onDelete: {
                                     modelContext.delete(goal)
                                 }
@@ -925,16 +913,18 @@ private extension ReadingGoalsView {
             if completedGoals.isEmpty {
                 EmptyGoalCard(
                     title: "No completed goals yet",
-                    message: "Completed goals will become part of your reading journey."
+                    message: "Completed goals will become part of your reading journey.",
+                    borderColor: theme.palette.secondaryAccent
                 )
             } else {
                 LazyVStack(spacing: 12) {
-                    ForEach(completedGoals) { goal in
+                    ForEach(Array(completedGoals.enumerated()), id: \.element.id) { index, goal in
                         NavigationLink {
                             ReadingGoalDetailView(goal: goal)
                         } label: {
                             ReadingGoalRow(
                                 goal: goal,
+                                accentIndex: index,
                                 onDelete: {
                                     modelContext.delete(goal)
                                 }
@@ -1018,10 +1008,12 @@ struct MiniReadingTimerCard: View {
 // MARK: - Hero Goal Card
 
 struct ReadingHeroGoalCard: View {
+    @Environment(\.appTheme) private var theme
+
     let goal: ReadingGoals
     
     var body: some View {
-        GlassCard(variant: .primary) {
+        GlassCard(variant: .primary, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .center, spacing: 12) {
                     Image(goal.iconName)
@@ -1029,15 +1021,14 @@ struct ReadingHeroGoalCard: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 30, height: 30)
-                        .foregroundStyle(
-                            LColors.accents.primary
-                        )
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 52, height: 52)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(
-                            Circle()
-                                .strokeBorder(LColors.accents.secondary, lineWidth: 1.15)
-                        )
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                .mask { Circle().strokeBorder(lineWidth: 1.15) }
+                        }
                     
                     Text(goal.displayTitle)
                         .font(.system(size: 17, weight: .black, design: .rounded))
@@ -1054,17 +1045,17 @@ struct ReadingHeroGoalCard: View {
                         .lineLimit(3)
                     
                     FlowLayout(spacing: 8) {
-                        ReadingGoalPill(text: goal.type.rawValue)
-                        ReadingGoalPill(text: goal.cadence.rawValue)
-                        ReadingGoalPill(text: goal.priority.rawValue)
+                        ReadingGoalPill(text: goal.type.rawValue, tint: theme.palette.indicators)
+                        ReadingGoalPill(text: goal.cadence.rawValue, tint: theme.palette.indicators)
+                        ReadingGoalPill(text: goal.priority.rawValue, tint: theme.palette.indicators)
                         
                         if goal.isPinned {
-                            ReadingGoalPill(text: "Pinned", usePurpleStyle: true)
+                            ReadingGoalPill(text: "Pinned", usePurpleStyle: true, tint: theme.palette.indicators)
                         }
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        DottedGoalProgressBar(value: goal.progressValue)
+                        DottedGoalProgressBar(value: goal.progressValue, tint: theme.palette.primaryAction)
                             .frame(height: 12)
                         
                         HStack {
@@ -1099,12 +1090,19 @@ struct ReadingHeroGoalCard: View {
 // MARK: - Goal Row
 
 struct ReadingGoalRow: View {
+    @Environment(\.appTheme) private var theme
+
     let goal: ReadingGoals
+    var accentIndex: Int = 0
     var onDelete: () -> Void
     @State private var showingDeleteConfirm = false
+
+    private var accent: Color {
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+    }
     
     var body: some View {
-        GlassCard(variant: .secondary) {
+        GlassCard(variant: .secondary, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .center, spacing: 12) {
                     Image(goal.iconName)
@@ -1112,18 +1110,14 @@ struct ReadingGoalRow: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 24, height: 24)
-                        .foregroundStyle(
-                            LColors.accents.primary
-                        )
+                        .foregroundStyle(accent)
+                        .bubblyIconMaterial(tint: accent)
                         .frame(width: 42, height: 42)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    LColors.accents.primary,
-                                    lineWidth: 1
-                                )
-                        )
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: accent)
+                                .mask { Circle().strokeBorder(lineWidth: 1) }
+                        }
                     
                     Text(goal.displayTitle)
                         .font(.system(size: 17, weight: .black, design: .rounded))
@@ -1140,11 +1134,14 @@ struct ReadingGoalRow: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 15, height: 15)
-                            .foregroundStyle(
-                                LColors.accents.primary
-                            )
+                            .foregroundStyle(accent)
+                            .bubblyIconMaterial(tint: accent)
                             .frame(width: 34, height: 34)
-                            .background(Circle().fill(LColors.iconContainer.primary))
+                            .background(Circle().fill(theme.palette.raisedSurface))
+                            .overlay {
+                                BubblyIconMaterial(tint: accent)
+                                    .mask { Circle().strokeBorder(lineWidth: 1) }
+                            }
                     }
                     .buttonStyle(.plain)
                 }
@@ -1158,13 +1155,13 @@ struct ReadingGoalRow: View {
                     }
                     
                     FlowLayout(spacing: 8) {
-                        ReadingGoalPill(text: goal.type.rawValue)
-                        ReadingGoalPill(text: goal.cadence.rawValue)
-                        ReadingGoalPill(text: goal.status.rawValue)
+                        ReadingGoalPill(text: goal.type.rawValue, tint: accent)
+                        ReadingGoalPill(text: goal.cadence.rawValue, tint: accent)
+                        ReadingGoalPill(text: goal.status.rawValue, tint: accent)
                     }
                     
                     VStack(alignment: .leading, spacing: 7) {
-                        DottedGoalProgressBar(value: goal.progressValue)
+                        DottedGoalProgressBar(value: goal.progressValue, tint: accent)
                             .frame(height: 12)
                         
                         HStack {
@@ -1198,6 +1195,7 @@ struct ReadingGoalRow: View {
 
 struct DottedGoalProgressBar: View {
     let value: Double
+    var tint: Color? = nil
     private let dotCount = 25
     
     private var clampedValue: Double {
@@ -1211,18 +1209,34 @@ struct DottedGoalProgressBar: View {
     var body: some View {
         HStack(spacing: 4) {
             ForEach(0..<dotCount, id: \.self) { index in
-                Circle()
-                    .fill(dotFill(for: index))
-                    .frame(width: 8, height: 8)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(index < filledDots ? LColors.accents.primary.opacity(0.35) : LColors.border.subtle.opacity(0.5), lineWidth: 0.6)
-                    )
+                progressDot(at: index)
             }
 
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func progressDot(at index: Int) -> some View {
+        if let tint {
+            let dotTint = index < filledDots ? tint : tint.opacity(0.24)
+
+            BubblyIconMaterial(tint: dotTint)
+                .clipShape(Circle())
+                .frame(width: 8, height: 8)
+                .overlay {
+                    Circle().strokeBorder(dotTint.opacity(0.72), lineWidth: 0.6)
+                }
+        } else {
+            Circle()
+                .fill(dotFill(for: index))
+                .frame(width: 8, height: 8)
+                .overlay(
+                    Circle()
+                        .strokeBorder(index < filledDots ? LColors.accents.primary.opacity(0.35) : LColors.border.subtle.opacity(0.5), lineWidth: 0.6)
+                )
+        }
     }
     
     private func dotFill(for index: Int) -> LinearGradient {
@@ -1244,29 +1258,37 @@ struct DottedGoalProgressBar: View {
 // MARK: - Type Card
 
 struct ReadingGoalTypeCard: View {
+    @Environment(\.appTheme) private var theme
+
     let type: ReadingGoalType
+    var accentIndex: Int = 0
+
+    private var accent: Color {
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+    }
     
     var body: some View {
-        GlassCard(variant: .tertiary) {
-            VStack(alignment: .leading, spacing: 10) {
-                Image(iconName)
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 24, height: 24)
-                    .foregroundStyle(
-                        LColors.accents.primary
-                    )
-                
-                Text(shortTitle)
-                    .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.cardTitle)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.65)
-                    .multilineTextAlignment(.leading)
-            }
-            .frame(width: 96, alignment: .topLeading)
+        VStack(alignment: .leading, spacing: 10) {
+            Image(iconName)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 24, height: 24)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+
+            Text(shortTitle)
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                .lineLimit(2)
+                .minimumScaleFactor(0.65)
+                .multilineTextAlignment(.leading)
         }
+        .frame(width: 96, alignment: .topLeading)
+        .padding(18)
+        .background { BubblyTileSurface(tint: accent, cornerRadius: 20) }
+        .bubblyTileLift()
         .frame(width: 132)
     }
 
@@ -1341,9 +1363,10 @@ struct ReadingGoalStatCard: View {
 struct EmptyGoalCard: View {
     let title: String
     let message: String
+    var borderColor: Color? = nil
     
     var body: some View {
-        GlassCard(variant: .subtle) {
+        GlassCard(variant: .subtle, borderColor: borderColor) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
                     .font(.system(size: 16, weight: .black, design: .rounded))
@@ -1362,53 +1385,50 @@ struct EmptyGoalCard: View {
 // MARK: - Goal Pill
 
 struct ReadingGoalPill: View {
+    @Environment(\.appTheme) private var theme
+
     let text: String
     var usePurpleStyle: Bool = false
+    var tint: Color? = nil
     
     var body: some View {
         Text(text)
             .font(.system(size: 10, weight: .black, design: .rounded))
             .fixedSize(horizontal: true, vertical: false)
             .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: usePurpleStyle
-                            ? [
-                                LColors.gradientPurple.opacity(0.30),
-                                LColors.gradientPurple.opacity(0.18)
-                            ]
-                            : [
-                                LColors.gradientBlue.opacity(0.20),
-                                LColors.gradientPurple.opacity(0.20)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+            .background {
+                if let tint {
+                    BubblyIconMaterial(tint: tint)
+                        .clipShape(Capsule(style: .continuous))
+                } else {
+                    Capsule(style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: usePurpleStyle
+                                ? [
+                                    LColors.gradientPurple.opacity(0.30),
+                                    LColors.gradientPurple.opacity(0.18)
+                                ]
+                                : [
+                                    LColors.gradientBlue.opacity(0.20),
+                                    LColors.gradientPurple.opacity(0.20)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-            )
-            .overlay(
-                Capsule(style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: usePurpleStyle
-                            ? [
-                                LColors.gradientPurple,
-                                LColors.gradientPurple.opacity(0.7)
-                            ]
-                            : [
-                                LColors.gradientBlue.opacity(0.7),
-                                LColors.gradientPurple.opacity(0.7)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.8
-                    )
-            )
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .strokeBorder(
+                                    usePurpleStyle ? LColors.gradientPurple : LColors.gradientBlue.opacity(0.7),
+                                    lineWidth: 0.8
+                                )
+                        )
+                }
+            }
     }
 }
 
@@ -1460,6 +1480,7 @@ struct LogSessionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     let goals: [ReadingGoals]
     let books: [Book]
@@ -1474,6 +1495,7 @@ struct LogSessionSheet: View {
     @State private var sessionDate = Date()
     @State private var showingInsightSheet = false
     @State private var insightDraft = ReadingInsightDraft()
+    @State private var isBookPickerExpanded = false
 
     private var readingBooks: [Book] {
         books.filter { $0.status == .reading && !$0.isArchived }
@@ -1539,73 +1561,84 @@ struct LogSessionSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         // Book link
                         if !readingBooks.isEmpty {
-                            GlassCard(variant: .featured) {
+                            GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
                                 VStack(alignment: .leading, spacing: 12) {
                                     Text("Book")
                                         .font(.system(size: 17, weight: .black, design: .rounded))
                                         .foregroundStyle(LColors.cardTitle)
                                     
-                                    Menu {
-                                        Button("No Book") {
-                                            selectedBook = nil
-                                        }
-                                        
-                                        ForEach(readingBooks) { book in
-                                            Button(book.title) {
-                                                selectedBook = book
+                                    VStack(spacing: 8) {
+                                        Button {
+                                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                                isBookPickerExpanded.toggle()
                                             }
-                                        }
-                                    } label: {
+                                        } label: {
                                         HStack(spacing: 12) {
                                             Text(selectedBook?.title ?? "Select Reading Book")
                                                 .font(.system(size: 14, weight: .black, design: .rounded))
-                                                .foregroundStyle(selectedBook == nil ? LColors.textSecondary : .white)
                                                 .lineLimit(1)
                                             
                                             Spacer()
                                             
-                                            Image("chevdown")
+                                            Image(isBookPickerExpanded ? "chevup" : "chevdown")
                                                 .renderingMode(.template)
                                                 .resizable()
                                                 .scaledToFit()
                                                 .frame(width: 13, height: 13)
-                                                .foregroundStyle(LColors.textSecondary)
                                         }
+                                        .foregroundStyle(.white)
+                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                         .padding(.horizontal, 14)
                                         .padding(.vertical, 12)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                                .fill(LColors.glassSurface2)
-                                        )
+                                        .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 16) }
+                                        .bubblyTileLift()
+                                        }
+                                        .buttonStyle(.plain)
+
+                                        if isBookPickerExpanded {
+                                            ScrollView(.vertical, showsIndicators: readingBooks.count + 1 > 4) {
+                                                LazyVStack(spacing: 7) {
+                                                    sessionBookOption(title: "No Book", book: nil)
+
+                                                    ForEach(readingBooks) { book in
+                                                        sessionBookOption(title: book.title, book: book)
+                                                    }
+                                                }
+                                            }
+                                            .frame(height: CGFloat(min(readingBooks.count + 1, 4)) * 48)
+                                            .padding(9)
+                                            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18) }
+                                            .bubblyTileLift()
+                                            .transition(.move(edge: .top).combined(with: .opacity))
+                                        }
                                     }
-                                    .buttonStyle(.plain)
                                     .onChange(of: selectedBook?.id) { _, _ in syncEbookToPhysical() }
                                 }
                             }
                         }
 
                         // Duration
-                        GlassCard(variant: .primary) {
+                        GlassCard(variant: .primary, borderColor: theme.palette.secondaryAccent) {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Duration")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
                                     .foregroundStyle(LColors.cardTitle)
-                                LumeyTextField(title: "Minutes read", text: $manualMinutes)
+                                LumeyTextField(title: "Minutes read", text: $manualMinutes, borderColor: theme.palette.primaryAction)
                                     .keyboardType(.numberPad)
                             }
                         }
 
                         // Pages
-                        GlassCard(variant: .secondary) {
+                        GlassCard(variant: .secondary, borderColor: theme.palette.indicators) {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Pages")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
                                     .foregroundStyle(LColors.cardTitle)
 
-                                LumeyTextField(title: "Start Page", text: $startPage)
+                                LumeyTextField(title: "Start Page", text: $startPage, borderColor: theme.palette.primaryAction)
                                     .keyboardType(.numberPad)
 
-                                LumeyTextField(title: "End Page", text: $endPage)
+                                LumeyTextField(title: "End Page", text: $endPage, borderColor: theme.palette.secondaryAccent)
                                     .keyboardType(.numberPad)
 
                                 HStack {
@@ -1624,7 +1657,7 @@ struct LogSessionSheet: View {
                         }
                         
                         // Ebook Pages (always visible, optional)
-                        GlassCard(variant: .tertiary) {
+                        GlassCard(variant: .tertiary, borderColor: theme.palette.primaryAction) {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Ebook Pages")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -1634,11 +1667,11 @@ struct LogSessionSheet: View {
                                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                                     .foregroundStyle(LColors.textSecondary)
 
-                                LumeyTextField(title: "Ebook Start Page", text: $ebookStartPage)
+                                LumeyTextField(title: "Ebook Start Page", text: $ebookStartPage, borderColor: theme.palette.primaryAction)
                                     .keyboardType(.numberPad)
                                     .onChange(of: ebookStartPage) { _, _ in syncEbookToPhysical() }
 
-                                LumeyTextField(title: "Ebook End Page", text: $ebookEndPage)
+                                LumeyTextField(title: "Ebook End Page", text: $ebookEndPage, borderColor: theme.palette.secondaryAccent)
                                     .keyboardType(.numberPad)
                                     .onChange(of: ebookEndPage) { _, _ in syncEbookToPhysical() }
                                 
@@ -1648,7 +1681,7 @@ struct LogSessionSheet: View {
 
                         // Goal link
                         if !activeGoals.isEmpty {
-                            GlassCard(variant: .elevated) {
+                            GlassCard(variant: .elevated, borderColor: theme.palette.secondaryAccent) {
                                 VStack(alignment: .leading, spacing: 12) {
                                     Text("Link to Goals")
                                         .font(.system(size: 17, weight: .black, design: .rounded))
@@ -1656,23 +1689,27 @@ struct LogSessionSheet: View {
 
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 8) {
-                                            ForEach(activeGoals) { goal in
+                                            ForEach(Array(activeGoals.enumerated()), id: \.element.id) { index, goal in
                                                 let isSelected = selectedGoalIDs.contains(goal.id)
+                                                let tint = theme.palette.rotation[index % theme.palette.rotation.count]
                                                 Button {
                                                     toggleGoalSelection(goal)
                                                 } label: {
                                                     Text(goal.displayTitle)
                                                         .font(.system(size: 12, weight: .black, design: .rounded))
-                                                        .foregroundStyle(LColors.cardTitle)
+                                                        .foregroundStyle(.white)
+                                                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                                         .padding(.horizontal, 12)
                                                         .padding(.vertical, 7)
-                                                        .background(
-                                                            Capsule().fill(
-                                                                isSelected
-                                                                ? LColors.accents.primary
-                                                                : LColors.glassSurface2
-                                                            )
-                                                        )
+                                                        .background {
+                                                            BubblyIconMaterial(tint: tint)
+                                                                .clipShape(Capsule(style: .continuous))
+                                                        }
+                                                        .overlay {
+                                                            Capsule(style: .continuous)
+                                                                .strokeBorder(.white.opacity(isSelected ? 0.72 : 0.20), lineWidth: isSelected ? 1.3 : 0.8)
+                                                        }
+                                                        .opacity(isSelected ? 1 : 0.64)
                                                 }
                                                 .buttonStyle(.plain)
                                             }
@@ -1690,20 +1727,24 @@ struct LogSessionSheet: View {
                         }
 
                         // Date & time
-                        GlassCard(variant: .subtle) {
+                        GlassCard(variant: .subtle, borderColor: theme.palette.indicators) {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Date & Time")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
                                     .foregroundStyle(LColors.cardTitle)
 
-                                LumeyGradientDateTimeDrumPicker(date: $sessionDate)
+                                LumeyGradientDateTimeDrumPicker(
+                                    date: $sessionDate,
+                                    dateTint: theme.palette.primaryAction,
+                                    timeTint: theme.palette.secondaryAccent
+                                )
                             }
                         }
 
                         insightButton
 
                         // Points preview
-                        GlassCard(variant: .featured) {
+                        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Points Preview")
@@ -1711,7 +1752,8 @@ struct LogSessionSheet: View {
                                         .foregroundStyle(LColors.textSecondary)
                                     Text("+\(previewPoints) pts")
                                         .font(.system(size: 26, weight: .black, design: .rounded))
-                                        .foregroundStyle(LColors.accents.primary)
+                                        .foregroundStyle(theme.palette.primaryAction)
+                                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                                 }
                                 Spacer()
                                 Image("levelup")
@@ -1719,9 +1761,8 @@ struct LogSessionSheet: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 26, height: 26)
-                                    .foregroundStyle(
-                                        LColors.accents.primary
-                                    )
+                                    .foregroundStyle(theme.palette.primaryAction)
+                                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             }
                         }
                     }
@@ -1758,17 +1799,11 @@ struct LogSessionSheet: View {
                 Spacer()
             }
             .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(selectedBook == nil ? AnyShapeStyle(LColors.surface.subtle.opacity(0.6)) : AnyShapeStyle(LColors.accents.primary))
-                    .shadow(color: selectedBook == nil ? .clear : LColors.gradientBlue.opacity(0.18), radius: 14, y: 7)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(selectedBook == nil ? AnyShapeStyle(LColors.glassBorder) : AnyShapeStyle(LColors.border.subtle), lineWidth: 1)
-            )
+            .background { BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 18) }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
         .disabled(selectedBook == nil)
@@ -1793,13 +1828,14 @@ struct LogSessionSheet: View {
             Button { saveSession() } label: {
                 Text("Save")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.cardTitle)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 9)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(LColors.accents.primary)
-                    )
+                    .background {
+                        BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                            .clipShape(Capsule(style: .continuous))
+                    }
             }
             .buttonStyle(.plain)
 
@@ -1809,16 +1845,16 @@ struct LogSessionSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.special, lineWidth: 1.2)
-                            )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
+                            .fill(theme.palette.raisedSurface)
+                            .overlay {
+                                BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                    .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                            }
                     )
             }
             .buttonStyle(.plain)
@@ -1834,6 +1870,48 @@ struct LogSessionSheet: View {
     }
 
     // MARK: - Ebook Sync
+
+    private func sessionBookOption(title: String, book: Book?) -> some View {
+        let isSelected = selectedBook?.id == book?.id
+
+        return Button {
+            selectedBook = book
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                isBookPickerExpanded = false
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(book == nil ? "xmarkwavy" : "books")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
+
+                Text(title)
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .lineLimit(1)
+
+                Spacer()
+
+                if isSelected {
+                    Image("checkwavy")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 13, height: 13)
+                }
+            }
+            .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isSelected ? theme.palette.raisedSurface : Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+    }
     
     private func syncEbookToPhysical() {
         guard let book = selectedBook, book.ebookTotalPages > 0, book.totalPages > 0 else { return }
@@ -2131,6 +2209,7 @@ struct LogSessionSheet: View {
 struct GoalCheckInSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     
     let goals: [ReadingGoals]
     let books: [Book]
@@ -2139,10 +2218,11 @@ struct GoalCheckInSheet: View {
     @State private var updatedProgress = ""
     @State private var selectedBook: Book? = nil
     @State private var checkInDate = Date()
-    @State private var checkInTime = Date()
+    @State private var isGoalPickerExpanded = false
+    @State private var isBookPickerExpanded = false
     
     private var availableBooks: [Book] {
-        books.filter { !$0.isArchived }
+        books.filter { $0.status == .reading && !$0.isArchived }
     }
     
     private var currentProgress: String {
@@ -2167,7 +2247,7 @@ struct GoalCheckInSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         
                         // Pick a Goal
-                        GlassCard(variant: .primary) {
+                        GlassCard(variant: .primary, borderColor: theme.palette.primaryAction) {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Goal")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -2178,45 +2258,44 @@ struct GoalCheckInSheet: View {
                                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                                         .foregroundStyle(LColors.textSecondary)
                                 } else {
-                                    Menu {
-                                        ForEach(goals) { goal in
-                                            Button {
-                                                selectedGoal = goal
-                                                updatedProgress = String(format: "%.0f", goal.currentValue)
-                                            } label: {
-                                                Text(goal.displayTitle)
+                                    VStack(spacing: 8) {
+                                        Button {
+                                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                                isGoalPickerExpanded.toggle()
                                             }
+                                        } label: {
+                                            checkInPickerLabel(
+                                                title: selectedGoal?.displayTitle ?? "Pick a Goal",
+                                                isExpanded: isGoalPickerExpanded,
+                                                tint: theme.palette.primaryAction
+                                            )
                                         }
-                                    } label: {
-                                        HStack {
-                                            Text(selectedGoal?.displayTitle ?? "Pick a Goal")
-                                                .font(.system(size: 14, weight: .bold, design: .rounded))
-                                                .foregroundStyle(selectedGoal != nil ? .white : LColors.textSecondary)
-                                            
-                                            Spacer()
-                                            
-                                            Image("chevdown")
-                                                .renderingMode(.template)
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: 12, height: 12)
-                                                .foregroundStyle(LColors.textSecondary)
+                                        .buttonStyle(.plain)
+
+                                        if isGoalPickerExpanded {
+                                            ScrollView(.vertical, showsIndicators: goals.count > 4) {
+                                                LazyVStack(spacing: 7) {
+                                                    ForEach(goals) { goal in
+                                                        checkInGoalOption(goal)
+                                                    }
+                                                }
+                                            }
+                                            .frame(height: CGFloat(min(goals.count, 4)) * 48)
+                                            .padding(9)
+                                            .background {
+                                                BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18)
+                                            }
+                                            .bubblyTileLift()
+                                            .transition(.move(edge: .top).combined(with: .opacity))
                                         }
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 12)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                                .fill(LColors.glassSurface2)
-                                        )
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                         }
                         
                         // Current Progress
                         if let goal = selectedGoal {
-                            GlassCard(variant: .secondary) {
+                            GlassCard(variant: .secondary, borderColor: theme.palette.secondaryAccent) {
                                 VStack(alignment: .leading, spacing: 12) {
                                     Text("Current Progress")
                                         .font(.system(size: 17, weight: .black, design: .rounded))
@@ -2241,13 +2320,20 @@ struct GoalCheckInSheet: View {
                         }
                         
                         // Updated Progress
-                        GlassCard(variant: .tertiary) {
+                        GlassCard(
+                            variant: .tertiary,
+                            borderColor: checkInCardBorder(at: selectedGoal == nil ? 1 : 2)
+                        ) {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Updated Progress")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
                                     .foregroundStyle(LColors.cardTitle)
                                 
-                                LumeyTextField(title: "New Value", text: $updatedProgress)
+                                LumeyTextField(
+                                    title: "New Value",
+                                    text: $updatedProgress,
+                                    borderColor: theme.palette.primaryAction
+                                )
                                     .keyboardType(.decimalPad)
                                 
                                 if let goal = selectedGoal {
@@ -2271,7 +2357,10 @@ struct GoalCheckInSheet: View {
                         }
                         
                         // Book (Optional)
-                        GlassCard(variant: .elevated) {
+                        GlassCard(
+                            variant: .elevated,
+                            borderColor: checkInCardBorder(at: selectedGoal == nil ? 2 : 3)
+                        ) {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Book")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -2281,56 +2370,60 @@ struct GoalCheckInSheet: View {
                                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                                     .foregroundStyle(LColors.textSecondary)
                                 
-                                Menu {
-                                    Button("None") {
-                                        selectedBook = nil
-                                    }
-                                    
-                                    ForEach(availableBooks) { book in
-                                        Button {
-                                            selectedBook = book
-                                        } label: {
-                                            Text("\(book.title) — \(book.author)")
+                                VStack(spacing: 8) {
+                                    Button {
+                                        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                            isBookPickerExpanded.toggle()
                                         }
+                                    } label: {
+                                        checkInPickerLabel(
+                                            title: selectedBook?.title ?? "Pick a Book",
+                                            isExpanded: isBookPickerExpanded,
+                                            tint: theme.palette.secondaryAccent
+                                        )
                                     }
-                                } label: {
-                                    HStack {
-                                        Text(selectedBook?.title ?? "Pick a Book")
-                                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                                            .foregroundStyle(selectedBook != nil ? .white : LColors.textSecondary)
-                                        
-                                        Spacer()
-                                        
-                                        Image("chevdown")
-                                            .renderingMode(.template)
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 12, height: 12)
-                                            .foregroundStyle(LColors.textSecondary)
+                                    .buttonStyle(.plain)
+
+                                    if isBookPickerExpanded {
+                                        ScrollView(.vertical, showsIndicators: availableBooks.count + 1 > 4) {
+                                            LazyVStack(spacing: 7) {
+                                                checkInBookOption(title: "None", book: nil)
+
+                                                ForEach(availableBooks) { book in
+                                                    checkInBookOption(
+                                                        title: "\(book.title) — \(book.author)",
+                                                        book: book
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        .frame(height: CGFloat(min(availableBooks.count + 1, 4)) * 48)
+                                        .padding(9)
+                                        .background {
+                                            BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 18)
+                                        }
+                                        .bubblyTileLift()
+                                        .transition(.move(edge: .top).combined(with: .opacity))
                                     }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .fill(LColors.glassSurface2)
-                                    )
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         
                         // Date & Time
-                        GlassCard(variant: .subtle) {
+                        GlassCard(
+                            variant: .subtle,
+                            borderColor: checkInCardBorder(at: selectedGoal == nil ? 3 : 4)
+                        ) {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Date & Time")
                                     .font(.system(size: 17, weight: .black, design: .rounded))
                                     .foregroundStyle(LColors.cardTitle)
                                 
-                                DatePicker("Date", selection: $checkInDate, displayedComponents: .date)
-                                    .tint(LColors.accent)
-                                
-                                DatePicker("Time", selection: $checkInTime, displayedComponents: .hourAndMinute)
-                                    .tint(LColors.accent)
+                                LumeyGradientDateTimeDrumPicker(
+                                    date: $checkInDate,
+                                    dateTint: theme.palette.primaryAction,
+                                    timeTint: theme.palette.secondaryAccent
+                                )
                             }
                         }
                         
@@ -2349,12 +2442,13 @@ struct GoalCheckInSheet: View {
                                     .font(.system(size: 15, weight: .black, design: .rounded))
                             }
                             .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(
-                                Capsule(style: .continuous)
-                                    .fill(LGradients.header)
-                            )
+                            .background {
+                                BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 18)
+                            }
+                            .bubblyTileLift()
                         }
                         .buttonStyle(.plain)
                         .padding(.top, 4)
@@ -2383,9 +2477,17 @@ struct GoalCheckInSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 17, height: 17)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 38, height: 38)
-                    .background(Circle().fill(LColors.glassSurface2))
+                    .background(
+                        Circle()
+                            .fill(theme.palette.raisedSurface)
+                            .overlay {
+                                BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                    .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                            }
+                    )
             }
             .buttonStyle(.plain)
         }
@@ -2397,6 +2499,103 @@ struct GoalCheckInSheet: View {
             Rectangle().fill(LColors.border.nested).frame(height: 1)
         }
         .safeAreaPadding(.top)
+    }
+
+    // MARK: - Picker Controls
+
+    private func checkInCardBorder(at visibleIndex: Int) -> Color {
+        theme.palette.rotation[visibleIndex % theme.palette.rotation.count]
+    }
+
+    private func checkInPickerLabel(title: String, isExpanded: Bool, tint: Color) -> some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .font(.system(size: 14, weight: .black, design: .rounded))
+                .lineLimit(1)
+
+            Spacer()
+
+            Image(isExpanded ? "chevup" : "chevdown")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 13, height: 13)
+        }
+        .foregroundStyle(.white)
+        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 16) }
+        .bubblyTileLift()
+    }
+
+    private func checkInGoalOption(_ goal: ReadingGoals) -> some View {
+        let isSelected = selectedGoal?.id == goal.id
+
+        return Button {
+            selectedGoal = goal
+            updatedProgress = String(format: "%.0f", goal.currentValue)
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                isGoalPickerExpanded = false
+            }
+        } label: {
+            checkInPickerOption(
+                title: goal.displayTitle,
+                icon: goal.iconName,
+                isSelected: isSelected
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func checkInBookOption(title: String, book: Book?) -> some View {
+        let isSelected = selectedBook?.id == book?.id
+
+        return Button {
+            selectedBook = book
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                isBookPickerExpanded = false
+            }
+        } label: {
+            checkInPickerOption(
+                title: title,
+                icon: book == nil ? "xmarkwavy" : "books",
+                isSelected: isSelected
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func checkInPickerOption(title: String, icon: String, isSelected: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(icon)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 14, height: 14)
+
+            Text(title)
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .lineLimit(1)
+
+            Spacer()
+
+            if isSelected {
+                Image("checkwavy")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 13, height: 13)
+            }
+        }
+        .foregroundStyle(.white)
+        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 9)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(isSelected ? theme.palette.raisedSurface : Color.clear)
+        )
     }
     
     // MARK: - Complete Check-In
@@ -2410,17 +2609,8 @@ struct GoalCheckInSheet: View {
         let previousStatus = goal.status
         let newValue = Double(updatedProgress) ?? goal.currentValue
 
-        // Combine date and time
         let calendar = Calendar.current
-        let dateComponents = calendar.dateComponents([.year, .month, .day], from: checkInDate)
-        let timeComponents = calendar.dateComponents([.hour, .minute], from: checkInTime)
-        var combined = DateComponents()
-        combined.year = dateComponents.year
-        combined.month = dateComponents.month
-        combined.day = dateComponents.day
-        combined.hour = timeComponents.hour
-        combined.minute = timeComponents.minute
-        let eventDate = calendar.date(from: combined) ?? Date()
+        let eventDate = checkInDate
 
         // Reset recurring goals if new period
         if goal.isRecurringGoal {

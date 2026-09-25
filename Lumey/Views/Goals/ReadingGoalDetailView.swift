@@ -10,6 +10,7 @@ struct ReadingGoalDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @Bindable var goal: ReadingGoals
 
@@ -99,6 +100,34 @@ struct ReadingGoalDetailView: View {
             .sorted { $0.createdAt > $1.createdAt }
     }
 
+    private var hasDescription: Bool {
+        !goal.goalDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var hasReason: Bool {
+        !goal.goalReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var hasReward: Bool {
+        !goal.rewardIdea.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var notesCardIndex: Int {
+        1 + (hasDescription ? 1 : 0) + (hasReason ? 1 : 0) + (hasReward ? 1 : 0)
+    }
+
+    private var relatedBooksCardIndex: Int {
+        notesCardIndex + 1
+    }
+
+    private var relatedSeriesCardIndex: Int {
+        relatedBooksCardIndex + (linkedBooks.isEmpty ? 0 : 1)
+    }
+
+    private var sessionHistoryCardIndex: Int {
+        relatedSeriesCardIndex + (linkedSeriesName.isEmpty ? 0 : 1)
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
@@ -110,8 +139,8 @@ struct ReadingGoalDetailView: View {
                         topBar
                         overviewCard
 
-                        if !goal.goalDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            detailCard(title: "Description") {
+                        if hasDescription {
+                            detailCard(title: "Description", borderIndex: 1) {
                                 Text(goal.goalDescription)
                                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                                     .foregroundStyle(LColors.text.primary)
@@ -119,8 +148,11 @@ struct ReadingGoalDetailView: View {
                             }
                         }
 
-                        if !goal.goalReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            detailCard(title: "Why This Matters") {
+                        if hasReason {
+                            detailCard(
+                                title: "Why This Matters",
+                                borderIndex: 1 + (hasDescription ? 1 : 0)
+                            ) {
                                 Text(goal.goalReason)
                                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                                     .foregroundStyle(LColors.text.primary)
@@ -128,35 +160,35 @@ struct ReadingGoalDetailView: View {
                             }
                         }
 
-                        if !goal.rewardIdea.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            detailCard(title: "Reward") {
+                        if hasReward {
+                            detailCard(
+                                title: "Reward",
+                                borderIndex: 1 + (hasDescription ? 1 : 0) + (hasReason ? 1 : 0)
+                            ) {
                                 HStack(spacing: 10) {
                                     Image("starpopgift")
                                         .renderingMode(.template)
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 18, height: 18)
-                                        .foregroundStyle(LColors.accents.primary)
+                                        .foregroundStyle(.white)
 
                                     Text(goal.rewardIdea)
                                         .font(.system(size: 14, weight: .bold, design: .rounded))
-                                        .foregroundStyle(LColors.cardTitle)
+                                        .foregroundStyle(.white)
                                         .multilineTextAlignment(.leading)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 10)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(LColors.border.nestedStrong)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                .strokeBorder(LColors.border.subtle, lineWidth: 1)
-                                        )
-                                    )
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                                .background {
+                                    BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 14)
                                 }
+                                .bubblyTileLift()
                             }
+                        }
 
                         notesCard
 
@@ -220,16 +252,16 @@ struct ReadingGoalDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
-                                .fill(LColors.bg)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                                )
-                                .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
+                                .fill(theme.palette.raisedSurface)
+                                .overlay {
+                                    BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                        .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                                }
                         )
                 }
                 .buttonStyle(.plain)
@@ -243,16 +275,16 @@ struct ReadingGoalDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.secondary)
+                        .foregroundStyle(theme.palette.primaryAction)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
-                                .fill(LColors.bg)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
-                                )
-                                .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
+                                .fill(theme.palette.raisedSurface)
+                                .overlay {
+                                    BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                        .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                                }
                         )
                 }
                 .buttonStyle(.plain)
@@ -260,12 +292,12 @@ struct ReadingGoalDetailView: View {
             }
 
             FlowLayout(spacing: 8) {
-                ReadingGoalPill(text: goal.type.rawValue)
-                ReadingGoalPill(text: goal.status.rawValue)
-                ReadingGoalPill(text: goal.cadence.rawValue)
+                ReadingGoalPill(text: goal.type.rawValue, tint: theme.palette.rotation[0])
+                ReadingGoalPill(text: goal.status.rawValue, tint: theme.palette.rotation[1])
+                ReadingGoalPill(text: goal.cadence.rawValue, tint: theme.palette.rotation[2])
 
                 if goal.isPinned {
-                    ReadingGoalPill(text: "Pinned", usePurpleStyle: true)
+                    ReadingGoalPill(text: "Pinned", tint: theme.palette.rotation[0])
                 }
             }
         }
@@ -274,7 +306,7 @@ struct ReadingGoalDetailView: View {
     // MARK: - Overview Card
 
     private var overviewCard: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: cardBorder(at: 0)) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(alignment: .center, spacing: 14) {
                     Image(goal.iconName)
@@ -282,10 +314,11 @@ struct ReadingGoalDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 28, height: 28)
-                        .foregroundStyle(LColors.accents.special)
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 52, height: 52)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(Circle().strokeBorder(LColors.accents.secondary, lineWidth: 1.15))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay(Circle().strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.15))
 
                     VStack(alignment: .leading, spacing: 5) {
                         Text(goal.displayTitle)
@@ -302,7 +335,7 @@ struct ReadingGoalDetailView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    DottedGoalProgressBar(value: goal.progressValue)
+                    DottedGoalProgressBar(value: goal.progressValue, tint: theme.palette.primaryAction)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .frame(height: 12)
 
@@ -347,7 +380,8 @@ struct ReadingGoalDetailView: View {
         ) {
             GoalDetailMiniStat(
                 title: "Started",
-                value: goal.startDate.formatted(date: .abbreviated, time: .omitted)
+                value: goal.startDate.formatted(date: .abbreviated, time: .omitted),
+                tint: theme.palette.primaryAction
             )
 
             Button {
@@ -355,7 +389,8 @@ struct ReadingGoalDetailView: View {
             } label: {
                 GoalDetailMiniStat(
                     title: "Completion History",
-                    value: "\(goalCompletionHistory.count)"
+                    value: "\(goalCompletionHistory.count)",
+                    tint: theme.palette.secondaryAccent
                 )
             }
             .buttonStyle(.plain)
@@ -363,13 +398,22 @@ struct ReadingGoalDetailView: View {
             if let targetDate = goal.targetDate {
                 GoalDetailMiniStat(
                     title: "Due",
-                    value: targetDate.formatted(date: .abbreviated, time: .omitted)
+                    value: targetDate.formatted(date: .abbreviated, time: .omitted),
+                    tint: theme.palette.indicators
                 )
             }
 
             if goal.type == .streak {
-                GoalDetailMiniStat(title: "Streak", value: "\(goal.currentStreak)")
-                GoalDetailMiniStat(title: "Best", value: "\(goal.bestStreak)")
+                GoalDetailMiniStat(
+                    title: "Streak",
+                    value: "\(goal.currentStreak)",
+                    tint: theme.palette.primaryAction
+                )
+                GoalDetailMiniStat(
+                    title: "Best",
+                    value: "\(goal.bestStreak)",
+                    tint: theme.palette.secondaryAccent
+                )
             }
         }
     }
@@ -380,17 +424,18 @@ struct ReadingGoalDetailView: View {
         NavigationLink {
             GoalNotesTimelinePage(goal: goal)
         } label: {
-            GlassCard(variant: .primary) {
+            GlassCard(variant: .primary, borderColor: cardBorder(at: notesCardIndex)) {
                 HStack(spacing: 12) {
                     Image("lovepage")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .foregroundStyle(LColors.accents.primary)
+                        .foregroundStyle(theme.palette.indicators)
+                        .bubblyIconMaterial(tint: theme.palette.indicators)
                         .frame(width: 42, height: 42)
-                        .background(Circle().fill(LColors.iconContainer.primary))
-                        .overlay(Circle().strokeBorder(LColors.accents.special, lineWidth: 1))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay(Circle().strokeBorder(theme.palette.indicators, lineWidth: 1))
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Notes")
@@ -415,7 +460,8 @@ struct ReadingGoalDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
-                        .foregroundStyle(LColors.text.secondary)
+                        .foregroundStyle(Color(red: 0.72, green: 0.74, blue: 0.80))
+                        .bubblyIconMaterial(tint: Color(red: 0.72, green: 0.74, blue: 0.80))
                 }
             }
         }
@@ -438,7 +484,7 @@ struct ReadingGoalDetailView: View {
         if !linkedBooks.isEmpty || !linkedSeriesName.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
                 if !linkedBooks.isEmpty {
-                    detailCard(title: "Related Books") {
+                    detailCard(title: "Related Books", borderIndex: relatedBooksCardIndex) {
                         VStack(spacing: 10) {
                             ForEach(linkedBooks) { book in
                                 HStack(spacing: 10) {
@@ -476,7 +522,7 @@ struct ReadingGoalDetailView: View {
                 }
 
                 if !linkedSeriesName.isEmpty {
-                    detailCard(title: "Related Series") {
+                    detailCard(title: "Related Series", borderIndex: relatedSeriesCardIndex) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(linkedSeriesName)
                                 .font(.system(size: 16, weight: .black, design: .rounded))
@@ -497,7 +543,7 @@ struct ReadingGoalDetailView: View {
     // MARK: - Session History
 
     private var sessionHistoryCard: some View {
-        GlassCard(variant: .secondary) {
+        GlassCard(variant: .secondary, borderColor: cardBorder(at: sessionHistoryCardIndex)) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Session History")
                     .font(.system(size: 16, weight: .black, design: .rounded))
@@ -505,7 +551,7 @@ struct ReadingGoalDetailView: View {
 
                 VStack(spacing: 0) {
                     ForEach(Array(visibleLinkedSessions.enumerated()), id: \.element.id) { index, session in
-                        sessionHistoryRow(session)
+                        sessionHistoryRow(session, accentIndex: index)
 
                         if index < visibleLinkedSessions.count - 1 {
                             dottedDivider
@@ -522,7 +568,10 @@ struct ReadingGoalDetailView: View {
                                     visibleSessionCount = 4
                                 }
                             } label: {
-                                sessionHistoryButtonLabel("Load Less")
+                                sessionHistoryButtonLabel(
+                                    "See Less",
+                                    tint: theme.palette.secondaryAccent
+                                )
                             }
                             .buttonStyle(.plain)
                         }
@@ -533,7 +582,10 @@ struct ReadingGoalDetailView: View {
                                     visibleSessionCount += 4
                                 }
                             } label: {
-                                sessionHistoryButtonLabel("Load More")
+                                sessionHistoryButtonLabel(
+                                    "Load More",
+                                    tint: theme.palette.primaryAction
+                                )
                             }
                             .buttonStyle(.plain)
                         }
@@ -545,17 +597,20 @@ struct ReadingGoalDetailView: View {
         }
     }
 
-    private func sessionHistoryRow(_ session: ReadingSession) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+    private func sessionHistoryRow(_ session: ReadingSession, accentIndex: Int) -> some View {
+        let accent = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return HStack(alignment: .top, spacing: 10) {
             Image("openbook")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LColors.accents.secondary)
+                .foregroundStyle(accent)
+                .bubblyIconMaterial(tint: accent)
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(LColors.iconContainer.primary))
-                .overlay(Circle().strokeBorder(LColors.accents.primary, lineWidth: 1))
+                .background(Circle().fill(theme.palette.raisedSurface))
+                .overlay(Circle().strokeBorder(accent, lineWidth: 1))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(session.linkedBookTitle.isEmpty ? "Reading Session" : session.linkedBookTitle)
@@ -576,20 +631,17 @@ struct ReadingGoalDetailView: View {
         }
     }
 
-    private func sessionHistoryButtonLabel(_ text: String) -> some View {
+    private func sessionHistoryButtonLabel(_ text: String, tint: Color) -> some View {
         Text(text)
             .font(.system(size: 12, weight: .black, design: .rounded))
-            .foregroundStyle(LColors.cardTitle)
+            .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(LColors.iconContainer.primary)
-                    .overlay(
-                        Capsule(style: .continuous)
-                            .strokeBorder(LColors.accents.contrast, lineWidth: 1)
-                    )
-            )
+            .background {
+                BubblyIconMaterial(tint: tint)
+                    .clipShape(Capsule(style: .continuous))
+            }
     }
 
     private var dottedDivider: some View {
@@ -679,11 +731,16 @@ struct ReadingGoalDetailView: View {
 
     // MARK: - Helpers
 
+    private func cardBorder(at visibleIndex: Int) -> Color {
+        theme.palette.rotation[visibleIndex % theme.palette.rotation.count]
+    }
+
     private func detailCard<Content: View>(
         title: String,
+        borderIndex: Int,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        GlassCard(variant: .tertiary) {
+        GlassCard(variant: .tertiary, borderColor: cardBorder(at: borderIndex)) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(title)
                     .font(.system(size: 14, weight: .black, design: .rounded))
@@ -699,6 +756,7 @@ struct ReadingGoalDetailView: View {
 // MARK: - GOAL COMPLETION HISTORY SHEET
 private struct GoalCompletionHistorySheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
 
     let goalTitle: String
     let entries: [ReadingGoalHistory]
@@ -716,8 +774,8 @@ private struct GoalCompletionHistorySheet: View {
                         if entries.isEmpty {
                             emptyHistoryCard
                         } else {
-                            ForEach(entries, id: \.id) { entry in
-                                historyCard(entry)
+                            ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                                historyCard(entry, accentIndex: index)
                             }
                         }
                     }
@@ -752,15 +810,16 @@ private struct GoalCompletionHistorySheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.special)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.secondary, lineWidth: 1.2)
-                            )
+                            .fill(theme.palette.raisedSurface)
+                            .overlay {
+                                BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                    .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                            }
                     )
             }
             .buttonStyle(.plain)
@@ -772,14 +831,15 @@ private struct GoalCompletionHistorySheet: View {
     }
 
     private var emptyHistoryCard: some View {
-        GlassCard(variant: .elevated) {
+        GlassCard(variant: .elevated, borderColor: theme.palette.primaryAction) {
             VStack(spacing: 10) {
                 Image("startrophyfill")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 28, height: 28)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
                 Text("No Completion History Yet")
                     .font(.system(size: 16, weight: .black, design: .rounded))
@@ -794,18 +854,21 @@ private struct GoalCompletionHistorySheet: View {
         }
     }
 
-    private func historyCard(_ entry: ReadingGoalHistory) -> some View {
-        GlassCard(variant: .subtle) {
+    private func historyCard(_ entry: ReadingGoalHistory, accentIndex: Int) -> some View {
+        let accent = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return GlassCard(variant: .subtle, borderColor: accent) {
             HStack(alignment: .top, spacing: 12) {
                 Image("startrophyfill")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .foregroundStyle(accent)
+                    .bubblyIconMaterial(tint: accent)
                     .frame(width: 38, height: 38)
-                    .background(Circle().fill(LColors.iconContainer.primary))
-                    .overlay(Circle().strokeBorder(LColors.accents.special, lineWidth: 1))
+                    .background(Circle().fill(theme.palette.raisedSurface))
+                    .overlay(Circle().strokeBorder(accent, lineWidth: 1))
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Completed")
@@ -836,31 +899,30 @@ private struct GoalCompletionHistorySheet: View {
 // MARK: - Mini Stat
 
 struct GoalDetailMiniStat: View {
+    @Environment(\.appTheme) private var theme
+
     let title: String
     let value: String
+    let tint: Color
 
     var body: some View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(LColors.border.nested, lineWidth: 1)
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 }
 

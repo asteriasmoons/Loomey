@@ -10,6 +10,7 @@ struct BookSearchSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
     private var books: [Book]
@@ -67,7 +68,7 @@ struct BookSearchSheet: View {
         VStack {
             Spacer(minLength: 0)
 
-            LumeyDottedGradientSpinner(size: 62)
+            LumeyDottedGradientSpinner(size: 62, useBubblyPalette: true)
 
             Spacer(minLength: 0)
         }
@@ -97,17 +98,17 @@ struct BookSearchSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
-                    .background(
+                    .background {
                         Circle()
-                            .fill(LColors.bg)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
-                            )
+                            .fill(theme.palette.background)
                             .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
-                    )
+
+                        BubblyIconMaterial(tint: theme.palette.primaryAction)
+                            .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                    }
             }
             .buttonStyle(.plain)
         }
@@ -124,6 +125,10 @@ struct BookSearchSheet: View {
                     .padding(14)
                     .background(.white.opacity(0.14))
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
+                    }
 
                 Button {
                     Task {
@@ -132,13 +137,14 @@ struct BookSearchSheet: View {
                 } label: {
                     Text(isLoading ? "Searching..." : "Search Books")
                         .font(.headline)
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(
-                            LColors.gradientBlue
-                        )
-                        .foregroundStyle(LColors.appBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .background {
+                            BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 18)
+                        }
+                        .bubblyTileLift()
                 }
                 .disabled(isLoading || query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .opacity(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.55 : 1)
@@ -154,7 +160,8 @@ struct BookSearchSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 34, height: 34)
-                .foregroundStyle(LColors.text.secondary)
+                .foregroundStyle(theme.palette.indicators)
+                .bubblyIconMaterial(tint: theme.palette.indicators)
 
             Text("No search results yet")
                 .font(.headline)
@@ -169,14 +176,16 @@ struct BookSearchSheet: View {
 
     private var resultsList: some View {
         VStack(spacing: 14) {
-            ForEach(results) { book in
-                resultCard(book)
+            ForEach(Array(results.enumerated()), id: \.element.id) { index, book in
+                resultCard(book, accentIndex: index)
             }
         }
     }
 
-    private func resultCard(_ book: BookSearchResult) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private func resultCard(_ book: BookSearchResult, accentIndex: Int) -> some View {
+        let accent = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 coverView(book.coverUrl)
 
@@ -193,15 +202,15 @@ struct BookSearchSheet: View {
 
                     HStack(spacing: 8) {
                         if let releaseYear = book.releaseYear {
-                            metadataPill("\(releaseYear)")
+                            metadataPill("\(releaseYear)", tint: theme.palette.rotation[0])
                         }
 
                         if let pages = book.pages {
-                            metadataPill("\(pages) pages")
+                            metadataPill("\(pages) pages", tint: theme.palette.rotation[1])
                         }
 
                         if let rating = book.rating {
-                            metadataPill(String(format: "%.1f", rating))
+                            metadataPill(String(format: "%.1f", rating), tint: theme.palette.rotation[2])
                         }
                     }
                 }
@@ -219,25 +228,28 @@ struct BookSearchSheet: View {
             if let tags = book.tags, !tags.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(tags.prefix(6), id: \.self) { tag in
-                            metadataPill(tag)
+                        ForEach(Array(tags.prefix(6).enumerated()), id: \.element) { index, tag in
+                            metadataPill(
+                                tag,
+                                tint: theme.palette.rotation[index % theme.palette.rotation.count]
+                            )
                         }
                     }
                 }
             }
 
-            addToLibraryButton(for: book)
+            addToLibraryButton(for: book, tint: accent)
         }
         .padding(14)
         .background(.white.opacity(0.10))
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(.white.opacity(0.16), lineWidth: 1)
+                .stroke(accent, lineWidth: 1)
         }
     }
 
-    private func addToLibraryButton(for searchResult: BookSearchResult) -> some View {
+    private func addToLibraryButton(for searchResult: BookSearchResult, tint: Color) -> some View {
         let alreadyAdded = isBookInLibrary(searchResult)
 
         return Button {
@@ -253,17 +265,22 @@ struct BookSearchSheet: View {
                 Text(alreadyAdded ? "Added to Library" : "Add to Library")
                     .font(.system(size: 13, weight: .black, design: .rounded))
             }
-            .foregroundStyle(alreadyAdded ? LColors.textSecondary : .black)
+            .foregroundStyle(alreadyAdded ? LColors.textSecondary : theme.palette.textPrimary)
+            .shadow(
+                color: alreadyAdded ? .clear : theme.palette.background.opacity(0.55),
+                radius: 1,
+                y: 2
+            )
             .frame(maxWidth: .infinity)
             .padding(.vertical, 11)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        alreadyAdded
-                            ? LColors.border.nestedStrong
-                            : LColors.gradientBlue
-                    )
-            )
+            .background {
+                if alreadyAdded {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(LColors.border.nestedStrong)
+                } else {
+                    BubblyTileSurface(tint: tint, cornerRadius: 16)
+                }
+            }
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(.white.opacity(alreadyAdded ? 0.14 : 0.22), lineWidth: 1)
@@ -383,14 +400,16 @@ struct BookSearchSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    private func metadataPill(_ text: String) -> some View {
+    private func metadataPill(_ text: String, tint: Color) -> some View {
         Text(text)
             .font(.caption.weight(.semibold))
-            .foregroundStyle(LColors.text.secondary)
+            .foregroundStyle(theme.palette.textPrimary)
+            .bubblyIconMaterial(tint: theme.palette.textPrimary)
+            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
-            .background(.white.opacity(0.12))
-            .clipShape(Capsule())
+            .background { BubblyTileSurface(tint: tint, cornerRadius: 999) }
+            .bubblyTileLift()
     }
 
     @MainActor

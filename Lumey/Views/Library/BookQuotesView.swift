@@ -11,6 +11,7 @@ struct BookQuotesView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @State private var showAddSheet = false
     @State private var editingQuote: BookQuote? = nil
@@ -20,6 +21,11 @@ struct BookQuotesView: View {
     private var quotes: [BookQuote] {
         (book.bookQuotes ?? []).sorted { $0.dateCreated > $1.dateCreated }
     }
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 14),
+        GridItem(.flexible(), spacing: 14)
+    ]
 
     var body: some View {
         ZStack {
@@ -73,6 +79,7 @@ struct BookQuotesView: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
@@ -81,7 +88,6 @@ struct BookQuotesView: View {
                                 Circle()
                                     .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -95,6 +101,7 @@ struct BookQuotesView: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.indicators)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
@@ -103,7 +110,6 @@ struct BookQuotesView: View {
                                 Circle()
                                     .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -115,9 +121,12 @@ struct BookQuotesView: View {
             if quotes.isEmpty {
                 emptyState
             } else {
-                VStack(spacing: 14) {
-                    ForEach(quotes, id: \.id) { quote in
-                        quoteCard(quote)
+                LazyVGrid(columns: columns, spacing: 14) {
+                    ForEach(Array(quotes.enumerated()), id: \.element.id) { index, quote in
+                        quoteCard(
+                            quote,
+                            tint: theme.palette.rotation[index % theme.palette.rotation.count]
+                        )
                     }
                 }
             }
@@ -133,6 +142,7 @@ struct BookQuotesView: View {
                     .scaledToFit()
                     .frame(width: 32, height: 32)
                     .foregroundStyle(LGradients.blue)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                 Text("No favorite quotes yet")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
@@ -147,16 +157,21 @@ struct BookQuotesView: View {
         }
     }
 
-    private func quoteCard(_ quote: BookQuote) -> some View {
-        GlassCard(cornerRadius: 18, padding: 16, variant: .secondary) {
-            VStack(alignment: .leading, spacing: 10) {
+    private func quoteCard(_ quote: BookQuote, tint: Color) -> some View {
+        GlassCard(cornerRadius: 18, padding: 0, variant: .secondary, borderColor: tint) {
+            ZStack {
+                BubblyLightWash(colors: [tint], intensity: 0.34, fadeEnd: 0.82)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .top) {
                     Image("quote")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 22, height: 22)
-                        .foregroundStyle(LGradients.blue)
+                        .foregroundStyle(tint)
+                        .bubblyIconMaterial(tint: tint)
 
                     Spacer()
 
@@ -169,14 +184,15 @@ struct BookQuotesView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 14, height: 14)
-                                .foregroundStyle(LGradients.blue)
+                                .foregroundStyle(tint)
+                                .bubblyIconMaterial(tint: tint)
                                 .frame(width: 30, height: 30)
                                 .background(
                                     Circle()
                                         .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LGradients.blue, lineWidth: 1)
+                                                .strokeBorder(tint, lineWidth: 1)
                                         )
                                 )
                         }
@@ -191,14 +207,15 @@ struct BookQuotesView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 14, height: 14)
-                                .foregroundStyle(LGradients.blue)
+                                .foregroundStyle(tint)
+                                .bubblyIconMaterial(tint: tint)
                                 .frame(width: 30, height: 30)
                                 .background(
                                     Circle()
                                         .fill(LColors.iconContainer.primary)
                                         .overlay(
                                             Circle()
-                                                .strokeBorder(LGradients.blue, lineWidth: 1)
+                                                .strokeBorder(tint, lineWidth: 1)
                                         )
                                 )
                         }
@@ -225,8 +242,11 @@ struct BookQuotesView: View {
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundStyle(LColors.textSecondary)
                 }
+                }
+                .padding(16)
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
 
@@ -265,6 +285,7 @@ struct BookQuoteEditorSheet: View {
     let quote: BookQuote?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     @State private var text = ""
     @State private var pageNumber = ""
@@ -293,7 +314,8 @@ struct BookQuoteEditorSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 18, height: 18)
-                                .foregroundStyle(LGradients.blue)
+                                .foregroundStyle(theme.palette.secondaryAccent)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                                 .frame(width: 42, height: 42)
                                 .background(
                                     Circle()
@@ -303,8 +325,7 @@ struct BookQuoteEditorSheet: View {
                         .buttonStyle(.plain)
                     }
 
-                    GlassCard(variant: .primary) {
-                        VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Quote")
                                     .font(.system(size: 11, weight: .black, design: .rounded))
@@ -321,7 +342,7 @@ struct BookQuoteEditorSheet: View {
                                             .fill(LColors.surface.nested)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                    .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                                             )
                                     )
                             }
@@ -341,11 +362,10 @@ struct BookQuoteEditorSheet: View {
                                             .fill(LColors.surface.nested)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                    .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                                             )
                                     )
                             }
-                        }
                     }
 
                     Button {
@@ -353,13 +373,12 @@ struct BookQuoteEditorSheet: View {
                     } label: {
                         Text(isEditing ? "Save Changes" : "Add Quote")
                             .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(LGradients.blue)
-                            )
+                            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 16) }
+                            .bubblyTileLift()
                     }
                     .buttonStyle(.plain)
                     .opacity(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)

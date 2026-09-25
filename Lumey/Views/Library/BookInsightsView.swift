@@ -12,6 +12,7 @@ struct BookInsightsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @State private var isGeneratingReview = false
     @State private var errorMessage: String?
@@ -80,6 +81,7 @@ struct BookInsightsView: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
@@ -88,7 +90,6 @@ struct BookInsightsView: View {
                                 Circle()
                                     .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
@@ -105,21 +106,22 @@ struct BookInsightsView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 11, height: 11)
+                    .foregroundStyle(.white)
 
                 Text("BETA")
                     .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
             }
-            .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
             .padding(.horizontal, 11)
             .padding(.vertical, 7)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(LGradients.header)
-                    .shadow(color: LColors.gradientBlue.opacity(0.14), radius: 10, y: 5)
-            )
+            .background {
+                BubblyIconMaterial(tint: theme.palette.indicators)
+                    .clipShape(Capsule(style: .continuous))
+            }
             .overlay(
                 Capsule(style: .continuous)
-                    .strokeBorder(LColors.border.subtle, lineWidth: 1)
+                    .strokeBorder(theme.palette.indicators, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -170,14 +172,12 @@ struct BookInsightsView: View {
 
                 Spacer()
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(theme.palette.textPrimary)
+            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(LGradients.header)
-                    .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 14, y: 7)
-            )
+            .background { BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 18) }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
         .disabled(insights.isEmpty || isGeneratingReview)
@@ -207,6 +207,7 @@ struct BookInsightsView: View {
                     .scaledToFit()
                     .frame(width: 34, height: 34)
                     .foregroundStyle(LColors.accents.secondary)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                 Text("No insights yet")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
@@ -324,6 +325,7 @@ private struct BookInsightDetailView: View {
     let number: Int
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
     @State private var expandedAnswerIDs: Set<String> = []
 
     private var answers: [InsightAnswerRow] {
@@ -395,7 +397,8 @@ private struct BookInsightDetailView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(LColors.accents.secondary)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
@@ -404,7 +407,6 @@ private struct BookInsightDetailView: View {
                                 Circle()
                                     .strokeBorder(LColors.accents.secondary, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)

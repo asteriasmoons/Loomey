@@ -7,6 +7,7 @@ import SwiftUI
 
 struct ReadingListBookSummarySheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
     let book: Book
 
     private var hasSummary: Bool {
@@ -50,12 +51,13 @@ private extension ReadingListBookSummarySheet {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
                             .fill(LColors.bg)
-                            .overlay(Circle().strokeBorder(LColors.accents.primary, lineWidth: 1.2))
+                            .overlay(Circle().strokeBorder(theme.palette.primaryAction, lineWidth: 1.2))
                     )
             }
             .buttonStyle(.plain)
@@ -66,7 +68,7 @@ private extension ReadingListBookSummarySheet {
     }
 
     var bookHeader: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(book.title)
                     .font(.system(size: 22, weight: .black, design: .rounded))
@@ -79,17 +81,21 @@ private extension ReadingListBookSummarySheet {
 
                 Text(book.status.rawValue)
                     .font(.system(size: 10, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 5)
-                    .background(Capsule().fill(LColors.iconContainer.primary))
+                    .background {
+                        BubblyIconMaterial(tint: theme.palette.indicators)
+                            .clipShape(Capsule(style: .continuous))
+                    }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     var summaryCard: some View {
-        GlassCard(variant: .primary) {
+        GlassCard(variant: .primary, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Summary")
                     .font(.system(size: 15, weight: .black, design: .rounded))

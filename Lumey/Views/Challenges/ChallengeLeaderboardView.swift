@@ -8,6 +8,7 @@ import SwiftUI
 struct ChallengeLeaderboardView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @State private var selectedProfile: ChallengeUserProfile?
 
@@ -121,14 +122,14 @@ struct ChallengeLeaderboardView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
                             .fill(LColors.bg)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                             )
                     )
             }
@@ -144,7 +145,7 @@ struct ChallengeLeaderboardView: View {
     // MARK: - Hero
 
     private var heroCard: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 12) {
                     Image("startrophyfill")
@@ -152,14 +153,14 @@ struct ChallengeLeaderboardView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 24, height: 24)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 54, height: 54)
                         .background(
                             Circle()
                                 .fill(LColors.glassSurface)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LColors.accents.contrast, lineWidth: 1.2)
+                                    .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.2)
                                 )
                                 .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 14, y: 7)
                         )
@@ -179,16 +180,18 @@ struct ChallengeLeaderboardView: View {
                 }
 
                 HStack(spacing: 10) {
-                    leaderboardMiniStat(title: "Top", value: "\(visibleRankedSubmissions.count)")
-                    leaderboardMiniStat(title: "Approved", value: "\(approvedCount)")
-                    leaderboardMiniStat(title: "Reward", value: rewardValue)
+                    leaderboardMiniStat(title: "Top", value: "\(visibleRankedSubmissions.count)", accentIndex: 0)
+                    leaderboardMiniStat(title: "Approved", value: "\(approvedCount)", accentIndex: 1)
+                    leaderboardMiniStat(title: "Reward", value: rewardValue, accentIndex: 2)
                 }
             }
         }
     }
 
-    private func leaderboardMiniStat(title: String, value: String) -> some View {
-        VStack(spacing: 3) {
+    private func leaderboardMiniStat(title: String, value: String, accentIndex: Int) -> some View {
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: 15, weight: .black, design: .rounded))
                 .foregroundStyle(LColors.cardTitle)
@@ -199,10 +202,8 @@ struct ChallengeLeaderboardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 
     // MARK: - Empty
@@ -252,7 +253,8 @@ struct ChallengeLeaderboardView: View {
                     leaderboardRow(
                         rank: index + 1,
                         submission: submission,
-                        profile: profile(for: submission)
+                        profile: profile(for: submission),
+                        accent: theme.palette.rotation[index % theme.palette.rotation.count]
                     )
                 }
             }
@@ -262,14 +264,15 @@ struct ChallengeLeaderboardView: View {
     private func leaderboardRow(
         rank: Int,
         submission: ChallengeSubmission,
-        profile: ChallengeUserProfile?
+        profile: ChallengeUserProfile?,
+        accent: Color
     ) -> some View {
         Button {
             onSubmissionTapped?(submission)
         } label: {
-            GlassCard(padding: 14, variant: .secondary) {
+            GlassCard(padding: 14, variant: .secondary, borderColor: accent) {
                 HStack(spacing: 12) {
-                    rankBadge(rank)
+                    rankBadge(rank, accent: accent)
 
                     Button {
                         if let profile {
@@ -324,7 +327,7 @@ struct ChallengeLeaderboardView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 15, height: 15)
-                            .foregroundStyle(LColors.accents.special)
+                            .bubblyIconMaterial(tint: theme.palette.indicators)
                     }
                 }
             }
@@ -332,23 +335,18 @@ struct ChallengeLeaderboardView: View {
         .buttonStyle(.plain)
     }
 
-    private func rankBadge(_ rank: Int) -> some View {
-        Image("\(rank)wavy")
+    private func rankBadge(_ rank: Int, accent: Color) -> some View {
+        let tint = rank <= 3 ? accent : theme.palette.textSecondary
+
+        return Image("\(rank)wavy")
             .renderingMode(.template)
             .resizable()
             .scaledToFit()
             .frame(width: 18, height: 18)
             .foregroundStyle(.white)
             .frame(width: 40, height: 40)
-            .background(
-                Circle()
-                    .fill(rankGradient(for: rank))
-                    .shadow(
-                        color: LColors.gradientBlue.opacity(rank <= 3 ? 0.20 : 0.06),
-                        radius: rank <= 3 ? 12 : 4,
-                        y: 5
-                    )
-            )
+            .background { BubblyIconMaterial(tint: tint).clipShape(Circle()) }
+            .overlay { Circle().strokeBorder(tint, lineWidth: 1) }
     }
 
     private func avatarView(
@@ -371,7 +369,11 @@ struct ChallengeLeaderboardView: View {
             .padding(.vertical, 3)
             .background(
                 Capsule(style: .continuous)
-                    .fill(Color(lumeyHex: status.badgeColor).opacity(0.75))
+                    .fill(.clear)
+                    .overlay {
+                        BubblyIconMaterial(tint: Color(lumeyHex: status.badgeColor))
+                            .clipShape(Capsule(style: .continuous))
+                    }
             )
     }
 
@@ -382,7 +384,7 @@ struct ChallengeLeaderboardView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 11, height: 11)
-                .foregroundStyle(LColors.textSecondary)
+                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
             Text("\(value)")
                 .font(.system(size: 10, weight: .black, design: .rounded))
@@ -397,7 +399,7 @@ struct ChallengeLeaderboardView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 15, height: 15)
-                .foregroundStyle(LColors.accents.primary)
+                .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
             Text(title)
                 .font(.system(size: 15, weight: .black, design: .rounded))

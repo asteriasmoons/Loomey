@@ -9,6 +9,7 @@ import SwiftData
 struct ReadingBingoBoardDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
     private var books: [Book]
@@ -17,6 +18,7 @@ struct ReadingBingoBoardDetailView: View {
     private var progressRecords: [ReadingBingoProgress]
 
     let boardID: String
+    let accentIndex: Int
 
     @State private var selectedSquare: ReadingBingoSquareDefinition?
     @State private var celebrationMessage: String?
@@ -39,6 +41,10 @@ struct ReadingBingoBoardDetailView: View {
     }
 
     private let columnHeaders = ["B", "I", "N", "G", "O"]
+
+    private var boardTint: Color {
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+    }
 
     var body: some View {
         ZStack {
@@ -82,6 +88,7 @@ struct ReadingBingoBoardDetailView: View {
             if let snapshot {
                 ReadingBingoSquareCompletionSheet(
                     boardSnapshot: snapshot,
+                    tint: boardTint,
                     square: square,
                     books: books.filter { !$0.isArchived },
                     completionRecord: progressRecord?.squareStates.first(where: { $0.squareID == square.id }),
@@ -108,7 +115,7 @@ private extension ReadingBingoBoardDetailView {
 
                 Text(snapshot.state.title)
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(snapshot.accent.gradient)
+                    .bubblyIconMaterial(tint: boardTint)
             }
 
             Spacer(minLength: 12)
@@ -121,17 +128,17 @@ private extension ReadingBingoBoardDetailView {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(snapshot.accent.gradient)
+                    .bubblyIconMaterial(tint: boardTint)
                     .frame(width: 42, height: 42)
                     .background(Circle().fill(LColors.bg))
-                    .overlay(Circle().strokeBorder(snapshot.accent.gradient, lineWidth: 1.2))
+                    .overlay(Circle().strokeBorder(boardTint, lineWidth: 1.2))
             }
             .buttonStyle(.plain)
         }
     }
 
     func heroCard(snapshot: ReadingBingoBoardSnapshot) -> some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: boardTint) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(alignment: .top, spacing: 14) {
                     Image(snapshot.iconName)
@@ -139,15 +146,15 @@ private extension ReadingBingoBoardDetailView {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 30, height: 30)
-                        .foregroundStyle(snapshot.accent.gradient)
+                        .bubblyIconMaterial(tint: boardTint)
                         .frame(width: 58, height: 58)
-                        .background(Circle().fill(snapshot.accent.softGradient))
-                        .overlay(Circle().strokeBorder(snapshot.accent.gradient, lineWidth: 1))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay(Circle().strokeBorder(boardTint, lineWidth: 1))
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text(snapshot.state.title)
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(snapshot.accent.gradient)
+                            .bubblyIconMaterial(tint: boardTint)
 
                         Text(snapshot.description)
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -164,41 +171,37 @@ private extension ReadingBingoBoardDetailView {
                         .foregroundStyle(LColors.headingPrimary)
                         .lineLimit(2)
 
-                    ReadingBingoAccentProgressBar(progress: snapshot.progress, accent: snapshot.accent)
+                    ReadingBingoAccentProgressBar(progress: snapshot.progress, tint: boardTint)
                         .frame(height: 10)
 
                     HStack(spacing: 10) {
-                        heroTile(title: "Squares", value: "\(snapshot.completedChallengeCount)/\(snapshot.totalChallengeCount)", accent: snapshot.accent)
-                        heroTile(title: "Bingos", value: "\(snapshot.bingoCount)", accent: snapshot.accent)
-                        heroTile(title: "Waiting", value: "\(snapshot.remainingChallengeCount)", accent: snapshot.accent)
+                        heroTile(title: "Squares", value: "\(snapshot.completedChallengeCount)/\(snapshot.totalChallengeCount)")
+                        heroTile(title: "Bingos", value: "\(snapshot.bingoCount)")
+                        heroTile(title: "Waiting", value: "\(snapshot.remainingChallengeCount)")
                     }
                 }
             }
         }
     }
 
-    func heroTile(title: String, value: String, accent: ReadingBingoAccentIdentity) -> some View {
+    func heroTile(title: String, value: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.system(size: 17, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(accent.primaryColor.opacity(0.20), lineWidth: 1)
-        )
+        .background { BubblyTileSurface(tint: boardTint, cornerRadius: 16) }
+        .bubblyTileLift()
     }
 
     func boardCard(snapshot: ReadingBingoBoardSnapshot) -> some View {
@@ -207,7 +210,7 @@ private extension ReadingBingoBoardDetailView {
                 ForEach(Array(columnHeaders.enumerated()), id: \.offset) { _, header in
                     Text(header)
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(snapshot.accent.gradient)
+                        .bubblyIconMaterial(tint: boardTint)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -217,7 +220,7 @@ private extension ReadingBingoBoardDetailView {
                 ForEach(snapshot.squares) { square in
                     ReadingBingoSquareCell(
                         square: square,
-                        accent: snapshot.accent,
+                        tint: boardTint,
                         isEmphasized: !emphasizedLineIDs.isDisjoint(with: Set(square.lineIDs))
                     ) {
                         guard !square.isFreeSpace else { return }
@@ -230,7 +233,7 @@ private extension ReadingBingoBoardDetailView {
     }
 
     func lineSummaryCard(snapshot: ReadingBingoBoardSnapshot) -> some View {
-        GlassCard(variant: .secondary) {
+        GlassCard(variant: .secondary, borderColor: boardTint) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Bingo Lines")
                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -246,13 +249,12 @@ private extension ReadingBingoBoardDetailView {
                         ForEach(snapshot.lineDefinitions.filter { snapshot.earnedLineIDs.contains($0.id) }) { line in
                             Text(line.title)
                                 .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(LColors.cardTitle)
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 8)
-                                .background(
-                                    Capsule(style: .continuous)
-                                        .fill(snapshot.accent.gradient)
-                                )
+                                .background { BubblyTileSurface(tint: boardTint, cornerRadius: 999) }
+                                .bubblyTileLift()
                         }
                     }
 
@@ -365,8 +367,10 @@ private extension ReadingBingoBoardDetailView {
 }
 
 private struct ReadingBingoSquareCell: View {
+    @Environment(\.appTheme) private var theme
+
     let square: ReadingBingoSquareSnapshot
-    let accent: ReadingBingoAccentIdentity
+    let tint: Color
     let isEmphasized: Bool
     let action: () -> Void
 
@@ -375,45 +379,21 @@ private struct ReadingBingoSquareCell: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                tileShape
-                    .fill(background)
+                if square.isCompleted || square.isFreeSpace {
+                    BubblyTileSurface(tint: tint, cornerRadius: cornerRadius)
+                } else {
+                    tileShape.fill(LColors.primarySurface)
+                }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(alignment: .top) {
-                        if square.isFreeSpace {
-                            Text("FREE")
-                                .font(.system(size: 10, weight: .black, design: .rounded))
-                                .foregroundStyle(LColors.cardTitle)
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 4)
-                                .background(
-                                    Capsule(style: .continuous)
-                                        .fill(LColors.border.subtle)
-                                )
-                        } else if square.isCompleted {
-                            Image("checkwavy")
-                                .renderingMode(.template)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 13, height: 13)
-                                .foregroundStyle(.white)
-                                .frame(width: 24, height: 24)
-                                .background(Circle().fill(LColors.border.subtle))
-                        } else {
-                            Circle()
-                                .fill(LColors.border.nestedStrong)
-                                .frame(width: 24, height: 24)
-                                .overlay(Circle().strokeBorder(LColors.border.subtle, lineWidth: 1))
-                        }
-
-                        Spacer(minLength: 6)
-                    }
-
-                    Spacer(minLength: 2)
-
-                    Text(square.title)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(square.isFreeSpace ? "FREE" : square.title)
                         .font(.system(size: 10.5, weight: .black, design: .rounded))
                         .foregroundStyle(square.isCompleted || square.isFreeSpace ? .white : LColors.primaryText)
+                        .shadow(
+                            color: square.isCompleted || square.isFreeSpace ? theme.palette.background.opacity(0.65) : .clear,
+                            radius: 1,
+                            y: 2
+                        )
                         .multilineTextAlignment(.leading)
                         .lineLimit(4)
                         .minimumScaleFactor(0.76)
@@ -421,18 +401,23 @@ private struct ReadingBingoSquareCell: View {
                     if !square.linkedBookTitle.isEmpty {
                         Text(square.linkedBookTitle)
                             .font(.system(size: 9, weight: .bold, design: .rounded))
-                            .foregroundStyle((square.isCompleted || square.isFreeSpace) ? LColors.text.secondary : LColors.textSecondary)
+                            .foregroundStyle((square.isCompleted || square.isFreeSpace) ? .white.opacity(0.86) : LColors.textSecondary)
+                            .shadow(
+                                color: square.isCompleted || square.isFreeSpace ? theme.palette.background.opacity(0.65) : .clear,
+                                radius: 1,
+                                y: 2
+                            )
                             .lineLimit(1)
                     }
                 }
-                .frame(maxWidth: .infinity, minHeight: 90, alignment: .topLeading)
+                .frame(maxWidth: .infinity, minHeight: 90, alignment: .bottomLeading)
                 .padding(10)
             }
             .frame(maxWidth: .infinity, minHeight: 90, alignment: .topLeading)
             .clipShape(tileShape)
             .overlay(
                 tileShape
-                    .strokeBorder(borderStyle, lineWidth: isEmphasized ? 1.6 : 1)
+                    .strokeBorder(tint, lineWidth: isEmphasized ? 1.8 : 1)
             )
             .contentShape(tileShape)
             .compositingGroup()
@@ -448,48 +433,9 @@ private struct ReadingBingoSquareCell: View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
     }
 
-    private var background: some ShapeStyle {
-        if square.isFreeSpace {
-            return AnyShapeStyle(accent.gradient)
-        }
-
-        if square.isHighlighted {
-            return AnyShapeStyle(accent.softGradient)
-        }
-
-        if square.isCompleted {
-            return AnyShapeStyle(
-                LinearGradient(
-                    colors: [
-                        accent.primaryColor.opacity(0.34),
-                        accent.secondaryColor.opacity(0.24)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-        }
-
-        return AnyShapeStyle(
-            LColors.primarySurface
-        )
-    }
-
-    private var borderStyle: some ShapeStyle {
-        if square.isHighlighted || square.isFreeSpace {
-            return AnyShapeStyle(accent.gradient)
-        }
-
-        if square.isCompleted {
-            return AnyShapeStyle(accent.primaryColor.opacity(0.65))
-        }
-
-        return AnyShapeStyle(LColors.border.primary)
-    }
-
     private var shadowColor: Color {
         if isEmphasized {
-            return accent.secondaryColor.opacity(0.28)
+            return tint.opacity(0.28)
         }
         return .clear
     }
@@ -497,8 +443,10 @@ private struct ReadingBingoSquareCell: View {
 
 private struct ReadingBingoSquareCompletionSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
 
     let boardSnapshot: ReadingBingoBoardSnapshot
+    let tint: Color
     let square: ReadingBingoSquareDefinition
     let books: [Book]
     let completionRecord: ReadingBingoSquareStateRecord?
@@ -537,7 +485,7 @@ private struct ReadingBingoSquareCompletionSheet: View {
 
             VStack(spacing: 0) {
                 Capsule()
-                    .fill(LColors.border.primary.opacity(0.75))
+                    .fill(tint.opacity(0.75))
                     .frame(width: 36, height: 4)
                     .padding(.top, 10)
                     .padding(.bottom, 18)
@@ -572,7 +520,7 @@ private struct ReadingBingoSquareCompletionSheet: View {
 
                 Text(boardSnapshot.title)
                     .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(boardSnapshot.accent.gradient)
+                    .bubblyIconMaterial(tint: tint)
             }
 
             Spacer(minLength: 0)
@@ -585,28 +533,28 @@ private struct ReadingBingoSquareCompletionSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(boardSnapshot.accent.gradient)
+                    .bubblyIconMaterial(tint: tint)
                     .frame(width: 42, height: 42)
-                    .background(Circle().fill(LColors.iconContainer.primary))
-                    .overlay(Circle().strokeBorder(boardSnapshot.accent.gradient, lineWidth: 1))
+                    .background(Circle().fill(theme.palette.raisedSurface))
+                    .overlay(Circle().strokeBorder(tint, lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
     }
 
     private var challengeCard: some View {
-        GlassCard(variant: .elevated) {
+        GlassCard(variant: .elevated, borderColor: tint) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Requirement")
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(boardSnapshot.accent.gradient)
+                    .bubblyIconMaterial(tint: tint)
 
                 Text(square.description)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
 
-                DottedDivider()
+                materialDottedDivider
 
                 HStack(spacing: 12) {
                     statusTile(
@@ -634,28 +582,37 @@ private struct ReadingBingoSquareCompletionSheet: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
 
             Text(value)
                 .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
         }
-        .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
-        .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(LColors.border.nested, lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
+    }
+
+    private var materialDottedDivider: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<28, id: \.self) { _ in
+                Circle()
+                    .frame(width: 3, height: 3)
+                    .bubblyIconMaterial(tint: tint)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, 2)
     }
 
     private var bookPickerCard: some View {
-        GlassCard(variant: .subtle) {
+        GlassCard(variant: .subtle, borderColor: tint) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Choose Book")
                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -673,7 +630,7 @@ private struct ReadingBingoSquareCompletionSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 16, height: 16)
-                            .foregroundStyle(LColors.textSecondary)
+                            .bubblyIconMaterial(tint: tint)
 
                         TextField("Search library books...", text: $searchText)
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -689,7 +646,7 @@ private struct ReadingBingoSquareCompletionSheet: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(LColors.border.primary, lineWidth: 1)
+                            .strokeBorder(tint, lineWidth: 1)
                     )
 
                     if let selectedBook {
@@ -701,7 +658,7 @@ private struct ReadingBingoSquareCompletionSheet: View {
                             ReadingBingoBookSelectionRow(
                                 book: book,
                                 isSelected: selectedBookID == book.id,
-                                accent: boardSnapshot.accent
+                                tint: tint
                             ) {
                                 if selectedBookID == book.id {
                                     selectedBookID = nil
@@ -725,28 +682,29 @@ private struct ReadingBingoSquareCompletionSheet: View {
             VStack(alignment: .leading, spacing: 5) {
                 Text(book.displayTitle)
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.cardTitle)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .lineLimit(2)
 
                 Text(book.displayAuthor)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
 
                 Text(book.progressText)
                     .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundStyle(boardSnapshot.accent.gradient)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
             }
 
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(boardSnapshot.accent.softGradient)
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 16) }
+        .bubblyTileLift()
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(boardSnapshot.accent.gradient, lineWidth: 1)
+                .strokeBorder(tint, lineWidth: 1)
         )
     }
 
@@ -757,11 +715,17 @@ private struct ReadingBingoSquareCompletionSheet: View {
             } label: {
                 Text(completionRecord == nil ? "Complete Challenge" : "Save Completion")
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.appBackground)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(canComplete ? AnyShapeStyle(boardSnapshot.accent.gradient) : AnyShapeStyle(LColors.border.nestedStrong))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background {
+                        BubblyTileSurface(
+                            tint: canComplete ? tint : tint.opacity(0.38),
+                            cornerRadius: 16
+                        )
+                    }
+                    .bubblyTileLift()
             }
             .buttonStyle(.plain)
             .disabled(!canComplete)
@@ -795,9 +759,11 @@ private struct ReadingBingoSquareCompletionSheet: View {
 }
 
 private struct ReadingBingoBookSelectionRow: View {
+    @Environment(\.appTheme) private var theme
+
     let book: Book
     let isSelected: Bool
-    let accent: ReadingBingoAccentIdentity
+    let tint: Color
     let action: () -> Void
 
     var body: some View {
@@ -810,17 +776,20 @@ private struct ReadingBingoBookSelectionRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(book.displayTitle)
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(isSelected ? .white : LColors.cardTitle)
+                        .shadow(color: isSelected ? theme.palette.background.opacity(0.65) : .clear, radius: 1, y: 2)
                         .lineLimit(2)
 
                     Text(book.displayAuthor)
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                        .foregroundStyle(isSelected ? .white : LColors.textSecondary)
+                        .shadow(color: isSelected ? theme.palette.background.opacity(0.65) : .clear, radius: 1, y: 2)
                         .lineLimit(1)
 
                     Text(book.status.rawValue)
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundStyle(isSelected ? .white : LColors.textSecondary)
+                        .shadow(color: isSelected ? theme.palette.background.opacity(0.65) : .clear, radius: 1, y: 2)
                 }
 
                 Spacer(minLength: 8)
@@ -831,24 +800,30 @@ private struct ReadingBingoBookSelectionRow: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
-                        .foregroundStyle(.white)
+                        .bubblyIconMaterial(tint: tint)
                         .frame(width: 30, height: 30)
-                        .background(Circle().fill(accent.gradient))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay(Circle().strokeBorder(.white.opacity(0.8), lineWidth: 1.5))
                 } else {
                     Circle()
-                        .fill(LColors.iconContainer.primary)
+                        .fill(theme.palette.raisedSurface)
                         .frame(width: 30, height: 30)
-                        .overlay(Circle().strokeBorder(LColors.border.subtle, lineWidth: 1))
+                        .overlay(Circle().strokeBorder(tint, lineWidth: 1))
                 }
             }
             .padding(10)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isSelected ? AnyShapeStyle(accent.softGradient) : AnyShapeStyle(LColors.surface.subtle.opacity(0.5)))
-            )
+            .background {
+                if isSelected {
+                    BubblyTileSurface(tint: tint, cornerRadius: 16)
+                } else {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(LColors.surface.subtle.opacity(0.5))
+                }
+            }
+            .bubblyTileLift(isEnabled: isSelected)
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(isSelected ? AnyShapeStyle(accent.gradient) : AnyShapeStyle(LColors.border.nested), lineWidth: 1)
+                    .strokeBorder(isSelected ? .white.opacity(0.82) : tint, lineWidth: isSelected ? 1.5 : 1)
             )
         }
         .buttonStyle(.plain)

@@ -9,6 +9,7 @@ import SwiftData
 struct CatchUpSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     let books: [Book]
     let sessions: [ReadingSession]
@@ -100,9 +101,11 @@ struct CatchUpSheet: View {
 }
 
 private struct CatchUpPreviewTile: View {
+    @Environment(\.appTheme) private var theme
+
     let label: String
     let value: String
-    let valueColor: Color
+    let tint: Color
     var valueLineLimit: Int = 1
     var valueFontSize: CGFloat = 18
 
@@ -110,12 +113,14 @@ private struct CatchUpPreviewTile: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label.uppercased())
                 .font(.system(size: 10, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 .lineLimit(1)
 
             Text(value)
                 .font(.system(size: valueFontSize, weight: .black, design: .rounded))
-                .foregroundStyle(valueColor)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 .lineLimit(valueLineLimit)
                 .truncationMode(.tail)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -123,14 +128,8 @@ private struct CatchUpPreviewTile: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 }
 
@@ -155,12 +154,16 @@ private extension CatchUpSheet {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
-                            .fill(LColors.bg)
-                            .overlay(Circle().strokeBorder(LColors.accents.special, lineWidth: 1.2))
+                            .fill(theme.palette.raisedSurface)
+                            .overlay {
+                                BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                    .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                            }
                     )
             }
             .buttonStyle(.plain)
@@ -176,14 +179,15 @@ private extension CatchUpSheet {
     }
 
     var introductionCard: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             HStack(alignment: .top, spacing: 12) {
                 Image("clockwavy")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 24, height: 24)
-                    .foregroundStyle(LColors.accents.primary)
+                    .foregroundStyle(theme.palette.primaryAction)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
                 Text("Tell Lumey where you are now and how many days you read. Your missing page-based sessions will be rebuilt without adding made-up reading time.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -194,7 +198,7 @@ private extension CatchUpSheet {
     }
 
     var bookPickerCard: some View {
-        GlassCard(variant: .primary) {
+        GlassCard(variant: .primary, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Book")
                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -211,18 +215,20 @@ private extension CatchUpSheet {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18, height: 18)
-                            .foregroundStyle(LColors.accents.secondary)
+                            .foregroundStyle(.white)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(selectedBook?.displayTitle ?? "Select a Book")
                                 .font(.system(size: 14, weight: .black, design: .rounded))
-                                .foregroundStyle(selectedBook == nil ? LColors.textSecondary : LColors.cardTitle)
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                 .lineLimit(1)
 
                             if let selectedBook {
                                 Text(selectedBook.displayAuthor)
                                     .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(LColors.textSecondary)
+                                    .foregroundStyle(.white.opacity(0.82))
+                                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                     .lineLimit(1)
                             }
                         }
@@ -234,18 +240,12 @@ private extension CatchUpSheet {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 13, height: 13)
-                            .foregroundStyle(LColors.textSecondary)
+                            .foregroundStyle(.white)
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(LColors.glassSurface2)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
-                    )
+                    .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 16) }
+                    .bubblyTileLift()
                 }
                 .buttonStyle(.plain)
 
@@ -256,14 +256,17 @@ private extension CatchUpSheet {
                             .foregroundStyle(LColors.textSecondary)
                             .padding(.vertical, 8)
                     } else {
-                        ScrollView(showsIndicators: false) {
+                        ScrollView(.vertical, showsIndicators: availableBooks.count > 4) {
                             LazyVStack(spacing: 8) {
                                 ForEach(availableBooks) { book in
                                     bookSelectionRow(book)
                                 }
                             }
                         }
-                        .frame(maxHeight: 230)
+                        .frame(height: CGFloat(min(availableBooks.count, 4)) * 56)
+                        .padding(9)
+                        .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18) }
+                        .bubblyTileLift()
                     }
                 }
             }
@@ -288,17 +291,19 @@ private extension CatchUpSheet {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)
-                    .foregroundStyle(isSelected ? LColors.accents.contrast : LColors.accents.secondary)
+                    .foregroundStyle(.white)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(book.displayTitle)
                         .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(.white)
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                         .lineLimit(1)
 
                     Text(book.displayAuthor)
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(LColors.textSecondary)
+                        .foregroundStyle(.white.opacity(0.82))
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                         .lineLimit(1)
                 }
 
@@ -306,23 +311,20 @@ private extension CatchUpSheet {
 
                 Text("Page \(ReadingCatchUpService.lastLoggedPage(for: book, sessions: sessions))")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
             }
             .padding(11)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(isSelected ? LColors.state.selectedFill : LColors.iconContainer.primary)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(isSelected ? LColors.state.selectedBorder : LColors.border.nested, lineWidth: 1)
+                    .fill(isSelected ? theme.palette.raisedSurface : Color.clear)
             )
         }
         .buttonStyle(.plain)
     }
 
     func catchUpInputs(for book: Book) -> some View {
-        GlassCard(variant: .secondary) {
+        GlassCard(variant: .secondary, borderColor: theme.palette.indicators) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Reading Progress")
                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -337,7 +339,8 @@ private extension CatchUpSheet {
 
                     Text("\(lastLoggedPage)")
                         .font(.system(size: 18, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.accents.secondary)
+                        .foregroundStyle(theme.palette.primaryAction)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 }
                 .padding(12)
                 .background(
@@ -346,11 +349,19 @@ private extension CatchUpSheet {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(LColors.border.nestedStrong, lineWidth: 1)
+                        .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                 )
 
-                LumeyNumberField(title: "Current Book Page", text: $currentPage)
-                LumeyNumberField(title: "Number of Reading Days", text: $readingDays)
+                LumeyNumberField(
+                    title: "Current Book Page",
+                    text: $currentPage,
+                    borderColor: theme.palette.secondaryAccent
+                )
+                LumeyNumberField(
+                    title: "Number of Reading Days",
+                    text: $readingDays,
+                    borderColor: theme.palette.indicators
+                )
 
                 if book.totalPages > 0 {
                     Text("This book has \(book.totalPages) pages.")
@@ -368,7 +379,8 @@ private extension CatchUpSheet {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LColors.accents.contrast)
+                .foregroundStyle(theme.palette.indicators)
+                .bubblyIconMaterial(tint: theme.palette.indicators)
 
             Text(message)
                 .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -388,7 +400,7 @@ private extension CatchUpSheet {
     }
 
     func previewCard(preview: ReadingCatchUpPreview, book: Book) -> some View {
-        GlassCard(variant: .tertiary) {
+        GlassCard(variant: .tertiary, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Preview")
                     .font(.system(size: 17, weight: .black, design: .rounded))
@@ -399,13 +411,13 @@ private extension CatchUpSheet {
                         CatchUpPreviewTile(
                             label: "Last Logged Page",
                             value: "\(preview.lastLoggedPage)",
-                            valueColor: LColors.accents.secondary
+                            tint: theme.palette.rotation[0]
                         )
 
                         CatchUpPreviewTile(
                             label: "Current Page",
                             value: "\(preview.currentPage)",
-                            valueColor: LColors.accents.primary
+                            tint: theme.palette.rotation[1]
                         )
                     }
 
@@ -413,26 +425,26 @@ private extension CatchUpSheet {
                         CatchUpPreviewTile(
                             label: "Missing Pages",
                             value: "\(preview.missingPages)",
-                            valueColor: LColors.accents.contrast
+                            tint: theme.palette.rotation[2]
                         )
 
                         CatchUpPreviewTile(
                             label: "Reading Days",
                             value: "\(preview.readingDays)",
-                            valueColor: LColors.accents.tertiary
+                            tint: theme.palette.rotation[0]
                         )
                     }
 
                     CatchUpPreviewTile(
                         label: "Sessions Created",
                         value: "\(preview.sessions.count)",
-                        valueColor: LColors.accents.special
+                        tint: theme.palette.rotation[1]
                     )
 
                     CatchUpPreviewTile(
                         label: "Book",
                         value: book.displayTitle,
-                        valueColor: LColors.cardTitle,
+                        tint: theme.palette.rotation[2],
                         valueLineLimit: 2,
                         valueFontSize: 16
                     )
@@ -442,39 +454,37 @@ private extension CatchUpSheet {
     }
 
     func sessionBreakdown(_ plans: [ReadingCatchUpSessionPlan]) -> some View {
-        GlassCard(variant: .elevated) {
+        GlassCard(variant: .elevated, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Session Breakdown")
                     .font(.system(size: 17, weight: .black, design: .rounded))
                     .foregroundStyle(LColors.cardTitle)
 
-                ForEach(plans.reversed()) { plan in
+                ForEach(Array(plans.reversed().enumerated()), id: \.element.id) { index, plan in
+                    let tint = theme.palette.rotation[index % theme.palette.rotation.count]
                     HStack(spacing: 12) {
                         Text(plan.date.formatted(.dateTime.month(.abbreviated).day().year()))
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
 
                         Spacer()
 
                         VStack(alignment: .trailing, spacing: 2) {
                             Text("Pages \(plan.startPage) to \(plan.endPage)")
                                 .font(.system(size: 12, weight: .black, design: .rounded))
-                                .foregroundStyle(LColors.cardTitle)
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
 
                             Text("\(plan.pagesRead) pages")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                                .foregroundStyle(LColors.accents.secondary)
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                         }
                     }
                     .padding(11)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(LColors.iconContainer.primary)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(LColors.border.nested, lineWidth: 1)
-                    )
+                    .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+                    .bubblyTileLift()
                 }
             }
         }
@@ -494,17 +504,12 @@ private extension CatchUpSheet {
                 Text(isSaving ? "Creating Sessions" : "Create Catch Up Sessions")
                     .font(.system(size: 15, weight: .black, design: .rounded))
             }
-            .foregroundStyle(LColors.appBackground)
+            .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(LColors.accents.primary)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(LColors.strongBorder, lineWidth: 1)
-            )
+            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 18) }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
         .disabled(isSaving)

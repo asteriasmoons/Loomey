@@ -15,6 +15,7 @@ private struct BookSheetMode: Identifiable {
 struct ReadingLibraryView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
     private var books: [Book]
@@ -174,7 +175,7 @@ private extension ReadingLibraryView {
     var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Library")
+                Text("Bookshelf")
                     .font(.system(size: 38, weight: .black, design: .rounded))
                     .foregroundStyle(LColors.headingPrimary)
 
@@ -200,21 +201,18 @@ private extension ReadingLibraryView {
                 .scaledToFit()
                 .frame(width: 24, height: 24)
                 .foregroundStyle(
-                    LColors.accents.primary
+                    theme.palette.primaryAction
                 )
+                .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 .frame(width: 46, height: 46)
-                .background(
+                .background {
                     Circle()
-                        .fill(LColors.bg)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    LColors.accents.primary,
-                                    lineWidth: 1.35
-                                )
-                        )
+                        .fill(theme.palette.background)
                         .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                )
+
+                    BubblyIconMaterial(tint: theme.palette.primaryAction)
+                        .mask { Circle().strokeBorder(lineWidth: 1.35) }
+                }
         }
         .buttonStyle(.plain)
     }
@@ -230,7 +228,8 @@ private extension ReadingLibraryView {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(theme.palette.primaryAction)
+                .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
             TextField("Search books, authors, series, tags...", text: $searchText)
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -257,16 +256,11 @@ private extension ReadingLibraryView {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(
-                    LColors.gradientBlue.opacity(0.08)
-                )
+                .fill(theme.palette.surface)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(
-                    LColors.gradientBlue.opacity(0.65),
-                    lineWidth: 1
-                )
+                .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
         )
     }
 }
@@ -284,16 +278,18 @@ private extension ReadingLibraryView {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.appBackground)
+                    .foregroundStyle(theme.palette.textPrimary)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Reading Lists")
                         .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.appBackground)
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
 
                     Text("Curated collections and TBR plans")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.black.opacity(0.75))
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                 }
 
                 Spacer()
@@ -301,10 +297,8 @@ private extension ReadingLibraryView {
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(LGradients.header)
-            )
+            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 20) }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
     }
@@ -318,14 +312,16 @@ private extension ReadingLibraryView {
             HStack(spacing: 12) {
                 libraryActionButton(
                     title: "Recommend",
-                    iconName: "sparkle"
+                    iconName: "sparkle",
+                    tint: theme.palette.primaryAction
                 ) {
                     showRecommendationsSheet = true
                 }
 
                 libraryActionButton(
                     title: "Look Up",
-                    iconName: "searchwavy"
+                    iconName: "searchwavy",
+                    tint: theme.palette.secondaryAccent
                 ) {
                     showBookSearchSheet = true
                 }
@@ -333,7 +329,8 @@ private extension ReadingLibraryView {
 
             libraryActionButton(
                 title: "Reading Mission",
-                iconName: "wand"
+                iconName: "wand",
+                tint: theme.palette.indicators
             ) {
                 showReadingMissionSheet = true
             }
@@ -343,6 +340,7 @@ private extension ReadingLibraryView {
     func libraryActionButton(
         title: String,
         iconName: String,
+        tint: Color,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -357,15 +355,12 @@ private extension ReadingLibraryView {
                     .font(.system(size: 14, weight: .black, design: .rounded))
                     .lineLimit(1)
             }
-            .foregroundStyle(LColors.appBackground)
+            .foregroundStyle(theme.palette.textPrimary)
+            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
             .frame(maxWidth: .infinity, minHeight: 46, alignment: .center)
             .contentShape(Rectangle())
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(
-                        LColors.accents.primary
-                    )
-            )
+            .background { BubblyTileSurface(tint: tint, cornerRadius: 18) }
+            .bubblyTileLift()
         }
         .buttonStyle(.plain)
     }
@@ -379,10 +374,18 @@ private extension ReadingLibraryView {
                     customFilterCollapseButton
                 }
 
-                statusFilterChip(title: "All", status: nil)
+                statusFilterChip(
+                    title: "All",
+                    status: nil,
+                    tint: theme.palette.rotation[0]
+                )
 
-                ForEach(BookStatus.allCases) { status in
-                    statusFilterChip(title: status.rawValue, status: status)
+                ForEach(Array(BookStatus.allCases.enumerated()), id: \.element.id) { index, status in
+                    statusFilterChip(
+                        title: status.rawValue,
+                        status: status,
+                        tint: theme.palette.rotation[(index + 1) % theme.palette.rotation.count]
+                    )
                 }
             }
             .padding(.vertical, 2)
@@ -393,8 +396,11 @@ private extension ReadingLibraryView {
         Group {
             if !customFilters.isEmpty {
                 FlowLayout(spacing: 8) {
-                    ForEach(customFilters) { filter in
-                        customFilterChip(filter)
+                    ForEach(Array(customFilters.enumerated()), id: \.element.id) { index, filter in
+                        customFilterChip(
+                            filter,
+                            tint: theme.palette.rotation[index % theme.palette.rotation.count]
+                        )
                     }
                 }
                 .frame(maxHeight: shouldShowCustomFilterCollapseControl && !isCustomFilterExpanded ? 39 : nil, alignment: .top)
@@ -414,17 +420,16 @@ private extension ReadingLibraryView {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 14, height: 14)
-                .foregroundStyle(LColors.gradientPurple)
+                .foregroundStyle(theme.palette.primaryAction)
+                .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 .frame(width: 34, height: 34)
-                .background(
+                .background {
                     Circle()
-                        .fill(LColors.bg)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(LColors.gradientPurple, lineWidth: 1.35)
-                        )
-                        .shadow(color: LColors.gradientPurple.opacity(0.24), radius: 10, y: 5)
-                )
+                        .fill(theme.palette.background)
+
+                    BubblyIconMaterial(tint: theme.palette.primaryAction)
+                        .mask { Circle().strokeBorder(lineWidth: 1.35) }
+                }
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Create custom library filter")
@@ -495,7 +500,7 @@ private extension ReadingLibraryView {
         defaultStatus == status
     }
 
-    func statusFilterChip(title: String, status: BookStatus?) -> some View {
+    func statusFilterChip(title: String, status: BookStatus?, tint: Color) -> some View {
         let isSelected = selectedStatus == status
 
         return Button {
@@ -516,30 +521,24 @@ private extension ReadingLibraryView {
                 Text(title)
             }
             .font(.system(size: 12, weight: .black, design: .rounded))
-            .foregroundStyle(isSelected ? .white : LColors.textSecondary)
+            .foregroundStyle(isSelected ? theme.palette.textPrimary : LColors.textSecondary)
+            .shadow(color: isSelected ? theme.palette.background.opacity(0.55) : .clear, radius: 1, y: 2)
             .padding(.horizontal, 14)
             .padding(.vertical, 9)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(
-                        isSelected
-                        ? LColors.gradientBlue.opacity(0.36)
-                        : LColors.surface.subtle.opacity(0.6)
-                    )
-            )
-            .overlay(
-                Capsule(style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: isSelected
-                            ? [LColors.accents.primary, LColors.accents.secondary]
-                            : [LColors.border.subtle, LColors.border.nested],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            )
+            .background {
+                if isSelected {
+                    BubblyTileSurface(tint: tint, cornerRadius: 999)
+                } else {
+                    Capsule(style: .continuous).fill(LColors.surface.subtle.opacity(0.6))
+                }
+            }
+            .overlay {
+                if !isSelected {
+                    Capsule(style: .continuous)
+                        .strokeBorder(LColors.border.subtle, lineWidth: 1)
+                }
+            }
+            .bubblyTileLift(isEnabled: isSelected)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -555,7 +554,7 @@ private extension ReadingLibraryView {
         }
     }
 
-    func customFilterChip(_ filter: ReadingLibraryCustomFilter) -> some View {
+    func customFilterChip(_ filter: ReadingLibraryCustomFilter, tint: Color) -> some View {
         let isSelected = selectedCustomFilterID == filter.id
 
         return Button {
@@ -569,20 +568,24 @@ private extension ReadingLibraryView {
             Text(filter.title)
                 .font(.system(size: 12, weight: .black, design: .rounded))
                 .lineLimit(1)
-                .foregroundStyle(isSelected ? .white : LColors.textSecondary)
+                .foregroundStyle(isSelected ? theme.palette.textPrimary : LColors.textSecondary)
+                .shadow(color: isSelected ? theme.palette.background.opacity(0.55) : .clear, radius: 1, y: 2)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 9)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(isSelected ? LColors.gradientPurple : LColors.surface.nestedSoft)
-                )
-                .overlay(
-                    Capsule(style: .continuous)
-                        .strokeBorder(
-                            isSelected ? LColors.gradientPurple : LColors.border.subtle,
-                            lineWidth: 1
-                        )
-                )
+                .background {
+                    if isSelected {
+                        BubblyTileSurface(tint: tint, cornerRadius: 999)
+                    } else {
+                        Capsule(style: .continuous).fill(LColors.surface.nestedSoft)
+                    }
+                }
+                .overlay {
+                    if !isSelected {
+                        Capsule(style: .continuous)
+                            .strokeBorder(LColors.border.subtle, lineWidth: 1)
+                    }
+                }
+                .bubblyTileLift(isEnabled: isSelected)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -651,10 +654,10 @@ private extension ReadingLibraryView {
 private extension ReadingLibraryView {
     var libraryOverview: some View {
         HStack(spacing: 12) {
-            LibraryMiniStatCard(title: "Total", value: "\(activeBooksCount)")
-            LibraryMiniStatCard(title: "Reading", value: "\(readingCount)")
-            LibraryMiniStatCard(title: "TBR", value: "\(tbrCount)")
-            LibraryMiniStatCard(title: "Finished", value: "\(finishedCount)")
+            LibraryMiniStatCard(title: "Total", value: "\(activeBooksCount)", tint: theme.palette.primaryAction)
+            LibraryMiniStatCard(title: "Reading", value: "\(readingCount)", tint: theme.palette.secondaryAccent)
+            LibraryMiniStatCard(title: "TBR", value: "\(tbrCount)", tint: theme.palette.indicators)
+            LibraryMiniStatCard(title: "Finished", value: "\(finishedCount)", tint: theme.palette.primaryAction)
         }
     }
 }
@@ -687,7 +690,7 @@ private extension ReadingLibraryView {
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(Array(visibleBooks.enumerated()), id: \.element.id) { index, book in
-                        LibraryBookRow(book: book, variant: GlassCardRotation.variant(for: index), accentIndex: index) {
+                        LibraryBookRow(book: book, variant: GlassCardRotation.variant(for: index), accentIndex: index + 1) {
                             activeBookSheet = BookSheetMode(book: book)
                         }
                         .contextMenu {
@@ -842,12 +845,18 @@ private extension View {
 }
 
 struct LibrarySeriesFilterDropdown: View {
+    @Environment(\.appTheme) private var theme
+
     let availableSeries: [String]
     @Binding var selectedSeries: String?
     @Binding var isExpanded: Bool
     
     private var selectedTitle: String {
         selectedSeries ?? "All Series"
+    }
+
+    private var expandedOptionsHeight: CGFloat {
+        CGFloat(min(availableSeries.count + 1, 4)) * 43
     }
     
     var body: some View {
@@ -868,25 +877,25 @@ struct LibrarySeriesFilterDropdown: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
-                        .foregroundStyle(LColors.accents.primary)
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 34, height: 34)
-                        .background(
-                            Circle()
-                                .fill(LColors.iconContainer.primary)
-                        )
-                        .overlay(
-                            Circle()
-                                .strokeBorder(LColors.accents.primary, lineWidth: 1)
-                        )
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay {
+                            BubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                                .mask { Circle().strokeBorder(lineWidth: 1) }
+                        }
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Filter Library")
                             .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.textSecondary)
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                         
                         Text(selectedTitle)
                             .font(.system(size: 14, weight: .black, design: .rounded))
-                            .foregroundStyle(LColors.cardTitle)
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                             .lineLimit(1)
                     }
                     
@@ -894,12 +903,13 @@ struct LibrarySeriesFilterDropdown: View {
                     
                     Text("\(availableSeries.count)")
                         .font(.system(size: 10, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(LColors.iconContainer.primary)
+                                .fill(theme.palette.raisedSurface)
                         )
                     
                     Image(isExpanded ? "chevup" : "chevdown")
@@ -907,7 +917,7 @@ struct LibrarySeriesFilterDropdown: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 12, height: 12)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: theme.palette.textPrimary)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
@@ -918,46 +928,32 @@ struct LibrarySeriesFilterDropdown: View {
             .buttonStyle(.plain)
             
             if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
-                    dropdownOption(title: "All Series", seriesName: nil)
-                    
-                    ForEach(availableSeries, id: \.self) { series in
-                        dropdownOption(title: series, seriesName: series)
+                ScrollView(.vertical, showsIndicators: true) {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        dropdownOption(title: "All Series", seriesName: nil)
+
+                        ForEach(availableSeries, id: \.self) { series in
+                            dropdownOption(title: series, seriesName: series)
+                        }
                     }
                 }
+                .frame(height: expandedOptionsHeight)
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(
-                            LColors.gradientBlue.opacity(0.08)
-                        )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(
-                            LColors.gradientBlue.opacity(0.55),
-                            lineWidth: 1
-                        )
-                )
+                .background { BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 20) }
+                .bubblyTileLift()
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
     }
     
     private var dropdownBackground: some View {
-        RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .fill(
-                LColors.gradientBlue.opacity(0.10)
-            )
+        BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 18)
     }
     
     private var dropdownBorder: some View {
         RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .strokeBorder(
-                LColors.gradientBlue.opacity(0.72),
-                lineWidth: 1
-            )
+            .strokeBorder(theme.palette.textPrimary.opacity(0.34), lineWidth: 1)
     }
     
     private func dropdownOption(title: String, seriesName: String?) -> some View {
@@ -971,17 +967,18 @@ struct LibrarySeriesFilterDropdown: View {
         } label: {
             HStack(spacing: 10) {
                 Circle()
-                    .fill(isSelected ? LColors.accents.primary : LColors.border.subtle)
+                    .fill(isSelected ? theme.palette.textPrimary : theme.palette.raisedSurface)
                     .frame(width: 12, height: 12)
                     .overlay(
                         Circle()
-                            .fill(isSelected ? LColors.border.primary.opacity(0.75) : Color.clear)
+                            .fill(isSelected ? theme.palette.secondaryAccent : Color.clear)
                             .frame(width: 4, height: 4)
                     )
                 
                 Text(title)
                     .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(isSelected ? .white : LColors.textSecondary)
+                    .foregroundStyle(theme.palette.textPrimary)
+                    .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
@@ -993,14 +990,15 @@ struct LibrarySeriesFilterDropdown: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 14, height: 14)
-                        .foregroundStyle(LColors.accents.secondary)
+                        .foregroundStyle(theme.palette.textPrimary)
+                        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                 }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 9)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(isSelected ? LColors.iconContainer.primary : Color.clear)
+                    .fill(isSelected ? theme.palette.raisedSurface : Color.clear)
             )
         }
         .buttonStyle(.plain)

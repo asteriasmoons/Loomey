@@ -6,6 +6,8 @@
 import SwiftUI
 
 struct ChallengeFeedEntryCard: View {
+    @Environment(\.appTheme) private var theme
+
     let submission: ChallengeSubmissionDTO
 
     var linkedBookTitle: String?
@@ -14,6 +16,7 @@ struct ChallengeFeedEntryCard: View {
     var avatarURL: String?
     var likeCount: Int?
     var commentCount: Int?
+    var accentColor: Color
     var isLiked: Bool
     var onLikeTapped: (() -> Void)?
     var onCommentTapped: (() -> Void)?
@@ -33,6 +36,7 @@ struct ChallengeFeedEntryCard: View {
         avatarURL: String? = nil,
         likeCount: Int? = nil,
         commentCount: Int? = nil,
+        accentColor: Color = LColors.accents.primary,
         isLiked: Bool = false,
         onLikeTapped: (() -> Void)? = nil,
         onCommentTapped: (() -> Void)? = nil,
@@ -48,6 +52,7 @@ struct ChallengeFeedEntryCard: View {
         self.avatarURL = avatarURL
         self.likeCount = likeCount
         self.commentCount = commentCount
+        self.accentColor = accentColor
         self.isLiked = isLiked
         self.onLikeTapped = onLikeTapped
         self.onCommentTapped = onCommentTapped
@@ -58,7 +63,7 @@ struct ChallengeFeedEntryCard: View {
     }
 
     var body: some View {
-        GlassCard(padding: 14, variant: .featured) {
+        GlassCard(padding: 14, variant: .featured, borderColor: accentColor) {
             VStack(alignment: .leading, spacing: 12) {
                 header
 
@@ -141,7 +146,11 @@ struct ChallengeFeedEntryCard: View {
             .padding(.vertical, 3)
             .background(
                 Capsule(style: .continuous)
-                    .fill(statusBadgeColor.opacity(0.75))
+                    .fill(.clear)
+                    .overlay {
+                        BubblyIconMaterial(tint: statusBadgeColor)
+                            .clipShape(Capsule(style: .continuous))
+                    }
             )
     }
 
@@ -169,7 +178,7 @@ struct ChallengeFeedEntryCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 11, height: 11)
-                .foregroundStyle(LColors.accents.primary)
+                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
             Text(title)
                 .font(.system(size: 11, weight: .black, design: .rounded))
@@ -280,9 +289,10 @@ struct ChallengeFeedEntryCard: View {
                         .frame(width: 14, height: 14)
                         .foregroundStyle(
                             isLiked
-                            ? AnyShapeStyle(LColors.gradientPurple)
+                            ? AnyShapeStyle(theme.palette.indicators)
                             : AnyShapeStyle(LColors.textSecondary)
                         )
+                        .bubblyIconMaterial(tint: isLiked ? theme.palette.indicators : theme.palette.secondaryAccent)
 
                     Text("\(displayLikeCount)")
                         .font(.system(size: 11, weight: .black, design: .rounded))
@@ -302,10 +312,9 @@ struct ChallengeFeedEntryCard: View {
                         .scaledToFit()
                         .frame(width: 14, height: 14)
                         .foregroundStyle(
-                            showInlineCommentBox
-                            ? AnyShapeStyle(.white)
-                            : AnyShapeStyle(LColors.textSecondary)
+                            AnyShapeStyle(theme.palette.secondaryAccent)
                         )
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
 
                     Text("\(displayCommentCount)")
                         .font(.system(size: 11, weight: .black, design: .rounded))
@@ -324,10 +333,9 @@ struct ChallengeFeedEntryCard: View {
                     .scaledToFit()
                     .frame(width: 14, height: 14)
                     .foregroundStyle(
-                        displayCommentCount > 0 || isCommenting
-                        ? AnyShapeStyle(.white)
-                        : AnyShapeStyle(LColors.textSecondary)
+                        AnyShapeStyle(theme.palette.secondaryAccent)
                     )
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
             }
             .buttonStyle(.plain)
             .disabled(onOpenComments == nil)
@@ -349,7 +357,7 @@ struct ChallengeFeedEntryCard: View {
                         .fill(LColors.surface.nested)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(LColors.border.nested, lineWidth: 1)
+                                .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                         )
                 )
 
@@ -366,12 +374,7 @@ struct ChallengeFeedEntryCard: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
-                    .background(
-                        Circle()
-                            .fill(LGradients.blue)
-                    )
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
             }
             .buttonStyle(.plain)
         }

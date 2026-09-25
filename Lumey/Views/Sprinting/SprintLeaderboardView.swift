@@ -7,6 +7,7 @@ import SwiftUI
 
 struct SprintLeaderboardView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
     @State private var entries: [SprintLeaderboardEntry] = []
     @State private var isLoading = false
@@ -48,21 +49,15 @@ struct SprintLeaderboardView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(
-                            LColors.accents.primary
-                        )
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .frame(width: 36, height: 36)
                         .background(
                             Circle()
                                 .fill(LColors.bg)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(
-                                            LColors.accents.primary,
-                                            lineWidth: 1.35
-                                        )
+                                        .strokeBorder(theme.palette.primaryAction, lineWidth: 1.35)
                                 )
-                                .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
                         )
                 }
                 .buttonStyle(.plain)
@@ -87,7 +82,7 @@ struct SprintLeaderboardView: View {
                     }
                 } else {
                     ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
-                        leaderboardRow(entry: entry, rank: index + 1)
+                        leaderboardRow(entry: entry, rank: index + 1, accentIndex: index)
                     }
                 }
             }
@@ -97,18 +92,19 @@ struct SprintLeaderboardView: View {
         }
     }
 
-    private func leaderboardRow(entry: SprintLeaderboardEntry, rank: Int) -> some View {
+    private func leaderboardRow(entry: SprintLeaderboardEntry, rank: Int, accentIndex: Int) -> some View {
         let isMe = entry.userId == userId
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
 
-        return GlassCard(variant: .primary) {
+        return GlassCard(variant: .primary, borderColor: tint) {
             HStack(spacing: 12) {
-                rankIcon(for: rank - 1)
+                rankIcon(for: rank - 1, tint: tint)
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         Text(entry.displayName)
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(isMe ? LColors.accent : LColors.textPrimary)
+                            .bubblyIconMaterial(tint: tint)
                         if isMe {
                             Text("you")
                                 .font(.system(size: 10, weight: .bold))
@@ -138,38 +134,13 @@ struct SprintLeaderboardView: View {
         }
     }
 
-    @ViewBuilder
-    private func rankIcon(for index: Int) -> some View {
-        switch index {
-        case 0:
-            Image("startrophyfill")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-                .foregroundStyle(LColors.accents.primary)
-        case 1:
-            Image("startrophyfill")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-                .foregroundStyle(LColors.accents.contrast)
-        case 2:
-            Image("startrophyfill")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-                .foregroundStyle(LColors.accents.secondary)
-        default:
-            Image("sparklybook")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-                .foregroundStyle(LColors.accents.special)
-        }
+    private func rankIcon(for index: Int, tint: Color) -> some View {
+        Image(index < 3 ? "startrophyfill" : "sparklybook")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 18, height: 18)
+            .bubblyIconMaterial(tint: tint)
     }
 
     private func load() async {

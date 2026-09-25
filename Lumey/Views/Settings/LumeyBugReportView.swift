@@ -5,6 +5,7 @@ import SwiftUI
 struct LumeyBugReportView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     @State private var title = ""
@@ -34,7 +35,12 @@ struct LumeyBugReportView: View {
 
     var body: some View {
         LumeyReportFormScaffold {
-            LumeyReportHeader(eyebrow: "VOXIVERSE", title: "Report a Bug") {
+            LumeyReportHeader(
+                eyebrow: "VOXIVERSE",
+                title: "Report a Bug",
+                eyebrowColor: theme.palette.secondaryAccent,
+                bubbly: true
+            ) {
                 dismiss()
             }
             introCard
@@ -54,42 +60,43 @@ struct LumeyBugReportView: View {
     private var introCard: some View {
         LumeyReportInfoCard(
             title: "Send this directly to Voxiverse",
-            message: "Describe exactly what happened. Loomey will attach the app version, build, device, iOS version, locale, time zone, and submission time automatically."
+            message: "Describe exactly what happened. Loomey will attach the app version, build, device, iOS version, locale, time zone, and submission time automatically.",
+            borderColor: theme.palette.primaryAction
         )
     }
 
     private var detailsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            LumeyReportSectionHeader(title: "Report Details")
-            LumeyReportTextField(title: "Title", placeholder: "Short description of the bug", text: $title)
-            LumeyReportPickerField(title: "Area", options: categories, selection: $category)
-            LumeyReportPickerField(title: "Severity", options: severities, selection: $severity)
-            LumeyReportPickerField(title: "Frequency", options: frequencies, selection: $frequency)
+            LumeyReportSectionHeader(title: "Report Details", color: theme.palette.primaryAction, bubbly: true)
+            LumeyReportTextField(title: "Title", placeholder: "Short description of the bug", text: $title, borderColor: theme.palette.secondaryAccent)
+            LumeyReportPickerField(title: "Area", options: categories, selection: $category, bubblyTint: theme.palette.primaryAction)
+            LumeyReportPickerField(title: "Severity", options: severities, selection: $severity, bubblyTint: theme.palette.secondaryAccent)
+            LumeyReportPickerField(title: "Frequency", options: frequencies, selection: $frequency, bubblyTint: theme.palette.indicators)
         }
     }
 
     private var behaviorSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            LumeyReportSectionHeader(title: "What Happened")
-            LumeyReportTextEditor(title: "Description", placeholder: "Tell me what happened, what you were doing, and what went wrong.", text: $descriptionText, minHeight: 150)
-            LumeyReportTextEditor(title: "Expected Behavior", placeholder: "What did you expect Loomey to do instead?", text: $expectedBehavior, minHeight: 110)
+            LumeyReportSectionHeader(title: "What Happened", color: theme.palette.secondaryAccent, bubbly: true)
+            LumeyReportTextEditor(title: "Description", placeholder: "Tell me what happened, what you were doing, and what went wrong.", text: $descriptionText, minHeight: 150, borderColor: theme.palette.indicators)
+            LumeyReportTextEditor(title: "Expected Behavior", placeholder: "What did you expect Loomey to do instead?", text: $expectedBehavior, minHeight: 110, borderColor: theme.palette.primaryAction)
         }
     }
 
     private var reproductionSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            LumeyReportSectionHeader(title: "Reproduce the Bug")
-            LumeyReportDynamicStepsField(title: "Steps to Reproduce", steps: $steps, maxSteps: 10)
-            LumeyReportTextEditor(title: "Additional Notes", placeholder: "Anything else that might help explain the problem?", text: $additionalNotes, minHeight: 100)
+            LumeyReportSectionHeader(title: "Reproduce the Bug", color: theme.palette.indicators, bubbly: true)
+            LumeyReportDynamicStepsField(title: "Steps to Reproduce", steps: $steps, maxSteps: 10, accentColor: theme.palette.secondaryAccent, bubblyNumbers: true)
+            LumeyReportTextEditor(title: "Additional Notes", placeholder: "Anything else that might help explain the problem?", text: $additionalNotes, minHeight: 100, borderColor: theme.palette.indicators)
         }
     }
 
     private func attachmentsSection(title: String) -> some View {
-        LumeyReportAttachmentsPicker(title: title, selectedPhotos: $selectedPhotos, attachmentData: attachmentData)
+        LumeyReportAttachmentsPicker(title: title, selectedPhotos: $selectedPhotos, attachmentData: attachmentData, accentColor: theme.palette.primaryAction, bubbly: true)
     }
 
     private func diagnosticsCard(screenName: String) -> some View {
-        LumeyReportDiagnosticsCard(screenName: screenName)
+        LumeyReportDiagnosticsCard(screenName: screenName, borderColor: theme.palette.secondaryAccent)
     }
 
     private func statusCards(successTitle: String, reportID: String?, error: String?) -> some View {
@@ -101,7 +108,8 @@ struct LumeyBugReportView: View {
             title: buttonTitle,
             sendingTitle: "Sending...",
             canSubmit: canSubmit,
-            isSubmitting: isSubmitting
+            isSubmitting: isSubmitting,
+            bubblyTint: theme.palette.indicators
         ) {
             Task { await submitReport() }
         }

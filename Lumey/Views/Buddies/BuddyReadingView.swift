@@ -9,6 +9,7 @@ import SwiftUI
 struct BuddyReadingView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     
     @State private var board: [BuddyAnnouncement] = []
     @State private var myAnnouncements: [BuddyAnnouncement] = []
@@ -58,6 +59,7 @@ struct BuddyReadingView: View {
                     }
                 )
                 .presentationDetents([.medium, .large])
+                .presentationContentInteraction(.resizes)
                 .presentationDragIndicator(.hidden)
                 .preferredColorScheme(.dark)
             }
@@ -220,77 +222,37 @@ struct BuddyReadingView: View {
                 Button {
                     showChangeDisplayName = true
                 } label: {
-                    ZStack {
-                        Circle()
-                            .fill(LColors.border.nested)
-                            .overlay(Circle().stroke(LColors.glassBorder, lineWidth: 1))
-                            .frame(width: 34, height: 34)
-                        Image("profilewavy")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                            .foregroundStyle(
-                                LColors.accents.primary
-                            )
-                            .frame(width: 40, height: 40)
-                            .background(
-                                Circle()
-                                    .fill(LColors.bg)
-                                    .overlay(
-                                        Circle()
-                                            .strokeBorder(
-                                                LColors.accents.primary,
-                                                lineWidth: 1.35
-                                            )
-                                    )
-                                    .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                            )
-                    }
-                    .buttonStyle(.plain)
+                    headerIcon("profilewavy", tint: theme.palette.secondaryAccent)
                 }
+                .buttonStyle(.plain)
                 
                 Button {
                     Task { await loadAll() }
                 } label: {
-                    ZStack {
-                        Circle()
-                            .fill(LColors.border.nested)
-                            .overlay(Circle().stroke(LColors.glassBorder, lineWidth: 1))
-                            .frame(width: 34, height: 34)
-                        Image("reset")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                            .foregroundStyle(
-                                LColors.accents.primary
-                            )
-                            .frame(width: 40, height: 40)
-                            .background(
-                                Circle()
-                                    .fill(LColors.bg)
-                                    .overlay(
-                                        Circle()
-                                            .strokeBorder(
-                                                LColors.accents.primary,
-                                                lineWidth: 1.35
-                                            )
-                                    )
-                                    .shadow(color: LColors.gradientBlue.opacity(0.20), radius: 14, y: 7)
-                            )
-                    }
-                    .buttonStyle(.plain)
+                    headerIcon("reset", tint: theme.palette.primaryAction)
                 }
+                .buttonStyle(.plain)
             }
             .padding(.top, 24)
         }
+    }
+
+    private func headerIcon(_ name: String, tint: Color) -> some View {
+        Image(name)
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 20, height: 20)
+            .bubblyIconMaterial(tint: tint)
+            .frame(width: 40, height: 40)
+            .background(Circle().fill(LColors.bg))
+            .overlay(Circle().strokeBorder(tint, lineWidth: 1.35))
     }
     
     // MARK: - My status section
     
     private var myStatusSection: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("My Status")
@@ -307,7 +269,7 @@ struct BuddyReadingView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 13, height: 13)
-                                .foregroundStyle(LColors.accents.primary)
+                                .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             Text(groupSummaryText)
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(LColors.textPrimary)
@@ -326,11 +288,12 @@ struct BuddyReadingView: View {
                                 Text(myGroups.count > 1 ? "Open a Chat" : "Open Chat")
                                     .font(.system(size: 13, weight: .semibold))
                             }
-                            .foregroundStyle(LColors.accents.contrast)
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(Capsule().fill(LColors.glassSurface2))
-                            .overlay(Capsule().stroke(LColors.glassBorder, lineWidth: 1))
+                            .background { BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 999) }
+                            .bubblyTileLift()
                         }
                         .buttonStyle(.plain)
 
@@ -340,7 +303,8 @@ struct BuddyReadingView: View {
                 // Announcements + post button — always visible regardless of group status
                 VStack(alignment: .leading, spacing: 12) {
                     if !myAnnouncements.isEmpty {
-                        ForEach(myAnnouncements) { announcement in
+                        ForEach(Array(myAnnouncements.enumerated()), id: \.element.id) { index, announcement in
+                            let accent = theme.palette.rotation[index % theme.palette.rotation.count]
                             HStack(spacing: 10) {
                                 VStack(alignment: .leading, spacing: 4) {
                                     HStack(spacing: 6) {
@@ -349,15 +313,15 @@ struct BuddyReadingView: View {
                                             .resizable()
                                             .scaledToFit()
                                             .frame(width: 12, height: 12)
-                                            .foregroundStyle(LColors.accents.secondary)
+                                            .foregroundStyle(.white)
                                         Text(announcement.bookTitle)
                                             .font(.system(size: 14, weight: .bold))
-                                            .foregroundStyle(LColors.textPrimary)
+                                            .foregroundStyle(.white)
                                     }
                                     if let msg = announcement.message, !msg.isEmpty {
                                         Text("\"\(msg)\"")
                                             .font(.subheadline)
-                                            .foregroundStyle(LColors.textSecondary)
+                                            .foregroundStyle(.white.opacity(0.88))
                                             .lineLimit(1)
                                     }
                                 }
@@ -381,14 +345,15 @@ struct BuddyReadingView: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 16, height: 16)
-                                        .foregroundStyle(LColors.textSecondary)
+                                        .foregroundStyle(.white)
                                 }
                                 .buttonStyle(.plain)
                             }
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                             .padding(10)
-                            .background(LColors.surface.subtle.opacity(0.6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(LColors.glassBorder, lineWidth: 1))
+                            .background { BubblyTileSurface(tint: accent, cornerRadius: 12) }
+                            .bubblyTileLift()
                         }
                     }
 
@@ -412,17 +377,12 @@ struct BuddyReadingView: View {
                                 Text(myAnnouncements.isEmpty ? "Post Announcement" : "Post Another")
                                     .font(.system(size: 13, weight: .semibold))
                             }
-                            .foregroundStyle(LColors.accents.special)
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(
-                                Capsule()
-                                    .fill(LColors.glassSurface2)
-                            )
-                            .overlay(
-                                Capsule()
-                                    .stroke(LColors.glassBorder, lineWidth: 1)
-                            )
+                            .background { BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 999) }
+                            .bubblyTileLift()
                         }
                         .buttonStyle(.plain)
                     }
@@ -558,9 +518,10 @@ struct BuddyReadingView: View {
                         .padding(.vertical, 10)
                 }
             } else {
-                ForEach(board) { announcement in
+                ForEach(Array(board.enumerated()), id: \.element.id) { index, announcement in
                     BuddyAnnouncementCard(
                         announcement: announcement,
+                        accent: theme.palette.rotation[index % theme.palette.rotation.count],
                         currentUserId: userId,
                         currentUserDisplayName: displayName,
                         joinedGroup: joinedGroup(for: announcement),
@@ -724,7 +685,7 @@ struct BuddyReadingView: View {
     private func ownerStatusPill(_ title: String) -> some View {
         Text(title)
             .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(LColors.textPrimary)
+            .foregroundStyle(.white)
             .padding(.horizontal, 9)
             .padding(.vertical, 6)
             .background(LColors.border.nested)
@@ -744,7 +705,7 @@ struct BuddyReadingView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(disabled ? LColors.textSecondary.opacity(0.45) : LColors.textSecondary)
+                .foregroundStyle(disabled ? Color.white.opacity(0.45) : Color.white)
         }
         .buttonStyle(.plain)
         .disabled(disabled)
@@ -754,7 +715,10 @@ struct BuddyReadingView: View {
     // MARK: - Announcement card
     
     struct BuddyAnnouncementCard: View {
+        @Environment(\.appTheme) private var theme
+
         let announcement: BuddyAnnouncement
+        let accent: Color
         let currentUserId: String
         let currentUserDisplayName: String
         /// Non-nil when the current user is a joined member of *this* announcement's group.
@@ -775,7 +739,7 @@ struct BuddyReadingView: View {
         }
         
         var body: some View {
-            GlassCard(variant: .tertiary) {
+            GlassCard(variant: .tertiary, borderColor: accent) {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
@@ -785,7 +749,7 @@ struct BuddyReadingView: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 12, height: 12)
-                                    .foregroundStyle(LColors.accents.contrast)
+                                    .bubblyIconMaterial(tint: accent)
                                 Text(announcement.bookTitle)
                                     .font(.system(size: 14, weight: .bold))
                                     .foregroundStyle(LColors.textPrimary)
@@ -812,12 +776,11 @@ struct BuddyReadingView: View {
 
                             Text("\(spotsLeft) spot\(spotsLeft == 1 ? "" : "s")")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(LColors.textPrimary)
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(LColors.border.nested)
-                                .clipShape(Capsule())
-                                .overlay(Capsule().stroke(LColors.glassBorder, lineWidth: 1))
+                                .background { BubblyIconMaterial(tint: accent).clipShape(Capsule()) }
                         }
                     }
                     
@@ -827,7 +790,7 @@ struct BuddyReadingView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 11, height: 11)
-                            .foregroundStyle(LColors.textSecondary)
+                            .bubblyIconMaterial(tint: accent)
                         Text(ownerNameText)
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(LColors.textSecondary)
@@ -865,15 +828,12 @@ struct BuddyReadingView: View {
                                     Text("Open Chat")
                                         .font(.system(size: 13, weight: .semibold))
                                 }
-                                .foregroundStyle(LColors.accents.secondary)
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
-                                .background(LColors.glassSurface2)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(LColors.glassBorder, lineWidth: 1)
-                                )
+                                .background { BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 12) }
+                                .bubblyTileLift()
                             }
                             .buttonStyle(.plain)
 
@@ -882,15 +842,12 @@ struct BuddyReadingView: View {
                             } label: {
                                 Text("Leave Group")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(LColors.textPrimary)
+                                    .foregroundStyle(.white)
+                                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 10)
-                                    .background(LColors.border.nested)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(LColors.glassBorder, lineWidth: 1)
-                                    )
+                                    .background { BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 12) }
+                                    .bubblyTileLift()
                             }
                             .buttonStyle(.plain)
                         } else {
@@ -907,15 +864,12 @@ struct BuddyReadingView: View {
                                     Text(actionTitle)
                                         .font(.system(size: 13, weight: .semibold))
                                 }
-                                .foregroundStyle(LColors.accents.special)
+                                .foregroundStyle(.white)
+                                .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
-                                .background(LColors.glassSurface2)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(LColors.glassBorder, lineWidth: 1)
-                                )
+                                .background { BubblyTileSurface(tint: accent, cornerRadius: 12) }
+                                .bubblyTileLift()
                             }
                             .buttonStyle(.plain)
                         }
@@ -932,6 +886,8 @@ struct BuddyReadingView: View {
 // MARK: - Group Picker
 
 struct BuddyGroupPickerSheet: View {
+    @Environment(\.appTheme) private var theme
+
     let groups: [BuddyGroup]
     let currentUserId: String
     let onClose: () -> Void
@@ -946,12 +902,19 @@ struct BuddyGroupPickerSheet: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
 
-                    VStack(spacing: 10) {
-                        ForEach(groups) { group in
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: 12),
+                            GridItem(.flexible(), spacing: 12)
+                        ],
+                        spacing: 12
+                    ) {
+                        ForEach(Array(groups.enumerated()), id: \.element.id) { index, group in
+                            let accent = theme.palette.rotation[index % theme.palette.rotation.count]
                             Button {
                                 onSelect(group)
                             } label: {
-                                groupRow(group)
+                                groupCard(group, accent: accent)
                             }
                             .buttonStyle(.plain)
                         }
@@ -987,7 +950,7 @@ struct BuddyGroupPickerSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                    .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                     .frame(width: 42, height: 42)
                     .background(
                         Circle()
@@ -996,60 +959,67 @@ struct BuddyGroupPickerSheet: View {
                                 Circle()
                                     .strokeBorder(LColors.accents.primary, lineWidth: 1.2)
                             )
-                            .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
                     )
             }
             .buttonStyle(.plain)
         }
     }
 
-    private func groupRow(_ group: BuddyGroup) -> some View {
-        GlassCard(variant: .elevated) {
-            HStack(spacing: 12) {
+    private func groupCard(_ group: BuddyGroup, accent: Color) -> some View {
+        GlassCard(
+            cornerRadius: 20,
+            padding: 14,
+            contentAlignment: .top,
+            variant: .elevated,
+            borderColor: accent
+        ) {
+            VStack(spacing: 7) {
                 Image("books")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 16, height: 16)
-                    .foregroundStyle(LColors.accents.contrast)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(LColors.iconContainer.primary))
-                    .overlay(Circle().strokeBorder(LColors.glassBorder, lineWidth: 1))
+                    .frame(width: 22, height: 22)
+                    .bubblyIconMaterial(tint: accent)
+                    .frame(width: 48, height: 48)
+                    .background(Circle().fill(theme.palette.raisedSurface))
+                    .overlay(Circle().strokeBorder(accent, lineWidth: 1.35))
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(group.bookTitle)
-                        .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
-                        .lineLimit(1)
+                Text(group.bookTitle)
+                    .font(.system(size: 14, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.cardTitle)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity)
 
-                    if let author = group.bookAuthor, !author.isEmpty {
-                        Text(author)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(LColors.textSecondary)
-                            .lineLimit(1)
-                    }
+                Text(group.bookAuthor?.isEmpty == false ? group.bookAuthor! : "Unknown Author")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(LColors.textSecondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity)
 
-                    Text(group.joinedMembers.map(\.displayName).joined(separator: ", "))
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(LColors.textSecondary)
-                        .lineLimit(1)
+                Text(group.joinedMembers.map(\.displayName).joined(separator: ", "))
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(LColors.textSecondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity)
 
-                    if let owner = group.ownerLabel(currentUserId: currentUserId) {
-                        Text(owner)
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundStyle(LColors.accents.secondary)
-                    }
+                if let owner = group.ownerLabel(currentUserId: currentUserId) {
+                    Text(owner)
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                 }
-
-                Spacer(minLength: 0)
 
                 Image("chevright")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)
-                    .foregroundStyle(LColors.text.primary)
+                    .bubblyIconMaterial(tint: accent)
             }
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
         }
     }
 }

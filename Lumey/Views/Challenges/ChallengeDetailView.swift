@@ -10,6 +10,7 @@ struct ChallengeDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     let challenge: ReadingChallenge
@@ -180,16 +181,15 @@ struct ChallengeDetailView: View {
             .resizable()
             .scaledToFit()
             .frame(width: 20, height: 20)
-            .foregroundStyle(isActive ? AnyShapeStyle(LColors.gradientYellow) : AnyShapeStyle(LColors.accents.primary))
+            .bubblyIconMaterial(tint: theme.palette.primaryAction)
             .frame(width: 42, height: 42)
             .background(
                 Circle()
-                    .fill(LColors.bg)
+                    .fill(isActive ? theme.palette.primaryAction.opacity(0.18) : LColors.bg)
                     .overlay(
                         Circle()
-                            .strokeBorder(isActive ? AnyShapeStyle(LColors.gradientYellow) : AnyShapeStyle(LColors.accents.contrast), lineWidth: 1.2)
+                            .strokeBorder(theme.palette.primaryAction, lineWidth: 1.2)
                     )
-                    .shadow(color: LColors.gradientBlue.opacity(0.18), radius: 12, y: 6)
             )
     }
 
@@ -203,16 +203,16 @@ struct ChallengeDetailView: View {
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 40, height: 40)
-                        .foregroundStyle(LColors.accents.primary)
+                        .frame(width: 28, height: 28)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                         .frame(width: 56, height: 56)
                         .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(LColors.glassSurface)
+                            Circle()
+                                .fill(theme.palette.raisedSurface)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                            Circle()
+                                .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1.2)
                         )
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -279,35 +279,43 @@ struct ChallengeDetailView: View {
 
     private var statsSection: some View {
         HStack(spacing: 10) {
-            statCard(icon: "starfill", value: "\(challenge.points)", label: "Points", color: LColors.gradientYellow)
-            statCard(icon: "clockfill", value: challenge.displayDuration, label: "Duration", color: LColors.accent)
-            statCard(icon: "groupfill", value: "\(challenge.participantCount)", label: "Joined", color: LColors.gradientPurple)
-            statCard(icon: "checkwavy", value: "\(challenge.completedCount)", label: "Completed", color: LColors.success)
+            statCard(icon: "starfill", value: "\(challenge.points)", label: "Points", accentIndex: 0)
+            statCard(icon: "clockfill", value: challenge.displayDuration, label: "Duration", accentIndex: 1)
+            statCard(icon: "groupfill", value: "\(challenge.participantCount)", label: "Joined", accentIndex: 2)
+            statCard(icon: "checkwavy", value: "\(challenge.completedCount)", label: "Completed", accentIndex: 3)
         }
     }
 
-    private func statCard(icon: String, value: String, label: String, color: Color) -> some View {
-        GlassCard(padding: 10, variant: .secondary) {
-            VStack(spacing: 6) {
-                Image(icon)
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 16, height: 16)
-                    .foregroundStyle(color)
+    private func statCard(icon: String, value: String, label: String, accentIndex: Int) -> some View {
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
 
-                Text(value)
-                    .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.cardTitle)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+        return VStack(spacing: 6) {
+            Image(icon)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 16, height: 16)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.72), radius: 1, y: 1)
 
-                Text(label)
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundStyle(LColors.textSecondary)
-            }
-            .frame(maxWidth: .infinity)
+            Text(value)
+                .font(.system(size: 14, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .shadow(color: theme.palette.background.opacity(0.72), radius: 1, y: 1)
+
+            Text(label)
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.72), radius: 1, y: 1)
         }
+        .frame(maxWidth: .infinity)
+        .padding(10)
+        .background {
+            BubblyTileSurface(tint: tint, cornerRadius: 18)
+        }
+        .bubblyTileLift()
     }
 
     // MARK: - Action Buttons
@@ -330,11 +338,13 @@ struct ChallengeDetailView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(LGradients.header)
-                    )
-                    .shadow(color: LColors.gradientPurple.opacity(0.3), radius: 12, y: 6)
+                    .background {
+                        BubblyTileSurface(
+                            tint: theme.palette.primaryAction,
+                            cornerRadius: 18
+                        )
+                    }
+                    .bubblyTileLift()
                 }
                 .buttonStyle(.plain)
             } else if let entry = userEntry {
@@ -387,11 +397,13 @@ struct ChallengeDetailView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(LGradients.header)
-                        )
-                        .shadow(color: LColors.gradientPurple.opacity(0.3), radius: 12, y: 6)
+                        .background {
+                            BubblyTileSurface(
+                                tint: theme.palette.primaryAction,
+                                cornerRadius: 18
+                            )
+                        }
+                        .bubblyTileLift()
                     }
                     .buttonStyle(.plain)
                 }
@@ -432,52 +444,61 @@ struct ChallengeDetailView: View {
     @ViewBuilder
     private var userStatusSection: some View {
         if let entry = userEntry {
-            GlassCard(padding: 14, variant: .tertiary) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Your Status")
-                        .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.cardTitle)
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: 10),
+                    GridItem(.flexible(), spacing: 10)
+                ],
+                spacing: 10
+            ) {
+                statusTile(label: "Status", value: entry.status.displayName, accentIndex: 0)
+                statusTile(
+                    label: challenge.isRecurring ? "Cycle Left" : "Time Left",
+                    value: entry.displayDaysRemaining,
+                    accentIndex: 1
+                )
+                statusTile(
+                    label: challenge.isRecurring ? "Cycle Start" : "Started",
+                    value: entry.startDate.formatted(date: .abbreviated, time: .omitted),
+                    accentIndex: 2
+                )
+                statusTile(
+                    label: challenge.isRecurring ? "Cycle End" : "Ends",
+                    value: entry.endDate.formatted(date: .abbreviated, time: .omitted),
+                    accentIndex: 3
+                )
 
-                    HStack(spacing: 14) {
-                        statusRow(label: "Status", value: entry.status.displayName)
-                        statusRow(label: challenge.isRecurring ? "Cycle Left" : "Time Left", value: entry.displayDaysRemaining)
-                    }
-
-                    HStack(spacing: 14) {
-                        statusRow(label: challenge.isRecurring ? "Cycle Start" : "Started", value: entry.startDate.formatted(date: .abbreviated, time: .omitted))
-                        statusRow(label: challenge.isRecurring ? "Cycle End" : "Ends", value: entry.endDate.formatted(date: .abbreviated, time: .omitted))
-                    }
-
-                    if entry.status == .approved {
-                        HStack(spacing: 6) {
-                            Image("starfill")
-                                .renderingMode(.template)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 14, height: 14)
-                                .foregroundStyle(LColors.gradientYellow)
-
-                            Text("+\(entry.earnedPoints) points earned")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(LColors.success)
-                        }
-                        .padding(.top, 4)
-                    }
+                if entry.status == .approved {
+                    statusTile(
+                        label: "Points Earned",
+                        value: "+\(entry.earnedPoints)",
+                        accentIndex: 4
+                    )
                 }
             }
         }
     }
 
-    private func statusRow(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+    private func statusTile(label: String, value: String, accentIndex: Int) -> some View {
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .foregroundStyle(theme.palette.textSecondary)
+
             Text(value)
-                .font(.system(size: 13, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.72), radius: 1, y: 1)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 29, alignment: .leading)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 7)
+        .background {
+            BubblyTileSurface(tint: tint, cornerRadius: 12)
+        }
+        .bubblyTileLift()
     }
 
     // MARK: - Feed

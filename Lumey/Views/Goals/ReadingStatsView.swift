@@ -8,6 +8,7 @@ import SwiftData
 
 struct ReadingStatsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     @Query(sort: \ReadingSession.date, order: .reverse)
     private var sessions: [ReadingSession]
@@ -434,18 +435,18 @@ private extension ReadingStatsView {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 14, height: 14)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
                 Text(stats?.isOnReadingBreak == true ? "Resume" : "Break")
                     .font(.system(size: 12, weight: .black, design: .rounded))
             }
             .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.7), radius: 1, y: 1)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(LGradients.header)
-            )
-            .shadow(color: LColors.gradientPurple.opacity(0.30), radius: 10, y: 4)
+            .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 999) }
+            .bubblyTileLift()
         }
     }
 }
@@ -599,20 +600,21 @@ private extension ReadingStatsView {
     }
 
     var personalityCard: some View {
-        GlassCard(variant: .featured) {
+        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
             HStack(spacing: 16) {
                 Image(personality.iconName)
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 30, height: 30)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                     .frame(width: 56, height: 56)
                     .background(
                         Circle()
-                            .fill(LColors.iconContainer.primary)
-                            .overlay(Circle().strokeBorder(LColors.accents.contrast, lineWidth: 1))
+                            .fill(theme.palette.raisedSurface)
+                            .overlay(Circle().strokeBorder(theme.palette.secondaryAccent, lineWidth: 1))
                     )
+                    .shadow(color: theme.palette.background.opacity(0.45), radius: 7, y: 4)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Reading Personality")
@@ -621,7 +623,7 @@ private extension ReadingStatsView {
 
                     Text(personality.rawValue)
                         .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
                     Text(personality.description)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -642,7 +644,7 @@ private extension ReadingStatsView {
         let summary = xpSummary
         let title = xpProfile?.selectedTitle.isEmpty == false ? xpProfile?.selectedTitle ?? summary.title : summary.title
 
-        return GlassCard(variant: .primary) {
+        return GlassCard(variant: .primary, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 14) {
                     Image("levelup")
@@ -650,10 +652,11 @@ private extension ReadingStatsView {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 28, height: 28)
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: theme.palette.indicators)
                         .frame(width: 56, height: 56)
-                        .background(Circle().fill(LColors.iconContainer.tertiary))
-                        .overlay(Circle().strokeBorder(LColors.accents.primary, lineWidth: 1))
+                        .background(Circle().fill(theme.palette.raisedSurface))
+                        .overlay(Circle().strokeBorder(theme.palette.indicators, lineWidth: 1))
+                        .shadow(color: theme.palette.background.opacity(0.45), radius: 7, y: 4)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Reading Level")
@@ -669,10 +672,10 @@ private extension ReadingStatsView {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Level \(summary.level)")
                         .font(.system(size: 52, weight: .black, design: .rounded))
-                        .foregroundStyle(LColors.accents.primary)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
                     VStack(alignment: .leading, spacing: 7) {
-                        GradientProgressBar(value: summary.progress)
+                        BubblyStatsProgressBar(value: summary.progress, tint: theme.palette.secondaryAccent)
                             .frame(height: 10)
 
                         HStack {
@@ -688,9 +691,9 @@ private extension ReadingStatsView {
                 DottedDivider()
 
                 HStack(spacing: 10) {
-                    statCapsule(title: "Points",   value: "\(totalPoints)",   tint: LColors.accents.primary)
-                    statCapsule(title: "Sessions", value: "\(totalSessions)", tint: LColors.accents.contrast)
-                    statCapsule(title: "Pages",    value: "\(totalPages)",    tint: LColors.accents.secondary)
+                    statCapsule(title: "Points",   value: "\(totalPoints)",   tint: theme.palette.primaryAction)
+                    statCapsule(title: "Sessions", value: "\(totalSessions)", tint: theme.palette.secondaryAccent)
+                    statCapsule(title: "Pages",    value: "\(totalPages)",    tint: theme.palette.indicators)
                 }
             }
         }
@@ -711,22 +714,18 @@ private extension ReadingStatsView {
         VStack(spacing: 4) {
             Text(value)
                 .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(tint)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.text.secondary)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(tint.opacity(0.32), lineWidth: 1)
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 }
 
@@ -737,7 +736,7 @@ private extension ReadingStatsView {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("Reading Missions")
 
-            GlassCard(variant: .secondary) {
+            GlassCard(variant: .secondary, borderColor: theme.palette.indicators) {
                 VStack(alignment: .leading, spacing: 12) {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                         missionStat(value: "\(missionStats.missionsGenerated)", label: "Joined", icon: "wand", accentIndex: 0)
@@ -753,14 +752,7 @@ private extension ReadingStatsView {
     }
 
     func missionStat(value: String, label: String, icon: String, accentIndex: Int) -> some View {
-        let tint: Color = {
-            switch accentIndex % 4 {
-            case 0:  return LColors.accents.primary
-            case 1:  return LColors.accents.contrast
-            case 2:  return LColors.accents.secondary
-            default: return LColors.accents.special
-            }
-        }()
+        let tint = theme.palette.rotation[(accentIndex / 2) % theme.palette.rotation.count]
 
         return HStack(spacing: 10) {
             Image(icon)
@@ -768,21 +760,24 @@ private extension ReadingStatsView {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(tint)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                 .frame(width: 34, height: 34)
-                .background(Circle().fill(LColors.iconContainer.primary))
-                .overlay(Circle().strokeBorder(tint.opacity(0.55), lineWidth: 1))
+                .background(Circle().fill(tint.opacity(0.30)))
+                .overlay(Circle().strokeBorder(.white.opacity(0.55), lineWidth: 1))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.text.primary)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                     .lineLimit(2)
                     .minimumScaleFactor(0.68)
 
                 Text(label)
                     .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundStyle(LColors.text.secondary)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                     .lineLimit(1)
                     .minimumScaleFactor(0.76)
             }
@@ -791,14 +786,8 @@ private extension ReadingStatsView {
         }
         .padding(12)
         .frame(maxWidth: .infinity, minHeight: 82, maxHeight: 82, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(tint.opacity(0.30), lineWidth: 1)
-        )
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 }
 
@@ -810,7 +799,7 @@ private extension ReadingStatsView {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("Reading Milestones")
 
-            GlassCard(variant: .tertiary) {
+            GlassCard(variant: .tertiary, borderColor: theme.palette.primaryAction) {
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(Array(readingMilestones.enumerated()), id: \.element.id) { index, milestone in
                         ReadingMilestoneRow(milestone: milestone, accentIndex: index)
@@ -823,16 +812,12 @@ private extension ReadingStatsView {
 }
 
 struct ReadingMilestoneRow: View {
+    @Environment(\.appTheme) private var theme
     let milestone: ReadingMilestone
     var accentIndex: Int = 0
 
     private var accent: Color {
-        switch accentIndex % 4 {
-        case 0:  return LColors.accents.primary
-        case 1:  return LColors.accents.contrast
-        case 2:  return LColors.accents.secondary
-        default: return LColors.accents.special
-        }
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
     }
 
     var body: some View {
@@ -842,7 +827,7 @@ struct ReadingMilestoneRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(milestone.isUnlocked ? accent : LColors.text.muted)
+                .bubblyIconMaterial(tint: milestone.isUnlocked ? accent : theme.palette.textSecondary.opacity(0.55))
                 .frame(width: 36, height: 36)
                 .background(
                     Circle()
@@ -870,17 +855,19 @@ struct ReadingMilestoneRow: View {
 
             Text(milestone.isUnlocked ? "Unlocked" : "Locked")
                 .font(.system(size: 10, weight: .black, design: .rounded))
-                .foregroundStyle(milestone.isUnlocked ? LColors.appBackground : LColors.text.muted)
+                .foregroundStyle(milestone.isUnlocked ? .white : theme.palette.textSecondary.opacity(0.55))
+                .shadow(color: milestone.isUnlocked ? theme.palette.background.opacity(0.75) : .clear, radius: 1, y: 1)
                 .padding(.horizontal, 9)
                 .padding(.vertical, 5)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(
-                            milestone.isUnlocked
-                            ? AnyShapeStyle(accent)
-                            : AnyShapeStyle(LColors.surface.subtle.opacity(0.5))
-                        )
-                )
+                .background {
+                    if milestone.isUnlocked {
+                        BubblyIconMaterial(tint: accent)
+                            .clipShape(Capsule(style: .continuous))
+                    } else {
+                        Capsule(style: .continuous)
+                            .fill(LColors.surface.subtle.opacity(0.5))
+                    }
+                }
         }
     }
 }
@@ -892,7 +879,7 @@ private extension ReadingStatsView {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("Favorite Things")
 
-            GlassCard(variant: .featured) {
+            GlassCard(variant: .featured, borderColor: theme.palette.secondaryAccent) {
                 VStack(alignment: .leading, spacing: 12) {
                     FavoriteThingRow(iconName: "openbook", title: "Most Read Author", value: mostReadAuthor, accentIndex: 0)
                     FavoriteThingRow(iconName: "loveflame", title: "Favorite Genre",    value: favoriteGenre,  accentIndex: 1)
@@ -907,18 +894,14 @@ private extension ReadingStatsView {
 }
 
 struct FavoriteThingRow: View {
+    @Environment(\.appTheme) private var theme
     let iconName: String
     let title: String
     let value: String
     var accentIndex: Int = 0
 
     private var accent: Color {
-        switch accentIndex % 4 {
-        case 0:  return LColors.accents.primary
-        case 1:  return LColors.accents.contrast
-        case 2:  return LColors.accents.secondary
-        default: return LColors.accents.special
-        }
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
     }
 
     var body: some View {
@@ -928,7 +911,7 @@ struct FavoriteThingRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 18, height: 18)
-                .foregroundStyle(accent)
+                .bubblyIconMaterial(tint: accent)
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(LColors.iconContainer.primary))
                 .overlay(Circle().strokeBorder(accent, lineWidth: 1))
@@ -957,7 +940,7 @@ private extension ReadingStatsView {
         VStack(alignment: .leading, spacing: 14) {
             sectionTitle("Reading Heatmap")
 
-            GlassCard(variant: .featured) {
+            GlassCard(variant: .featured, borderColor: theme.palette.indicators) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
@@ -979,8 +962,12 @@ private extension ReadingStatsView {
 
                             ForEach(0..<5, id: \.self) { intensity in
                                 RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                    .fill(heatmapColor(for: intensity))
+                                    .fill(.clear)
                                     .frame(width: 9, height: 9)
+                                    .background {
+                                        BubblyIconMaterial(tint: heatmapColor(for: intensity))
+                                            .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                                    }
                             }
 
                             Text("More")
@@ -1021,12 +1008,17 @@ private extension ReadingStatsView {
 }
 
 struct ReadingHeatmapCell: View {
+    @Environment(\.appTheme) private var theme
     let day: ReadingHeatmapDay
 
     var body: some View {
         RoundedRectangle(cornerRadius: 4, style: .continuous)
-            .fill(cellGradient)
+            .fill(.clear)
             .frame(width: 17, height: 17)
+            .background {
+                BubblyIconMaterial(tint: cellGradient)
+                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            }
             .overlay(
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
                     .strokeBorder(day.intensity == 0 ? LColors.border.subtle.opacity(0.45) : LColors.accents.contrast.opacity(0.28), lineWidth: 0.7)
@@ -1052,6 +1044,28 @@ struct ReadingHeatmapCell: View {
     }
 }
 
+private struct BubblyStatsProgressBar: View {
+    @Environment(\.appTheme) private var theme
+
+    let value: Double
+    let tint: Color
+
+    var body: some View {
+        GeometryReader { proxy in
+            let progress = min(max(value, 0), 1)
+
+            ZStack(alignment: .leading) {
+                Capsule(style: .continuous)
+                    .fill(theme.palette.raisedSurface)
+
+                BubblyTileSurface(tint: tint, cornerRadius: 999)
+                    .frame(width: max(0, proxy.size.width * progress))
+            }
+            .clipShape(Capsule(style: .continuous))
+        }
+    }
+}
+
 struct DottedDivider: View {
     var body: some View {
         HStack(spacing: 4) {
@@ -1072,12 +1086,13 @@ private extension ReadingStatsView {
             VStack(alignment: .leading, spacing: 14) {
                 sectionTitle("Streaks")
 
-                GlassCard(variant: .primary) {
+                GlassCard(variant: .primary, borderColor: theme.palette.primaryAction) {
                     VStack(alignment: .leading, spacing: 13) {
                         ForEach(Array(streakSummaries.enumerated()), id: \.element.id) { index, summary in
                             ReadingStreakSummaryRow(
                                 summary: adjustedSummary(summary),
-                                isPaused: summary.kind == .daily && stats?.isOnReadingBreak == true
+                                isPaused: summary.kind == .daily && stats?.isOnReadingBreak == true,
+                                accentIndex: index
                             )
 
                             if index < streakSummaries.count - 1 {
@@ -1104,7 +1119,7 @@ private extension ReadingStatsView {
     }
 
     var readingBreakInfoCard: some View {
-        GlassCard(variant: .secondary) {
+        GlassCard(variant: .secondary, borderColor: theme.palette.secondaryAccent) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
                     Image("pausewavy")
@@ -1112,7 +1127,7 @@ private extension ReadingStatsView {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(LColors.accents.contrast)
+                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                         .frame(width: 36, height: 36)
                         .background(
                             Circle()
@@ -1120,7 +1135,7 @@ private extension ReadingStatsView {
                         )
                         .overlay(
                             Circle()
-                                .strokeBorder(LColors.accents.primary, lineWidth: 1)
+                                .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                         )
 
                     VStack(alignment: .leading, spacing: 3) {
@@ -1147,19 +1162,50 @@ private extension ReadingStatsView {
                 if stats?.isOnReadingBreak == true || (stats?.totalReadingBreakDays ?? 0) > 0 {
                     HStack(spacing: 10) {
                         if stats?.isOnReadingBreak == true {
-                            statCapsule(title: "Current", value: "\(stats?.currentBreakDays ?? 0)")
+                            breakStatTile(title: "Current", value: "\(stats?.currentBreakDays ?? 0)")
                         }
-                        statCapsule(title: "Total Break Days", value: "\((stats?.totalReadingBreakDays ?? 0) + (stats?.isOnReadingBreak == true ? (stats?.currentBreakDays ?? 0) : 0))")
+                        breakStatTile(title: "Total Break Days", value: "\((stats?.totalReadingBreakDays ?? 0) + (stats?.isOnReadingBreak == true ? (stats?.currentBreakDays ?? 0) : 0))")
                     }
                 }
             }
         }
     }
+
+    func breakStatTile(title: String, value: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 18, weight: .black, design: .rounded))
+                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
+            Text(title)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(LColors.text.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(theme.palette.raisedSurface)
+                .overlay {
+                    BubblyLightWash(colors: [theme.palette.secondaryAccent], intensity: 0.34, fadeEnd: 0.85)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
+                }
+        }
+    }
 }
 
 struct ReadingStreakSummaryRow: View {
+    @Environment(\.appTheme) private var theme
     let summary: ReadingStreakSummary
     let isPaused: Bool
+    let accentIndex: Int
+
+    private var accent: Color {
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 11) {
@@ -1169,10 +1215,10 @@ struct ReadingStreakSummaryRow: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.secondary)
+                    .bubblyIconMaterial(tint: accent)
                     .frame(width: 38, height: 38)
                     .background(Circle().fill(LColors.iconContainer.primary))
-                    .overlay(Circle().strokeBorder(LColors.accents.contrast, lineWidth: 1))
+                    .overlay(Circle().strokeBorder(accent, lineWidth: 1))
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 7) {
@@ -1215,26 +1261,23 @@ struct ReadingStreakSummaryRow: View {
         VStack(spacing: 4) {
             Text("\(value)")
                 .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.accents.special)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
             Text(title)
                 .font(.system(size: 10, weight: .black, design: .rounded))
-                .foregroundStyle(LColors.cardTitle)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
             Text(unit)
                 .font(.system(size: 9, weight: .bold, design: .rounded))
-                .foregroundStyle(LColors.textSecondary)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(LColors.surface.nested)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(LColors.border.nested, lineWidth: 1)
-        )
+        .background { BubblyTileSurface(tint: accent, cornerRadius: 14) }
+        .bubblyTileLift()
     }
 }
 
@@ -1254,7 +1297,7 @@ private extension ReadingStatsView {
                     .background(Capsule().fill(LColors.glassSurface2))
             }
 
-            GlassCard(variant: .tertiary) {
+            GlassCard(variant: .tertiary, borderColor: theme.palette.indicators) {
                 if recentSessions.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("No sessions yet")
@@ -1268,9 +1311,16 @@ private extension ReadingStatsView {
                 } else {
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(Array(visibleRecentSessions.enumerated()), id: \.element.id) { index, session in
-                            CompactReadingSessionRow(session: session) {
-                                editingRecentSession = session
-                            }
+                            CompactReadingSessionRow(
+                                session: session,
+                                accentIndex: index,
+                                onEdit: {
+                                    editingRecentSession = session
+                                },
+                                onDelete: {
+                                    deleteSession(session)
+                                }
+                            )
 
                             if index < visibleRecentSessions.count - 1 {
                                 RecentSessionFullDottedDivider()
@@ -1285,7 +1335,7 @@ private extension ReadingStatsView {
                                             visibleRecentSessionCount = 4
                                         }
                                     } label: {
-                                        recentSessionsButtonLabel("Load Less")
+                                        recentSessionsButtonLabel("Load Less", tint: theme.palette.secondaryAccent)
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -1296,7 +1346,7 @@ private extension ReadingStatsView {
                                             visibleRecentSessionCount += 4
                                         }
                                     } label: {
-                                        recentSessionsButtonLabel("Load More")
+                                        recentSessionsButtonLabel("Load More", tint: theme.palette.primaryAction)
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -1310,28 +1360,82 @@ private extension ReadingStatsView {
         }
     }
 
-    private func recentSessionsButtonLabel(_ text: String) -> some View {
+    private func recentSessionsButtonLabel(_ text: String, tint: Color) -> some View {
         Text(text)
             .font(.system(size: 12, weight: .black, design: .rounded))
-            .foregroundStyle(LColors.cardTitle)
+            .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(LColors.iconContainer.primary)
-                    .overlay(
-                        Capsule(style: .continuous)
-                            .strokeBorder(LColors.accents.secondary, lineWidth: 1)
-                    )
-            )
+            .background { BubblyIconMaterial(tint: tint).clipShape(Capsule(style: .continuous)) }
+            .bubblyTileLift()
+    }
+
+    private func deleteSession(_ session: ReadingSession) {
+        let remainingSessions = sessions.filter { $0.id != session.id }
+
+        modelContext.delete(session)
+        refreshStats(using: remainingSessions)
+        try? modelContext.save()
+    }
+
+    private func refreshStats(using remainingSessions: [ReadingSession]) {
+        guard let stats else { return }
+
+        let calendar = Calendar.current
+        let now = Date()
+
+        stats.totalReadingSessions = remainingSessions.count
+        stats.totalMinutesRead = remainingSessions.reduce(0) { $0 + $1.durationMinutes }
+        stats.totalPagesRead = remainingSessions.reduce(0) { $0 + $1.pagesRead }
+        stats.longestReadingSessionMinutes = remainingSessions.map(\.durationMinutes).max() ?? 0
+        stats.lastReadingDate = remainingSessions.map(\.date).max()
+
+        let todaySessions = remainingSessions.filter { calendar.isDate($0.date, inSameDayAs: now) }
+        stats.minutesReadToday = todaySessions.reduce(0) { $0 + $1.durationMinutes }
+        stats.pagesReadToday = todaySessions.reduce(0) { $0 + $1.pagesRead }
+
+        let currentYear = calendar.component(.year, from: now)
+        let currentMonth = calendar.component(.month, from: now)
+        let monthSessions = remainingSessions.filter {
+            calendar.component(.year, from: $0.date) == currentYear
+            && calendar.component(.month, from: $0.date) == currentMonth
+        }
+        stats.minutesReadThisMonth = monthSessions.reduce(0) { $0 + $1.durationMinutes }
+        stats.pagesReadThisMonth = monthSessions.reduce(0) { $0 + $1.pagesRead }
+
+        let yearSessions = remainingSessions.filter {
+            calendar.component(.year, from: $0.date) == currentYear
+        }
+        stats.pagesReadThisYear = yearSessions.reduce(0) { $0 + $1.pagesRead }
+
+        let dailyStreak = ReadingStreakEngine.summary(
+            for: .daily,
+            sessions: remainingSessions,
+            preferences: streakPreferences,
+            breakPeriods: stats.breakPeriods,
+            today: now,
+            calendar: calendar,
+            preservedDailyLongest: stats.bestReadingStreak
+        )
+        stats.currentReadingStreak = dailyStreak.current
+        stats.bestReadingStreak = max(stats.bestReadingStreak, dailyStreak.longest)
+        stats.updatedAt = now
     }
 }
 
 // MARK: - Session Row
 
 struct CompactReadingSessionRow: View {
+    @Environment(\.appTheme) private var theme
     let session: ReadingSession
+    let accentIndex: Int
     let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    private var accent: Color {
+        theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+    }
 
     private var formattedDate: String {
         let formatter = DateFormatter()
@@ -1347,7 +1451,7 @@ struct CompactReadingSessionRow: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 17, height: 17)
-                .foregroundStyle(LColors.accents.primary)
+                .bubblyIconMaterial(tint: accent)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
@@ -1355,7 +1459,7 @@ struct CompactReadingSessionRow: View {
                 )
                 .overlay(
                     Circle()
-                        .strokeBorder(LColors.accents.special, lineWidth: 1)
+                        .strokeBorder(accent, lineWidth: 1)
                 )
 
             VStack(alignment: .leading, spacing: 7) {
@@ -1366,12 +1470,12 @@ struct CompactReadingSessionRow: View {
 
                 HStack(spacing: 7) {
                     if session.durationMinutes > 0 {
-                        ReadingGoalPill(text: "\(session.durationMinutes) min")
+                        sessionPill("\(session.durationMinutes) min")
                     }
                     if session.pagesRead > 0 {
-                        ReadingGoalPill(text: "\(session.pagesRead) pages")
+                        sessionPill("\(session.pagesRead) pages")
                     }
-                    ReadingGoalPill(text: "+\(session.pointsEarned) pts", usePurpleStyle: true)
+                    sessionPill("+\(session.pointsEarned) pts")
                 }
 
                 if !session.notes.isEmpty {
@@ -1394,18 +1498,44 @@ struct CompactReadingSessionRow: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 15, height: 15)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: accent)
                     .frame(width: 34, height: 34)
                     .background(Circle().fill(LColors.iconContainer.primary))
-                    .overlay(Circle().strokeBorder(LColors.border.subtle, lineWidth: 1))
+                    .overlay(Circle().strokeBorder(accent, lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .contextMenu {
+            Button(action: onDelete) {
+                Label {
+                    Text("Delete Session")
+                        .foregroundStyle(.white)
+                } icon: {
+                    Image("trash")
+                        .renderingMode(.template)
+                        .foregroundStyle(.white)
+                }
+            }
+            .tint(.white)
+        }
+    }
+
+    private func sessionPill(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .black, design: .rounded))
+            .foregroundStyle(.white)
+            .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background { BubblyIconMaterial(tint: accent).clipShape(Capsule(style: .continuous)) }
     }
 }
 
 private struct RecentSessionFullDottedDivider: View {
+    private let silver = Color(red: 0.72, green: 0.74, blue: 0.80)
+
     var body: some View {
         GeometryReader { proxy in
             let dotCount = max(Int(proxy.size.width / 8), 1)
@@ -1413,8 +1543,12 @@ private struct RecentSessionFullDottedDivider: View {
             HStack(spacing: 4) {
                 ForEach(0..<dotCount, id: \.self) { _ in
                     Circle()
-                        .fill(LColors.border.nestedStrong)
+                        .fill(.clear)
                         .frame(width: 4, height: 4)
+                        .background {
+                            BubblyIconMaterial(tint: silver.opacity(0.55))
+                                .clipShape(Circle())
+                        }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1690,6 +1824,7 @@ private extension ReadingStatsView {
 struct ReadingBreakSettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     let stats: ReadingStats?
     let currentStreak: Int
@@ -1722,18 +1857,17 @@ struct ReadingBreakSettingsSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 26, height: 26)
-                                .foregroundStyle(LColors.accents.secondary)
+                                .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
                                 .frame(width: 50, height: 50)
                                 .background(
                                     Circle()
-                                        .fill(
-                                            LColors.gradientBlue.opacity(0.18)
-                                        )
+                                        .fill(theme.palette.raisedSurface)
                                 )
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(LColors.accents.secondary, lineWidth: 1)
+                                        .strokeBorder(theme.palette.secondaryAccent, lineWidth: 1)
                                 )
+                                .shadow(color: theme.palette.background.opacity(0.45), radius: 7, y: 4)
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(isOnBreak ? "Resume Reading" : "Reading Break")
@@ -1763,22 +1897,25 @@ struct ReadingBreakSettingsSheet: View {
 
     private var startBreakContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            GlassCard(variant: .primary) {
+            GlassCard(variant: .primary, borderColor: theme.palette.primaryAction) {
                 VStack(alignment: .leading, spacing: 14) {
                     breakInfoRow(
                         icon: "flame",
                         title: "Streak Protected",
-                        subtitle: "Your \(currentStreak)-day streak will be frozen and safe."
+                        subtitle: "Your \(currentStreak)-day streak will be frozen and safe.",
+                        accentIndex: 0
                     )
                     breakInfoRow(
                         icon: "clockwavy",
                         title: "Up to \(ReadingStats.maxBreakDays) Days",
-                        subtitle: "Breaks last a maximum of \(ReadingStats.maxBreakDays) days before auto-expiring."
+                        subtitle: "Breaks last a maximum of \(ReadingStats.maxBreakDays) days before auto-expiring.",
+                        accentIndex: 1
                     )
                     breakInfoRow(
                         icon: "flatbook",
                         title: "Resume Anytime",
-                        subtitle: "Log a session after resuming to continue your streak."
+                        subtitle: "Log a session after resuming to continue your streak.",
+                        accentIndex: 2
                     )
                 }
             }
@@ -1792,18 +1929,17 @@ struct ReadingBreakSettingsSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
+                        .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
                     Text("Start Reading Break")
                         .font(.system(size: 16, weight: .black, design: .rounded))
                 }
                 .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(LGradients.header)
-                )
-                .shadow(color: LColors.gradientPurple.opacity(0.30), radius: 12, y: 6)
+                .background { BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 16) }
+                .bubblyTileLift()
             }
         }
     }
@@ -1812,7 +1948,7 @@ struct ReadingBreakSettingsSheet: View {
 
     private var activeBreakContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            GlassCard(variant: .secondary) {
+            GlassCard(variant: .secondary, borderColor: theme.palette.primaryAction) {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
@@ -1886,32 +2022,33 @@ struct ReadingBreakSettingsSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 16, height: 16)
+                        .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
                     Text("Resume Reading")
                         .font(.system(size: 16, weight: .black, design: .rounded))
                 }
                 .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(LGradients.header)
-                )
-                .shadow(color: LColors.gradientPurple.opacity(0.30), radius: 12, y: 6)
+                .background { BubblyTileSurface(tint: theme.palette.indicators, cornerRadius: 16) }
+                .bubblyTileLift()
             }
         }
     }
 
     // MARK: - Helpers
 
-    private func breakInfoRow(icon: String, title: String, subtitle: String) -> some View {
-        HStack(spacing: 12) {
+    private func breakInfoRow(icon: String, title: String, subtitle: String, accentIndex: Int) -> some View {
+        let accent = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
+
+        return HStack(spacing: 12) {
             Image(icon)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 16, height: 16)
-                .foregroundStyle(LColors.accents.primary)
+                .bubblyIconMaterial(tint: accent)
                 .frame(width: 32, height: 32)
                 .background(
                     Circle()
@@ -1919,7 +2056,7 @@ struct ReadingBreakSettingsSheet: View {
                 )
                 .overlay(
                     Circle()
-                        .strokeBorder(LColors.accents.special, lineWidth: 1)
+                        .strokeBorder(accent, lineWidth: 1)
                 )
 
             VStack(alignment: .leading, spacing: 2) {

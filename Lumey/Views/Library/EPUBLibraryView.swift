@@ -9,6 +9,7 @@ import UniformTypeIdentifiers
 
 struct EPUBLibraryView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     @EnvironmentObject private var appState: AppState
 
     @Query(sort: \Book.lastUpdated, order: .reverse)
@@ -154,7 +155,7 @@ struct EPUBLibraryView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 0) {
             Text("Library")
                 .font(.system(size: 28, weight: .black, design: .rounded))
                 .foregroundStyle(LColors.headingPrimary)
@@ -169,7 +170,9 @@ struct EPUBLibraryView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22, height: 22)
-                    .foregroundStyle(LColors.accents.primary)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
+                    .frame(width: 36, height: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
@@ -181,7 +184,9 @@ struct EPUBLibraryView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22, height: 22)
-                    .foregroundStyle(LColors.accents.contrast)
+                    .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
+                    .frame(width: 36, height: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
@@ -220,10 +225,10 @@ struct EPUBLibraryView: View {
     private var collectionFilters: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                collectionChip(label: "All", id: nil)
+                collectionChip(label: "All", id: nil, accentIndex: 0)
 
-                ForEach(collections) { collection in
-                    collectionChip(label: collection.name, id: collection.id)
+                ForEach(Array(collections.enumerated()), id: \.element.id) { index, collection in
+                    collectionChip(label: collection.name, id: collection.id, accentIndex: index + 1)
                 }
 
                 Button {
@@ -235,16 +240,21 @@ struct EPUBLibraryView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 12, height: 12)
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
 
                         Text("New")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                     }
-                    .foregroundStyle(LColors.textSecondary)
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
                     .background {
-                        Capsule()
-                            .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                        BubblyIconMaterial(
+                            tint: theme.palette.rotation[(collections.count + 1) % theme.palette.rotation.count]
+                        )
+                        .clipShape(Capsule(style: .continuous))
                     }
                 }
                 .buttonStyle(.plain)
@@ -252,8 +262,9 @@ struct EPUBLibraryView: View {
         }
     }
 
-    private func collectionChip(label: String, id: UUID?) -> some View {
+    private func collectionChip(label: String, id: UUID?, accentIndex: Int) -> some View {
         let isSelected = selectedCollectionID == id
+        let tint = theme.palette.rotation[accentIndex % theme.palette.rotation.count]
 
         return Button {
             withAnimation(.spring(duration: 0.25)) {
@@ -262,19 +273,17 @@ struct EPUBLibraryView: View {
         } label: {
             Text(label)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                .foregroundStyle(isSelected ? LColors.bg : .white)
+                .foregroundStyle(.white)
+                .shadow(color: theme.palette.background.opacity(0.75), radius: 1, y: 1)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background {
-                    if isSelected {
-                        Capsule().fill(LGradients.header)
-                    } else {
-                        Capsule()
-                            .fill(LColors.glassSurface)
-                            .overlay {
-                                Capsule().strokeBorder(LColors.glassBorder, lineWidth: 1)
-                            }
-                    }
+                    BubblyIconMaterial(tint: tint)
+                        .clipShape(Capsule(style: .continuous))
+                        .overlay {
+                            Capsule(style: .continuous)
+                                .strokeBorder(.white.opacity(isSelected ? 0.68 : 0.24), lineWidth: isSelected ? 1.4 : 1)
+                        }
                 }
         }
         .buttonStyle(.plain)
@@ -308,7 +317,7 @@ struct EPUBLibraryView: View {
                             .scaledToFit()
                     } else {
                         ZStack {
-                            Color(hex: book.coverColorHex) ?? LColors.gradientBlue
+                            Color(libraryHex: book.coverColorHex) ?? LColors.gradientBlue
 
                             VStack(spacing: 6) {
                                 Image("sparklybook")
@@ -654,6 +663,7 @@ private struct ManageCollectionsSheet: View {
     let onRename: (EPUBCollection, String) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
     @State private var editingID: UUID?
     @State private var editName = ""
 
@@ -675,9 +685,12 @@ private struct ManageCollectionsSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18, height: 18)
-                            .foregroundStyle(LColors.textSecondary)
+                            .bubblyIconMaterial(tint: theme.palette.primaryAction)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Close Collections")
                 }
                 .padding(.top, 8)
 
@@ -688,14 +701,16 @@ private struct ManageCollectionsSheet: View {
                         .padding(.top, 20)
                 }
 
-                ForEach(collections) { collection in
+                ForEach(Array(collections.enumerated()), id: \.element.id) { index, collection in
+                    let tint = theme.palette.rotation[index % theme.palette.rotation.count]
+
                     HStack(spacing: 12) {
                         Image("folderfill")
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18, height: 18)
-                            .foregroundStyle(LColors.accents.contrast)
+                            .bubblyIconMaterial(tint: tint)
 
                         if editingID == collection.id {
                             TextField("Name", text: $editName)
@@ -729,7 +744,7 @@ private struct ManageCollectionsSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 16, height: 16)
-                                .foregroundStyle(LColors.textSecondary)
+                                .bubblyIconMaterial(tint: theme.palette.textSecondary)
                         }
                         .buttonStyle(.plain)
 
@@ -741,7 +756,7 @@ private struct ManageCollectionsSheet: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 14, height: 14)
-                                .foregroundStyle(LColors.danger)
+                                .bubblyIconMaterial(tint: LColors.danger)
                         }
                         .buttonStyle(.plain)
                     }
@@ -750,8 +765,8 @@ private struct ManageCollectionsSheet: View {
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .fill(LColors.glassSurface)
                             .overlay {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(LColors.glassBorder, lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .strokeBorder(tint, lineWidth: 1)
                             }
                     }
                 }
@@ -766,7 +781,7 @@ private struct ManageCollectionsSheet: View {
 // MARK: - Color Hex Helper
 
 private extension Color {
-    init?(hex: String) {
+    init?(libraryHex hex: String) {
         let cleaned = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: cleaned).scanHexInt64(&int)
