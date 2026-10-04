@@ -1561,6 +1561,7 @@ private struct RecentSessionFullDottedDivider: View {
 private struct EditReadingSessionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
 
     let session: ReadingSession
     let allSessions: [ReadingSession]
@@ -1595,36 +1596,48 @@ private struct EditReadingSessionSheet: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                Capsule()
-                    .fill(LColors.border.primary.opacity(0.75))
-                    .frame(width: 36, height: 4)
-                    .padding(.top, 10)
-                    .padding(.bottom, 18)
+                sheetHeader
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 18) {
-                        header
+                    VStack(alignment: .leading, spacing: 16) {
+                        LumeyTextField(
+                            title: "Session Title",
+                            text: $title,
+                            borderColor: theme.palette.primaryAction
+                        )
 
-                        GlassCard(variant: .elevated) {
-                            VStack(alignment: .leading, spacing: 14) {
-                                LumeyTextField(title: "Session Title", text: $title)
-                                LumeyNumberField(title: "Minutes", text: $minutes)
-                                LumeyNumberField(title: "Pages", text: $pages)
-                                LumeyTextEditor(title: "Notes", text: $notes, minHeight: 92)
-                            }
+                        LumeyNumberField(
+                            title: "Minutes read",
+                            text: $minutes,
+                            borderColor: theme.palette.secondaryAccent
+                        )
+
+                        LumeyNumberField(
+                            title: "Pages read",
+                            text: $pages,
+                            borderColor: theme.palette.indicators
+                        )
+
+                        LumeyTextEditor(
+                            title: "Session Notes",
+                            text: $notes,
+                            minHeight: 92,
+                            borderColor: theme.palette.primaryAction
+                        )
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Date & Time")
+                                .font(.system(size: 17, weight: .black, design: .rounded))
+                                .foregroundStyle(LColors.cardTitle)
+
+                            LumeyGradientDateTimeDrumPicker(
+                                date: $sessionDate,
+                                dateTint: theme.palette.secondaryAccent,
+                                timeTint: theme.palette.indicators
+                            )
                         }
 
-                        GlassCard(variant: .subtle) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Date & Time")
-                                    .font(.system(size: 17, weight: .black, design: .rounded))
-                                    .foregroundStyle(LColors.cardTitle)
-
-                                LumeyGradientDateTimeDrumPicker(date: $sessionDate)
-                            }
-                        }
-
-                        GlassCard(variant: .featured) {
+                        GlassCard(variant: .featured, borderColor: theme.palette.primaryAction) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Updated Points")
@@ -1633,7 +1646,7 @@ private struct EditReadingSessionSheet: View {
 
                                     Text("+\(previewPoints) pts")
                                         .font(.system(size: 26, weight: .black, design: .rounded))
-                                        .foregroundStyle(LColors.accents.secondary)
+                                        .bubblyIconMaterial(tint: theme.palette.primaryAction)
                                 }
 
                                 Spacer()
@@ -1643,7 +1656,7 @@ private struct EditReadingSessionSheet: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 26, height: 26)
-                                    .foregroundStyle(LColors.accents.special)
+                                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
                             }
                         }
 
@@ -1660,11 +1673,10 @@ private struct EditReadingSessionSheet: View {
                                 .foregroundStyle(LColors.gradientPink)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-
-                        actionButtons
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 42)
+                    .padding(.top, 18)
+                    .padding(.bottom, 38)
                 }
                 .scrollDismissesKeyboard(.interactively)
             }
@@ -1673,21 +1685,11 @@ private struct EditReadingSessionSheet: View {
         .onAppear(perform: loadSession)
     }
 
-    private var header: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image("pencil")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 24, height: 24)
-                .foregroundStyle(LColors.accents.primary)
-                .frame(width: 50, height: 50)
-                .background(Circle().fill(LColors.iconContainer.primary))
-                .overlay(Circle().strokeBorder(LColors.accents.primary, lineWidth: 1))
-
+    private var sheetHeader: some View {
+        HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
                 Text("Edit Session")
-                    .font(.system(size: 26, weight: .black, design: .rounded))
+                    .font(.system(size: 28, weight: .black, design: .rounded))
                     .foregroundStyle(LColors.headingPrimary)
 
                 Text("Update the session details and saved points.")
@@ -1698,53 +1700,53 @@ private struct EditReadingSessionSheet: View {
             Spacer(minLength: 0)
 
             Button {
+                saveSession()
+            } label: {
+                Text("Save")
+                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 9)
+                    .background {
+                        BubblyIconMaterial(
+                            tint: canSave ? theme.palette.secondaryAccent : theme.palette.secondaryAccent.opacity(0.38)
+                        )
+                        .clipShape(Capsule(style: .continuous))
+                    }
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSave)
+
+            Button {
                 dismiss()
             } label: {
                 Image("xmarkwavy")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 18, height: 18)
-                    .foregroundStyle(LColors.accents.contrast)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(LColors.iconContainer.primary))
-                    .overlay(Circle().strokeBorder(LColors.accents.contrast, lineWidth: 1))
+                    .frame(width: 20, height: 20)
+                    .bubblyIconMaterial(tint: theme.palette.primaryAction)
+                    .frame(width: 42, height: 42)
+                    .background(
+                        Circle()
+                            .fill(theme.palette.raisedSurface)
+                            .overlay {
+                                BubblyIconMaterial(tint: theme.palette.primaryAction)
+                                    .mask { Circle().strokeBorder(lineWidth: 1.2) }
+                            }
+                    )
             }
             .buttonStyle(.plain)
         }
-        .padding(.top, 2)
-    }
-
-    private var actionButtons: some View {
-        HStack(spacing: 10) {
-            Button {
-                dismiss()
-            } label: {
-                Text("Cancel")
-                    .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.cardTitle)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(LColors.iconContainer.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(LColors.border.subtle, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-
-            Button {
-                saveSession()
-            } label: {
-                Text("Save Changes")
-                    .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(LColors.appBackground)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(canSave ? AnyShapeStyle(LColors.accents.primary) : AnyShapeStyle(LColors.border.nestedStrong))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            }
-            .buttonStyle(.plain)
-            .disabled(!canSave)
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 14)
+        .background(LColors.bg.opacity(0.98))
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(LColors.border.nested).frame(height: 1)
         }
+        .safeAreaPadding(.top)
     }
 
     private func loadSession() {

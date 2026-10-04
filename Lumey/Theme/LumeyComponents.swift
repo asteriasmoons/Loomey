@@ -354,6 +354,8 @@ struct LumeyGradientTimeDrumPicker: View {
 // MARK: - Date Drum Picker
 
 struct LumeyDateDrumPicker: View {
+    @Environment(\.appTheme) private var theme
+
     @Binding var date: Date
     var solidTint: Color? = nil
 
@@ -407,6 +409,7 @@ struct LumeyDateDrumPicker: View {
                     .scaledToFit()
                     .frame(width: 14, height: 14)
                     .foregroundStyle(solidTint.map { AnyShapeStyle($0) } ?? AnyShapeStyle(LGradients.header))
+                    .bubblyIconMaterial(tint: solidTint ?? theme.palette.primaryAction, isEnabled: solidTint != nil)
 
                 Text(formattedPreview)
                     .font(.system(size: 18, weight: .black, design: .rounded))
