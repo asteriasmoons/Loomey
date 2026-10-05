@@ -8,16 +8,32 @@ import Foundation
 struct LumeyReleaseNote: Identifiable, Hashable {
     let id: String
     let versionTitle: String
+    let buildTitle: String
     let releaseDate: String
     let headline: String
     let bullets: [String]
 }
 
 enum ReleaseNotesCatalog {
+    private static let lastSeenReleaseKey = "LastSeenLoomeyReleaseNote"
+
     static let notes: [LumeyReleaseNote] = [
+        LumeyReleaseNote(
+            id: "v1_1_0",
+            versionTitle: "Version 1.1.0",
+            buildTitle: "Build #1",
+            releaseDate: "October 2026",
+            headline: "Welcome to Loomey V1.1.0! Release notes day! Here is everything in the 1.1.0 update",
+            bullets: [
+                "Loomey has been renamed from the original 'Lumey' to 'Loomey' everywhere now.",
+                "Loomey underwent a significant UI redesign. Don't be surprised if you find a ghost of the old design. Instead report it through the built in system please under bug report.",
+                "Some Loomey features have temporarily been put on hold. Discover Your Next Read, specifically due to AI limitations. Stay tuned to know more about that."
+            ]
+        ),
         LumeyReleaseNote(
             id: "v1_10",
             versionTitle: "Version 1.10",
+            buildTitle: "Build #1",
             releaseDate: "August 2026",
             headline: "Welcome to the next feature in Loomey. Release notes! Here is everything in the 1.10 update.",
             bullets: [
@@ -31,6 +47,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_9",
             versionTitle: "Version 1.9",
+            buildTitle: "Build #1",
             releaseDate: "August 2026",
             headline: "Reading life became more layered with missions, Bingos, and richer session reflection.",
             bullets: [
@@ -43,6 +60,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_8",
             versionTitle: "Version 1.8",
+            buildTitle: "Build #1",
             releaseDate: "July 2026",
             headline: "Challenges became more social, more visual, and easier to revisit.",
             bullets: [
@@ -56,6 +74,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_7",
             versionTitle: "Version 1.7",
+            buildTitle: "Build #1",
             releaseDate: "June 2026",
             headline: "Reading progression became more rewarding with XP, levels, and title unlocks.",
             bullets: [
@@ -68,6 +87,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_6",
             versionTitle: "Version 1.6",
+            buildTitle: "Build #1",
             releaseDate: "May 2026",
             headline: "Reading streaks became more flexible and more personal.",
             bullets: [
@@ -80,6 +100,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_5",
             versionTitle: "Version 1.5",
+            buildTitle: "Build #1",
             releaseDate: "April 2026",
             headline: "The library grew smarter with richer book details and stronger metadata support.",
             bullets: [
@@ -92,6 +113,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_4",
             versionTitle: "Version 1.4",
+            buildTitle: "Build #1",
             releaseDate: "March 2026",
             headline: "Goals and reading sessions became more connected throughout the app.",
             bullets: [
@@ -104,6 +126,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_3",
             versionTitle: "Version 1.3",
+            buildTitle: "Build #1",
             releaseDate: "February 2026",
             headline: "Reader and library flows were polished for a smoother everyday reading rhythm.",
             bullets: [
@@ -116,6 +139,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_2",
             versionTitle: "Version 1.2",
+            buildTitle: "Build #1",
             releaseDate: "January 2026",
             headline: "Stats and profile started feeling more like a living record of your reading life.",
             bullets: [
@@ -128,6 +152,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_1",
             versionTitle: "Version 1.1",
+            buildTitle: "Build #1",
             releaseDate: "December 2025",
             headline: "Loomey’s reading core became steadier, tidier, and easier to use every day.",
             bullets: [
@@ -140,6 +165,7 @@ enum ReleaseNotesCatalog {
         LumeyReleaseNote(
             id: "v1_0",
             versionTitle: "Version 1.0",
+            buildTitle: "Build #1",
             releaseDate: "November 2025",
             headline: "Welcome to Loomey: a cozy reading space for tracking books, goals, and your reading life.",
             bullets: [
@@ -150,4 +176,20 @@ enum ReleaseNotesCatalog {
             ]
         )
     ]
+
+    static var hasUnseenLatestRelease: Bool {
+        guard let latestReleaseIdentifier else { return false }
+        return UserDefaults.standard.string(forKey: lastSeenReleaseKey) != latestReleaseIdentifier
+    }
+
+    static func markLatestReleaseSeen() {
+        guard let latestReleaseIdentifier else { return }
+        UserDefaults.standard.set(latestReleaseIdentifier, forKey: lastSeenReleaseKey)
+    }
+
+    private static var latestReleaseIdentifier: String? {
+        guard let latest = notes.first else { return nil }
+        return [latest.id, latest.versionTitle, latest.buildTitle, latest.releaseDate]
+            .joined(separator: "|")
+    }
 }

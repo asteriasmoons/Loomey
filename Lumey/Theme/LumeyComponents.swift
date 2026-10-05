@@ -871,7 +871,7 @@ private final class LumeyKeyboardDismissHostView: UIView {
 
         GlassCard {
             VStack(spacing: 10) {
-                Text("Lumey")
+                Text("Loomey")
                     .font(.system(size: 42, weight: .black, design: .rounded))
                     .foregroundStyle(LGradients.header)
 

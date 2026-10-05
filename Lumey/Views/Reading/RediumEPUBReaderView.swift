@@ -123,7 +123,7 @@ struct ReadiumEPUBReaderView: UIViewControllerRepresentable {
             securityScopedAccess = fileURL.startAccessingSecurityScopedResource()
 
             guard let readiumFileURL = fileURL.fileURL else {
-                loadingController.showError("Lumey could not read this EPUB file URL.")
+                loadingController.showError("Loomey could not read this EPUB file URL.")
                 return
             }
 
@@ -155,11 +155,11 @@ struct ReadiumEPUBReaderView: UIViewControllerRepresentable {
                     print("[EPUB Reader] Total reader setup time", String(format: "%.2f", CFAbsoluteTimeGetCurrent() - overallStart), "seconds")
 
                 case .failure(let error):
-                    loadingController.showError("Lumey could not open this EPUB.\n\n\(String(describing: error))")
+                    loadingController.showError("Loomey could not open this EPUB.\n\n\(String(describing: error))")
                 }
 
             case .failure(let error):
-                loadingController.showError("Lumey could not load this EPUB.\n\n\(String(describing: error))")
+                loadingController.showError("Loomey could not load this EPUB.\n\n\(String(describing: error))")
             }
         }
 
@@ -239,7 +239,7 @@ struct ReadiumEPUBReaderView: UIViewControllerRepresentable {
                     chromeController.hideReaderLoadingOverlay()
                 }
             } catch {
-                loadingController.showError("Lumey could not start the EPUB reader.\n\n\(error.localizedDescription)")
+                loadingController.showError("Loomey could not start the EPUB reader.\n\n\(error.localizedDescription)")
             }
         }
 
@@ -833,7 +833,7 @@ final class ReadiumReaderChromeViewController: UIViewController {
             case .failure(let error):
                 let alert = UIAlertController(
                     title: "Contents Error",
-                    message: "Lumey could not load the table of contents.\n\n\(error)",
+                    message: "Loomey could not load the table of contents.\n\n\(error)",
                     preferredStyle: .alert
                 )
                 alert.addAction(UIAlertAction(title: "Done", style: .cancel))

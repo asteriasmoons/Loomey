@@ -49,11 +49,11 @@ enum BookDetailsEnrichmentError: LocalizedError {
         case .missingIdentity:
             return "Enter a title and author before getting details."
         case .invalidResponse:
-            return "Lumey received an invalid book details response."
+            return "Loomey received an invalid book details response."
         case .serverError(_, let message):
             return message
         case .decodingError:
-            return "Lumey could not read the book details response."
+            return "Loomey could not read the book details response."
         }
     }
 }
@@ -108,7 +108,7 @@ final class BookDetailsEnrichmentService {
             )
             let message = backendError?.detail
                 ?? backendError?.error
-                ?? "Lumey could not find confident details for that book."
+                ?? "Loomey could not find confident details for that book."
             throw BookDetailsEnrichmentError.serverError(
                 statusCode: httpResponse.statusCode,
                 message: message

@@ -87,7 +87,7 @@ struct LumeyWidgetsLiveActivity: Widget {
                                 .foregroundStyle(context.state.isPaused ? .white.opacity(0.45) : Color(widgetHex: "#03DBFC"))
                         }
                         Spacer()
-                        Text("Open Lumey")
+                        Text("Open Loomey")
                             .font(.system(size: 12, weight: .black, design: .rounded))
                             .foregroundStyle(Color(widgetHex: "#7D19F7"))
                     }

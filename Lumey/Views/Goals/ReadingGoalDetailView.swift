@@ -28,6 +28,7 @@ struct ReadingGoalDetailView: View {
 
     @State private var showingEditSheet = false
     @State private var showingDeleteConfirm = false
+    @State private var showingEndGoalConfirm = false
     @State private var visibleSessionCount = 4
     @State private var showingGoalCompletionHistory = false
 
@@ -139,6 +140,12 @@ struct ReadingGoalDetailView: View {
                         topBar
                         overviewCard
 
+                        if goal.status == .active ||
+                            goal.status == .paused ||
+                            (goal.status == .completed && goal.isRecurringGoal) {
+                            goalActionButtons
+                        }
+
                         if hasDescription {
                             detailCard(title: "Description", borderIndex: 1) {
                                 Text(goal.goalDescription)
@@ -230,6 +237,14 @@ struct ReadingGoalDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This goal will be permanently removed.")
+        }
+        .alert("End Goal?", isPresented: $showingEndGoalConfirm) {
+            Button("End Goal", role: .destructive) {
+                endGoal()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This marks the goal as ended because you are no longer pursuing it. It will not count as completed or receive more progress.")
         }
     }
 
@@ -372,48 +387,154 @@ struct ReadingGoalDetailView: View {
         }
     }
 
-    @ViewBuilder
-    private var miniStatsGrid: some View {
-        LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 2),
-            spacing: 10
-        ) {
-            GoalDetailMiniStat(
-                title: "Started",
-                value: goal.startDate.formatted(date: .abbreviated, time: .omitted),
-                tint: theme.palette.primaryAction
-            )
+    private var goalActionButtons: some View {
+        HStack(spacing: 10) {
+            Button {
+                togglePausedState()
+            } label: {
+                goalActionLabel(
+                    title: goal.status == .paused ? "Resume Goal" : "Pause Goal",
+                    iconName: goal.status == .paused ? "playwavy" : "pausewavy",
+                    tint: theme.palette.primaryAction
+                )
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
 
             Button {
-                showingGoalCompletionHistory = true
+                showingEndGoalConfirm = true
             } label: {
-                GoalDetailMiniStat(
-                    title: "Completion History",
-                    value: "\(goalCompletionHistory.count)",
+                goalActionLabel(
+                    title: "End Goal",
+                    iconName: "stopwavy",
                     tint: theme.palette.secondaryAccent
                 )
             }
             .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+        }
+    }
 
-            if let targetDate = goal.targetDate {
+    private func goalActionLabel(title: String, iconName: String, tint: Color) -> some View {
+        HStack(spacing: 8) {
+            Image(iconName)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 17, height: 17)
+                .bubblyIconMaterial(tint: .white)
+
+            Text(title)
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .foregroundStyle(.white)
+        .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+        .bubblyTileLift()
+    }
+
+    private func togglePausedState() {
+        let eventType: ReadingGoalHistoryType
+        let note: String
+
+        if goal.status == .paused {
+            goal.resumeGoal()
+            eventType = .resumed
+            note = "Goal resumed."
+        } else {
+            goal.pauseGoal()
+            eventType = .paused
+            note = "Goal paused."
+        }
+
+        recordStateChange(eventType: eventType, note: note)
+    }
+
+    private func endGoal() {
+        goal.endGoal()
+        recordStateChange(eventType: .ended, note: "Goal ended.")
+    }
+
+    private func recordStateChange(eventType: ReadingGoalHistoryType, note: String) {
+        let history = ReadingGoalHistory(
+            goalID: goal.id,
+            goalTitleSnapshot: goal.displayTitle,
+            eventType: eventType,
+            previousValue: goal.currentValue,
+            newValue: goal.currentValue,
+            targetValue: goal.targetValue,
+            previousStreak: goal.currentStreak,
+            newStreak: goal.currentStreak,
+            bestStreak: goal.bestStreak,
+            note: note,
+            createdAt: Date()
+        )
+
+        modelContext.insert(history)
+        try? modelContext.save()
+    }
+
+    @ViewBuilder
+    private var miniStatsGrid: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
                 GoalDetailMiniStat(
-                    title: "Due",
-                    value: targetDate.formatted(date: .abbreviated, time: .omitted),
+                    title: "Started",
+                    value: goal.startDate.formatted(date: .abbreviated, time: .omitted),
+                    tint: theme.palette.primaryAction
+                )
+
+                Button {
+                    showingGoalCompletionHistory = true
+                } label: {
+                    GoalDetailMiniStat(
+                        title: "Completion History",
+                        value: "\(goalCompletionHistory.count)",
+                        tint: theme.palette.secondaryAccent
+                    )
+                }
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
+            }
+
+            if let cycleInterval = goal.cycleDateInterval() {
+                GoalDetailMiniStat(
+                    title: "Cycle Dates",
+                    value: cycleDateText(for: cycleInterval),
                     tint: theme.palette.indicators
                 )
             }
 
-            if goal.type == .streak {
-                GoalDetailMiniStat(
-                    title: "Streak",
-                    value: "\(goal.currentStreak)",
-                    tint: theme.palette.primaryAction
-                )
-                GoalDetailMiniStat(
-                    title: "Best",
-                    value: "\(goal.bestStreak)",
-                    tint: theme.palette.secondaryAccent
-                )
+            if goal.targetDate != nil || goal.type == .streak {
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 2),
+                    spacing: 10
+                ) {
+                    if let targetDate = goal.targetDate {
+                        GoalDetailMiniStat(
+                            title: "Due",
+                            value: targetDate.formatted(date: .abbreviated, time: .omitted),
+                            tint: theme.palette.indicators
+                        )
+                    }
+
+                    if goal.type == .streak {
+                        GoalDetailMiniStat(
+                            title: "Streak",
+                            value: "\(goal.currentStreak)",
+                            tint: theme.palette.primaryAction
+                        )
+                        GoalDetailMiniStat(
+                            title: "Best",
+                            value: "\(goal.bestStreak)",
+                            tint: theme.palette.secondaryAccent
+                        )
+                    }
+                }
             }
         }
     }
@@ -672,27 +793,19 @@ struct ReadingGoalDetailView: View {
                 .foregroundStyle(LColors.headingPrimary)
 
             VStack(spacing: 10) {
-                ForEach(milestones, id: \.label) { milestone in
+                ForEach(Array(milestones.enumerated()), id: \.element.label) { index, milestone in
                     let reached = goal.progressValue >= milestone.threshold
                     let noteCount = goalNotes.filter { $0.progressSnapshot >= milestone.threshold - 0.01 && $0.progressSnapshot <= milestone.threshold + 0.12 }.count
+                    let tint = theme.palette.rotation[index % theme.palette.rotation.count]
 
                     HStack(spacing: 12) {
                         Image(reached ? "checkwavy" : "sparkle")
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 16, height: 16)
-                            .foregroundStyle(reached ? AnyShapeStyle(LColors.accents.primary) : AnyShapeStyle(LColors.text.muted))
                             .frame(width: 36, height: 36)
-                            .background(Circle().fill(Color(lumeyHex: "#1a1a1e")))
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(
-                                        reached
-                                            ? AnyShapeStyle(LColors.accents.contrast)
-                                            : AnyShapeStyle(LColors.border.subtle),
-                                        lineWidth: 1
-                                    )
+                            .bubblyIconMaterial(
+                                tint: reached ? tint : LColors.text.muted
                             )
 
                         VStack(alignment: .leading, spacing: 3) {
@@ -715,18 +828,18 @@ struct ReadingGoalDetailView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .strokeBorder(
-                                reached
-                                    ? AnyShapeStyle(
-                                        LColors.accents.special
-                                    )
-                                    : AnyShapeStyle(LColors.border.nested),
-                                lineWidth: reached ? 1.2 : 0.8
-                            )
+                            .strokeBorder(tint, lineWidth: 1.2)
                     )
                 }
             }
         }
+    }
+
+    private func cycleDateText(for interval: DateInterval) -> String {
+        let calendar = Calendar.current
+        let inclusiveEnd = calendar.date(byAdding: .day, value: -1, to: interval.end) ?? interval.end
+        let style = Date.FormatStyle().month(.wide).day()
+        return "\(interval.start.formatted(style)) - \(inclusiveEnd.formatted(style))"
     }
 
     // MARK: - Helpers

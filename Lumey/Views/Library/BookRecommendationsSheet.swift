@@ -138,7 +138,7 @@ struct BookRecommendationsSheet: View {
                             .strokeBorder(theme.palette.primaryAction, lineWidth: 1)
                     }
 
-                Text("Lumey will blend close matches, safer picks, hidden gems, recent releases, backlist, and adjacent reads.")
+                Text("Loomey will blend close matches, safer picks, hidden gems, recent releases, backlist, and adjacent reads.")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(LColors.text.secondary)
                     .multilineTextAlignment(.leading)
@@ -583,12 +583,12 @@ struct BookRecommendationsSheet: View {
 
         if let source = recommendation.source, !source.isEmpty {
             bookNotes = recommendationDetails.isEmpty
-                ? "Recommended by Lumey. Source: \(source)."
-                : "Recommended by Lumey. \(recommendationDetails). Source: \(source)."
+                ? "Recommended by Loomey. Source: \(source)."
+                : "Recommended by Loomey. \(recommendationDetails). Source: \(source)."
         } else {
             bookNotes = recommendationDetails.isEmpty
-                ? "Recommended by Lumey."
-                : "Recommended by Lumey. \(recommendationDetails)."
+                ? "Recommended by Loomey."
+                : "Recommended by Loomey. \(recommendationDetails)."
         }
 
         let bookStatus = BookStatus.toBeRead
@@ -623,7 +623,7 @@ struct BookRecommendationsSheet: View {
             showEditBookAfterAdd = true
         } catch {
             print("Failed to save recommended book:", error)
-            errorMessage = "Lumey couldn't add this book to your library."
+            errorMessage = "Loomey couldn't add this book to your library."
         }
     }
 

@@ -46,9 +46,9 @@ enum ReadingCatchUpError: LocalizedError {
         case .moreDaysThanPages(let missingPages):
             return "Reading days cannot exceed the \(missingPages) missing pages."
         case .dateGenerationFailed:
-            return "Lumey could not create the session dates. Try again."
+            return "Loomey could not create the session dates. Try again."
         case .saveFailed:
-            return "Lumey could not save the Catch Up sessions. Try again."
+            return "Loomey could not save the Catch Up sessions. Try again."
         }
     }
 }

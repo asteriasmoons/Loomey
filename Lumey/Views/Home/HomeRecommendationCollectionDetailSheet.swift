@@ -46,7 +46,7 @@ struct HomeRecommendationCollectionDetailSheet: View {
                         } else if books.isEmpty {
                             emptyCard(
                                 title: "No books yet",
-                                message: "Lumey could not find enough verified books for this shelf."
+                                message: "Loomey could not find enough verified books for this shelf."
                             )
                         } else {
                             LazyVStack(spacing: 12) {
@@ -138,7 +138,7 @@ struct HomeRecommendationCollectionDetailSheet: View {
                         .font(.system(size: 16, weight: .black, design: .rounded))
                         .foregroundStyle(LColors.cardTitle)
 
-                    Text("Lumey is running recommendations for this shelf now.")
+                    Text("Loomey is running recommendations for this shelf now.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(LColors.textSecondary)
                 }

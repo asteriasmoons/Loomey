@@ -51,6 +51,10 @@ struct ReadingGoalsView: View {
     private var pausedGoals: [ReadingGoals] {
         goals.filter { $0.status == .paused && !$0.isArchived }
     }
+
+    private var endedGoals: [ReadingGoals] {
+        goals.filter { $0.status == .ended && !$0.isArchived }
+    }
     
     private var heroGoal: ReadingGoals? {
         pinnedGoals.first ?? activeGoals.first
@@ -79,6 +83,14 @@ struct ReadingGoalsView: View {
                             goalTypeShelf
                             
                             activeGoalsSection
+
+                            if !pausedGoals.isEmpty {
+                                pausedGoalsSection
+                            }
+
+                            if !endedGoals.isEmpty {
+                                endedGoalsSection
+                            }
                             
                             completedGoalsSection
                         }
@@ -436,7 +448,7 @@ private extension ReadingGoalsView {
             if achievements.isEmpty {
                 EmptyGoalCard(
                     title: "Achievements are loading",
-                    message: "Lumey creates built-in reading achievements automatically from your reading progress.",
+                    message: "Loomey creates built-in reading achievements automatically from your reading progress.",
                     borderColor: theme.palette.secondaryAccent
                 )
             } else {
@@ -817,7 +829,7 @@ private extension ReadingGoalsView {
             } else {
                 EmptyGoalCard(
                     title: "No active goal yet",
-                    message: "Create a yearly book goal, daily reading ritual, genre challenge, streak goal, or custom Lumey goal.",
+                    message: "Create a yearly book goal, daily reading ritual, genre challenge, streak goal, or custom Loomey goal.",
                     borderColor: theme.palette.primaryAction
                 )
             }
@@ -886,6 +898,52 @@ private extension ReadingGoalsView {
                         }
                         .buttonStyle(.plain)
                     }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Paused and Ended Goals
+
+private extension ReadingGoalsView {
+    var pausedGoalsSection: some View {
+        goalStatusSection(title: "Paused Goals", goals: pausedGoals)
+    }
+
+    var endedGoalsSection: some View {
+        goalStatusSection(title: "Ended Goals", goals: endedGoals)
+    }
+
+    func goalStatusSection(title: String, goals: [ReadingGoals]) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                sectionTitle(title)
+
+                Spacer()
+
+                Text("\(goals.count)")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundStyle(LColors.cardTitle)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(LColors.glassSurface2))
+            }
+
+            LazyVStack(spacing: 12) {
+                ForEach(Array(goals.enumerated()), id: \.element.id) { index, goal in
+                    NavigationLink {
+                        ReadingGoalDetailView(goal: goal)
+                    } label: {
+                        ReadingGoalRow(
+                            goal: goal,
+                            accentIndex: index,
+                            onDelete: {
+                                modelContext.delete(goal)
+                            }
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

@@ -87,7 +87,7 @@ struct CreateChallengeFeedPostSheet: View {
         .alert("Post Failed", isPresented: $showError) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text(errorMessage ?? "Lumey could not create this feed post right now.")
+            Text(errorMessage ?? "Loomey could not create this feed post right now.")
         }
     }
 
@@ -595,7 +595,7 @@ struct CreateChallengeFeedPostSheet: View {
                 selectedPhotoData = data
             }
         } catch {
-            errorMessage = "Lumey could not load this photo."
+            errorMessage = "Loomey could not load this photo."
             showError = true
         }
     }

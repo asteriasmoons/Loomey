@@ -55,7 +55,7 @@ enum ReadingXPService {
         "Lorekeeper",
         "Bookbound",
         "Infinite Reader",
-        "Lumey Legend"
+        "Loomey Legend"
     ]
 
     @discardableResult

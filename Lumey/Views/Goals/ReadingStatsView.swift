@@ -189,7 +189,7 @@ struct ReadingStatsView: View {
         [
             ReadingMilestone(
                 title: "First Book Finished",
-                subtitle: "Finish your first book in Lumey.",
+                subtitle: "Finish your first book in Loomey.",
                 iconName: "startrophy",
                 isUnlocked: totalBooksFinished >= 1
             ),

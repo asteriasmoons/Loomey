@@ -577,6 +577,9 @@ private struct TimelineRow: View {
         case .streakUpdated: return "sparkle"
         case .completed:     return "checkwavy"
         case .reset:         return "reset"
+        case .paused:        return "pausewavy"
+        case .resumed:       return "playwavy"
+        case .ended:         return "stopwavy"
         case .archived:      return "archivefill"
         case .rewardClaimed: return "starpopgift"
         case .noteAdded:     return "lovepage"
@@ -610,6 +613,12 @@ private struct ReadingGoalHistoryCard: View {
             streakUpdatedCard
         case .reset:
             simpleEventCard(description: "Goal reset.")
+        case .paused:
+            simpleEventCard(description: "Goal paused.")
+        case .resumed:
+            simpleEventCard(description: "Goal resumed.")
+        case .ended:
+            simpleEventCard(description: "Goal ended.")
         case .archived:
             simpleEventCard(description: "Goal archived.")
         case .rewardClaimed:

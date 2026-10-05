@@ -507,7 +507,7 @@ struct ProfileView: View {
             }
         }
 
-        return observations.isEmpty ? ["Keep adding books and Lumey will learn your reading patterns."] : Array(observations.prefix(3))
+        return observations.isEmpty ? ["Keep adding books and Loomey will learn your reading patterns."] : Array(observations.prefix(3))
     }
 
     private func hasReadingDNAValue(_ value: String) -> Bool {
@@ -1336,7 +1336,7 @@ struct ProfileView: View {
                 .font(.system(size: 22, weight: .black, design: .rounded))
                 .foregroundStyle(LColors.headingPrimary)
 
-            Text("Lumey learns your reading habits automatically.")
+            Text("Loomey learns your reading habits automatically.")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(LColors.textSecondary)
 

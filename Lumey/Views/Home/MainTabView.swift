@@ -44,7 +44,7 @@ enum LumeyTab: CaseIterable {
         case .library:
             return "searchwavy"
         case .bingos:
-            return "starbook"
+            return "puzzlepiece"
         case .stats:
             return "levelup"
         case .goals:
@@ -52,11 +52,11 @@ enum LumeyTab: CaseIterable {
         case .history:
             return "clockfill"
         case .epubLibrary:
-            return "books"
+            return "shelfofbooks"
         case .sprints:
             return "sparkbolt"
         case .buddies:
-            return "groupfill"
+            return "chathashtag"
         case .profile:
             return "profilewavy"
         case .challenges:
@@ -98,6 +98,8 @@ enum LumeyTab: CaseIterable {
 
 struct MainTabView: View {
     @State private var selectedTab: LumeyTab = .home
+    @State private var showingAutomaticReleaseNotes = false
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var themeController: LumeyThemeController
     
@@ -127,6 +129,28 @@ struct MainTabView: View {
                 }
             }
         }
+        .onAppear {
+            presentLatestReleaseNotesIfNeeded()
+        }
+        .onChange(of: appState.currentAppleUserId) { _, _ in
+            presentLatestReleaseNotesIfNeeded()
+        }
+        .adaptivePresentation(
+            isPresented: $showingAutomaticReleaseNotes,
+            useFullScreenCover: horizontalSizeClass == .regular
+        ) {
+            ReleaseNotesPage()
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
+        }
+    }
+
+    private func presentLatestReleaseNotesIfNeeded() {
+        guard appState.currentAppleUserId != nil,
+              ReleaseNotesCatalog.hasUnseenLatestRelease
+        else { return }
+
+        showingAutomaticReleaseNotes = true
     }
 
     @ViewBuilder
@@ -156,6 +180,21 @@ struct MainTabView: View {
             EPUBLibraryView()
         case .settings:
             SettingsView()
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func adaptivePresentation<Content: View>(
+        isPresented: Binding<Bool>,
+        useFullScreenCover: Bool,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        if useFullScreenCover {
+            fullScreenCover(isPresented: isPresented, content: content)
+        } else {
+            sheet(isPresented: isPresented, content: content)
         }
     }
 }
@@ -229,16 +268,11 @@ struct LumeyTabBar: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.82), value: showMoreTabs)
     }
 
-    /// Each primary tab gets its own palette accent so the nav bar isn't a
-    /// single-accent block — home reads as primary, library as contrast, etc.
     private func tabAccent(_ tab: LumeyTab) -> Color {
-        switch tab {
-        case .home:     return LColors.accents.primary
-        case .library:  return LColors.accents.contrast
-        case .stats:    return LColors.accents.secondary
-        case .goals:    return LColors.accents.special
-        default:        return LColors.accents.tertiary
+        guard let index = primaryTabs.firstIndex(of: tab) else {
+            return theme.palette.primaryAction
         }
+        return theme.palette.rotation[index % theme.palette.rotation.count]
     }
 
     private func tabButton(_ tab: LumeyTab) -> some View {
@@ -263,11 +297,8 @@ struct LumeyTabBar: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22, height: 22)
-                    .foregroundStyle(
-                        isSelected
-                        ? AnyShapeStyle(accent)
-                        : AnyShapeStyle(LColors.text.muted)
-                    )
+                    .foregroundStyle(LColors.text.muted)
+                    .bubblyIconMaterial(tint: accent, isEnabled: isSelected)
             }
             .frame(width: 42, height: 34)
             .contentShape(Rectangle())
@@ -315,6 +346,7 @@ struct LumeyTabBar: View {
 // MARK: - Curved Dock
 
 private struct CurvedDock: View {
+    @Environment(\.appTheme) private var theme
 
     let tabs: [LumeyTab]
     @Binding var selectedTab: LumeyTab
@@ -382,15 +414,8 @@ private struct CurvedDock: View {
 
     // MARK: - Dock Button
 
-    /// Dock tabs distribute across palette accents by index so the overflow
-    /// menu shows the full theme, not one repeated accent.
     private func dockAccent(for index: Int) -> Color {
-        switch index % 4 {
-        case 0:  return LColors.accents.primary
-        case 1:  return LColors.accents.contrast
-        case 2:  return LColors.accents.secondary
-        default: return LColors.accents.special
-        }
+        theme.palette.rotation[index % theme.palette.rotation.count]
     }
 
     private func dockButton(_ tab: LumeyTab, index: Int) -> some View {
@@ -408,11 +433,8 @@ private struct CurvedDock: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 19, height: 19)
-                .foregroundStyle(
-                    isSelected
-                    ? AnyShapeStyle(accent)
-                    : AnyShapeStyle(LColors.text.tertiary)
-                )
+                .foregroundStyle(LColors.text.tertiary)
+                .bubblyIconMaterial(tint: accent, isEnabled: isSelected)
                 .frame(width: itemSize, height: itemSize)
                 .background {
                     Circle()
@@ -428,11 +450,6 @@ private struct CurvedDock: View {
                             isSelected ? accent : LColors.border.primary,
                             lineWidth: isSelected ? 1.4 : 1
                         )
-                )
-                .shadow(
-                    color: isSelected ? accent.opacity(0.35) : .black.opacity(0.25),
-                    radius: isSelected ? 10 : 6,
-                    y: 4
                 )
                 .contentShape(Circle())
         }

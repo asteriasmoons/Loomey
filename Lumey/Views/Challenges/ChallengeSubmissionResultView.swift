@@ -410,7 +410,7 @@ struct ChallengeSubmissionResultView: View {
         case .rejected:
             return "This submission does not meet the challenge requirements yet."
         case .validating:
-            return "Lumey is checking your linked proof and validation details."
+            return "Loomey is checking your linked proof and validation details."
         case .submitted:
             return "Your submission has been received and is ready for validation."
         case .joined:

@@ -270,7 +270,7 @@ private extension SettingsView {
                 .font(.system(size: 38, weight: .black, design: .rounded))
                 .foregroundStyle(LColors.headingPrimary)
 
-            Text("Your Lumey control room")
+            Text("Your Loomey control room")
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(LColors.textSecondary)
         }
@@ -391,8 +391,8 @@ private extension SettingsView {
             }
 
             SettingsActionCard(
-                title: "Export Lumey",
-                subtitle: "Save your Lumey library as a clean CSV file",
+                title: "Export Loomey",
+                subtitle: "Save your Loomey library as a clean CSV file",
                 iconName: "exportfill",
                 accent: settingsAccent(at: 8)
             ) {
@@ -448,7 +448,7 @@ private extension SettingsView {
                         .font(.system(size: 16, weight: .black, design: .rounded))
                         .foregroundStyle(LColors.cardTitle)
 
-                    Text("Confirmed imports become normal Lumey books with a Goodreads batch tag, so future batch undo deletes exactly that import and syncs through iCloud.")
+                    Text("Confirmed imports become normal Loomey books with a Goodreads batch tag, so future batch undo deletes exactly that import and syncs through iCloud.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(LColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -490,7 +490,7 @@ private extension View {
 
 private extension SettingsView {
     var exportFilename: String {
-        "Lumey-Library-\(Self.filenameDateFormatter.string(from: Date()))"
+        "Loomey-Library-\(Self.filenameDateFormatter.string(from: Date()))"
     }
 
     func handleGoodreadsImport(_ result: Result<[URL], Error>) {
@@ -554,7 +554,7 @@ private extension SettingsView {
             selectedGoodreadsCandidateIDs = []
             notice = SettingsNotice(
                 title: "Goodreads Imported",
-                message: "Created \(selectedCandidates.count) Lumey book cards. Left \(duplicateCount) unselected or duplicate rows untouched."
+                message: "Created \(selectedCandidates.count) Loomey book cards. Left \(duplicateCount) unselected or duplicate rows untouched."
             )
         } catch {
             notice = SettingsNotice(
@@ -581,7 +581,7 @@ private extension SettingsView {
         switch result {
         case .success:
             notice = SettingsNotice(
-                title: "Lumey Exported",
+                title: "Loomey Exported",
                 message: "Your library CSV is ready."
             )
         case .failure(let error):

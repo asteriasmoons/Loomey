@@ -19,7 +19,7 @@ struct ReadingAchievementDefinition {
 
         .init(
             title: "First Book Finished",
-            description: "Finish your first book in Lumey.",
+            description: "Finish your first book in Loomey.",
             type: .booksFinished,
             targetValue: 1,
             iconName: "startrophy",

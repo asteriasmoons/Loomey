@@ -93,7 +93,7 @@ struct HomeRecommendationCollectionsSection: View {
                     title: recommendationCollectionsError ?? "Books You Might Love",
                     message: activeBooks.isEmpty
                     ? "Add or rate a few books to unlock shelves shaped around your taste."
-                    : "Lumey is still learning this shelf. Try again after your latest reads sync."
+                    : "Loomey is still learning this shelf. Try again after your latest reads sync."
                 )
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {

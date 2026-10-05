@@ -115,7 +115,7 @@ struct SprintEndPageSheet: View {
                     .font(.system(size: 28, weight: .black, design: .rounded))
                     .foregroundStyle(LColors.headingPrimary)
 
-                Text("Tell Lumey where you finished the sprint.")
+                Text("Tell Loomey where you finished the sprint.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
             }

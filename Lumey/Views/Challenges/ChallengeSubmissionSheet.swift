@@ -170,7 +170,7 @@ struct ChallengeSubmissionSheet: View {
         .alert("Photo Proof", isPresented: $showPhotoError) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text(photoErrorMessage ?? "Lumey could not use this photo.")
+            Text(photoErrorMessage ?? "Loomey could not use this photo.")
         }
         .adaptivePresentation(isPresented: $showResult, useFullScreenCover: horizontalSizeClass == .regular) {
             if let submission = resultSubmission {
@@ -662,7 +662,7 @@ struct ChallengeSubmissionSheet: View {
                         }
                 }
 
-                Text("Attach a photo when you want Lumey to validate real-world proof for this challenge.")
+                Text("Attach a photo when you want Loomey to validate real-world proof for this challenge.")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -890,7 +890,7 @@ struct ChallengeSubmissionSheet: View {
                 selectedPhotoData = data
             }
         } catch {
-            photoErrorMessage = "Lumey could not load this photo."
+            photoErrorMessage = "Loomey could not load this photo."
             showPhotoError = true
         }
     }
@@ -954,7 +954,7 @@ struct ChallengeSubmissionSheet: View {
                 }
             } catch {
                 isSubmitting = false
-                photoErrorMessage = "Lumey could not upload this proof photo. Please try again."
+                photoErrorMessage = "Loomey could not upload this proof photo. Please try again."
                 showPhotoError = true
                 return
             }

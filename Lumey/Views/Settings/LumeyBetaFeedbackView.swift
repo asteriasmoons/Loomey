@@ -86,7 +86,7 @@ struct LumeyBetaFeedbackView: View {
     private var testingSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             LumeyReportSectionHeader(title: "Testing Notes", color: theme.palette.secondaryAccent, bubbly: true)
-            LumeyReportTextEditor(title: "What Did You Test?", placeholder: "Which feature, workflow, screen, or part of Lumey were you testing?", text: $testedWhat, minHeight: 130, borderColor: theme.palette.indicators)
+            LumeyReportTextEditor(title: "What Did You Test?", placeholder: "Which feature, workflow, screen, or part of Loomey were you testing?", text: $testedWhat, minHeight: 130, borderColor: theme.palette.indicators)
             LumeyReportTextEditor(title: "What Worked Well?", placeholder: "What felt good, clear, useful, or polished?", text: $workedWell, minHeight: 110, borderColor: theme.palette.primaryAction)
             LumeyReportTextEditor(title: "What Could Be Better?", placeholder: "What felt awkward, confusing, incomplete, slow, or visually off?", text: $couldBeBetter, minHeight: 110, borderColor: theme.palette.secondaryAccent)
             LumeyReportTextEditor(title: "Anything Unexpected?", placeholder: "Anything surprising that was not necessarily a bug?", text: $unexpected, minHeight: 100, borderColor: theme.palette.indicators)

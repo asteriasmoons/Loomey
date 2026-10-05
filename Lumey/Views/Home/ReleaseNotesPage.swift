@@ -32,6 +32,9 @@ struct ReleaseNotesPage: View {
                 .padding(.bottom, horizontalSizeClass == .regular ? 36 : 120)
             }
         }
+        .onAppear {
+            ReleaseNotesCatalog.markLatestReleaseSeen()
+        }
     }
 
     private var topBar: some View {
@@ -138,6 +141,10 @@ struct ReleaseNotesPage: View {
                             Text(note.versionTitle)
                                 .font(.system(size: 18, weight: .black, design: .rounded))
                                 .foregroundStyle(LColors.cardTitle)
+
+                            Text(note.buildTitle)
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .bubblyReleaseMaterial(tint: tint)
 
                             Text(note.releaseDate)
                                 .font(.system(size: 11, weight: .bold, design: .rounded))

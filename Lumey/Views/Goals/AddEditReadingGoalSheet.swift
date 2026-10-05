@@ -213,7 +213,7 @@ struct AddEditReadingGoalSheet: View {
                     .font(.system(size: 28, weight: .black, design: .rounded))
                     .foregroundStyle(LColors.headingPrimary)
                 
-                Text(isEditing ? "Update your reading goal" : "Create a new Lumey reading goal")
+                Text(isEditing ? "Update your reading goal" : "Create a new Loomey reading goal")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
             }
@@ -668,8 +668,14 @@ struct AddEditReadingGoalSheet: View {
         targetGoal.targetSeriesName = linkedSeriesName.trimmingCharacters(in: .whitespacesAndNewlines)
         targetGoal.updatedAt = Date()
         
-        if targetGoal.currentValue >= targetGoal.targetValue && targetGoal.targetValue > 0 {
+        if targetGoal.status == .active,
+           targetGoal.currentValue >= targetGoal.targetValue,
+           targetGoal.targetValue > 0 {
             targetGoal.status = .completed
+        }
+
+        if targetGoal.status == .ended {
+            targetGoal.isPinned = false
         }
         
         if wasNewGoal {
@@ -716,6 +722,35 @@ struct AddEditReadingGoalSheet: View {
                     bestStreak: targetGoal.bestStreak,
                     note: "Goal completed."
                 )
+            }
+
+            if previousStatus != targetGoal.status {
+                let stateChange: (ReadingGoalHistoryType, String)?
+
+                switch (previousStatus, targetGoal.status) {
+                case (_, .paused):
+                    stateChange = (.paused, "Goal paused.")
+                case (.paused, .active):
+                    stateChange = (.resumed, "Goal resumed.")
+                case (_, .ended):
+                    stateChange = (.ended, "Goal ended.")
+                default:
+                    stateChange = nil
+                }
+
+                if let (eventType, note) = stateChange {
+                    insertGoalHistory(
+                        for: targetGoal,
+                        eventType: eventType,
+                        previousValue: previousValue,
+                        newValue: targetGoal.currentValue,
+                        targetValue: targetGoal.targetValue,
+                        previousStreak: previousStreak,
+                        newStreak: targetGoal.currentStreak,
+                        bestStreak: targetGoal.bestStreak,
+                        note: note
+                    )
+                }
             }
         }
         

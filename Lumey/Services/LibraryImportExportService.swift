@@ -100,7 +100,7 @@ enum LibraryImportExportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unreadableFile:
-            return "Lumey couldn't read that file."
+            return "Loomey couldn't read that file."
         case .missingTitleColumn:
             return "That CSV does not look like a Goodreads library export."
         case .emptyExport:

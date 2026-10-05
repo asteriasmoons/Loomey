@@ -209,7 +209,7 @@ struct ReadingHomeView: View {
                         writingStatsSection
                         readingMomentumSection
                         goalsSection
-                        HomeRecommendationCollectionsSection()
+//                        HomeRecommendationCollectionsSection()
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 24)
@@ -245,7 +245,7 @@ private extension ReadingHomeView {
     var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Lumey")
+                Text("Loomey")
                     .font(.system(size: 38, weight: .black, design: .rounded))
                     .foregroundStyle(LColors.headingPrimary)
 

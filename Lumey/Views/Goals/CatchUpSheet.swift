@@ -189,7 +189,7 @@ private extension CatchUpSheet {
                     .foregroundStyle(theme.palette.primaryAction)
                     .bubblyIconMaterial(tint: theme.palette.primaryAction)
 
-                Text("Tell Lumey where you are now and how many days you read. Your missing page-based sessions will be rebuilt without adding made-up reading time.")
+                Text("Tell Loomey where you are now and how many days you read. Your missing page-based sessions will be rebuilt without adding made-up reading time.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(LColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)

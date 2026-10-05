@@ -309,7 +309,7 @@ struct BookSearchSheet: View {
             bookPublicationYear = ""
         }
 
-        let bookNotes = "Added from Lumey Book Search. Source: \(searchResult.source)."
+        let bookNotes = "Added from Loomey Book Search. Source: \(searchResult.source)."
 
         let newBook = Book(
             title: bookTitle,
@@ -338,7 +338,7 @@ struct BookSearchSheet: View {
             showEditBookAfterAdd = true
         } catch {
             print("Failed to save searched book:", error)
-            errorMessage = "Lumey couldn't add this book to your library."
+            errorMessage = "Loomey couldn't add this book to your library."
         }
     }
 

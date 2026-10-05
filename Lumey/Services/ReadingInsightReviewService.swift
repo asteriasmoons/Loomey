@@ -60,11 +60,11 @@ enum ReadingInsightReviewServiceError: LocalizedError {
         case .noInsights:
             return "Add at least one insight before creating a review."
         case .invalidResponse:
-            return "Lumey received an invalid review response."
+            return "Loomey received an invalid review response."
         case .serverError(let message):
             return message
         case .decodingError:
-            return "Lumey could not read the generated review."
+            return "Loomey could not read the generated review."
         }
     }
 }
@@ -133,7 +133,7 @@ final class ReadingInsightReviewService {
             throw ReadingInsightReviewServiceError.serverError(
                 backendError?.detail
                     ?? backendError?.error
-                    ?? "Lumey could not create a review from those insights."
+                    ?? "Loomey could not create a review from those insights."
             )
         }
 

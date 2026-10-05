@@ -122,7 +122,7 @@ struct ReadingBookDetailView: View {
                             .font(.system(size: 17, weight: .black, design: .rounded))
                             .foregroundStyle(LColors.cardTitle)
 
-                        Text(book.hasEPUB ? book.epubOriginalFileName : "Import an EPUB file to read inside Lumey.")
+                        Text(book.hasEPUB ? book.epubOriginalFileName : "Import an EPUB file to read inside Loomey.")
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundStyle(LColors.textSecondary)
                             .lineLimit(2)

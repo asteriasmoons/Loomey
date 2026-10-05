@@ -58,6 +58,7 @@ enum ReadingGoalMode: String, Codable, CaseIterable, Identifiable {
 enum ReadingGoalStatus: String, Codable, CaseIterable, Identifiable {
     case active = "Active"
     case paused = "Paused"
+    case ended = "Ended"
     case completed = "Completed"
     case archived = "Archived"
     
@@ -259,24 +260,11 @@ extension ReadingGoals {
     }
     var shouldResetForCurrentPeriod: Bool {
         guard isRecurringGoal else { return false }
+        guard status == .active || status == .completed else { return false }
         guard currentValue > 0 || status == .completed else { return false }
 
         let comparisonDate = lastProgressResetDate ?? completedDate ?? updatedAt
-        let calendar = Calendar.current
-        let now = Date()
-        
-        switch cadence {
-        case .daily:
-            return !calendar.isDate(comparisonDate, inSameDayAs: now)
-        case .weekly:
-            return !calendar.isDate(comparisonDate, equalTo: now, toGranularity: .weekOfYear)
-        case .monthly:
-            return !calendar.isDate(comparisonDate, equalTo: now, toGranularity: .month)
-        case .seasonal:
-            return seasonalIndex(for: comparisonDate) != seasonalIndex(for: now)
-        case .yearly, .lifetime, .custom:
-            return false
-        }
+        return isOutsideCurrentPeriod(comparisonDate)
     }
     var type: ReadingGoalType {
         get { ReadingGoalType(rawValue: typeRawValue) ?? .books }
@@ -434,6 +422,54 @@ extension ReadingGoals {
         guard let targetDate else { return nil }
         return Calendar.current.dateComponents([.day], from: Date(), to: targetDate).day
     }
+
+    func cycleDateInterval(
+        containing date: Date = Date(),
+        calendar: Calendar = .current
+    ) -> DateInterval? {
+        guard isRecurringGoal else { return nil }
+
+        switch cadence {
+        case .daily:
+            return calendar.dateInterval(of: .day, for: date)
+        case .weekly:
+            return calendar.dateInterval(of: .weekOfYear, for: date)
+        case .monthly:
+            return calendar.dateInterval(of: .month, for: date)
+        case .seasonal:
+            let components = calendar.dateComponents([.year, .month], from: date)
+            guard let year = components.year, let month = components.month else { return nil }
+
+            let startYear: Int
+            let startMonth: Int
+            switch month {
+            case 3...5:
+                startYear = year
+                startMonth = 3
+            case 6...8:
+                startYear = year
+                startMonth = 6
+            case 9...11:
+                startYear = year
+                startMonth = 9
+            case 12:
+                startYear = year
+                startMonth = 12
+            default:
+                startYear = year - 1
+                startMonth = 12
+            }
+
+            guard let start = calendar.date(
+                from: DateComponents(year: startYear, month: startMonth, day: 1)
+            ), let end = calendar.date(byAdding: .month, value: 3, to: start) else {
+                return nil
+            }
+            return DateInterval(start: start, end: end)
+        case .yearly, .lifetime, .custom:
+            return nil
+        }
+    }
 }
 
 // MARK: - Helpers
@@ -444,6 +480,8 @@ extension ReadingGoals {
     }
     
     func updateProgress(to value: Double) {
+        guard status == .active else { return }
+
         currentValue = max(0, value)
         if currentValue > 0 {
             lastProgressResetDate = Date()
@@ -479,6 +517,8 @@ extension ReadingGoals {
     }
     
     func markCompleted() {
+        guard status == .active else { return }
+
         let now = Date()
 
         if targetValue > 0 {
@@ -492,6 +532,8 @@ extension ReadingGoals {
     }
     
     func updateStreak(completedOn date: Date = Date(), bridgeBreakGap: Bool = false) {
+        guard status == .active else { return }
+
         let calendar = Calendar.current
 
         if let lastCompletedDate {
@@ -526,6 +568,55 @@ extension ReadingGoals {
         
         updatedAt = Date()
     }
+
+    func pauseGoal() {
+        guard status == .active || (status == .completed && isRecurringGoal) else { return }
+        status = .paused
+    }
+
+    func resumeGoal() {
+        guard status == .paused else { return }
+
+        let comparisonDate = lastProgressResetDate ?? completedDate ?? updatedAt
+        let needsCurrentCycleReset = isRecurringGoal &&
+            currentValue > 0 &&
+            isOutsideCurrentPeriod(comparisonDate)
+
+        if needsCurrentCycleReset {
+            status = .active
+            resetProgress()
+        } else if targetValue > 0 && currentValue >= targetValue {
+            status = .completed
+        } else {
+            status = .active
+        }
+    }
+
+    func endGoal() {
+        guard status == .active || status == .paused || (status == .completed && isRecurringGoal) else { return }
+        status = .ended
+        isPinned = false
+        updatedAt = Date()
+    }
+
+    private func isOutsideCurrentPeriod(_ comparisonDate: Date) -> Bool {
+        let calendar = Calendar.current
+        let now = Date()
+
+        switch cadence {
+        case .daily:
+            return !calendar.isDate(comparisonDate, inSameDayAs: now)
+        case .weekly:
+            return !calendar.isDate(comparisonDate, equalTo: now, toGranularity: .weekOfYear)
+        case .monthly:
+            return !calendar.isDate(comparisonDate, equalTo: now, toGranularity: .month)
+        case .seasonal:
+            return seasonalIndex(for: comparisonDate) != seasonalIndex(for: now)
+        case .yearly, .lifetime, .custom:
+            return false
+        }
+    }
+
     private func seasonalIndex(for date: Date) -> Int {
         let month = Calendar.current.component(.month, from: date)
         

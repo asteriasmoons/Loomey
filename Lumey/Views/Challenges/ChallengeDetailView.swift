@@ -240,7 +240,7 @@ struct ChallengeDetailView: View {
                             }
                         }
 
-                        Text("Hosted by Lumey")
+                        Text("Hosted by Loomey")
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundStyle(LColors.textSecondary)
                     }

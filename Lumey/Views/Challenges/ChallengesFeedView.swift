@@ -1220,7 +1220,7 @@ private struct InlineChallengeFeedPostComposer: View {
         .alert("Post Failed", isPresented: $showError) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text(errorMessage ?? "Lumey could not create this feed post.")
+            Text(errorMessage ?? "Loomey could not create this feed post.")
         }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -1280,7 +1280,7 @@ private struct InlineChallengeFeedPostComposer: View {
         do {
             selectedPhotoData = try await item.loadTransferable(type: Data.self)
         } catch {
-            errorMessage = "Lumey could not load this photo."
+            errorMessage = "Loomey could not load this photo."
             showError = true
         }
     }

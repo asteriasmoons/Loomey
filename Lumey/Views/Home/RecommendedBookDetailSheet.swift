@@ -198,7 +198,7 @@ struct RecommendedBookDetailSheet: View {
                         .font(.system(size: 16, weight: .black, design: .rounded))
                         .foregroundStyle(LColors.cardTitle)
 
-                    Text("Lumey is writing the recommendation detail copy.")
+                    Text("Loomey is writing the recommendation detail copy.")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(LColors.textSecondary)
                 }
@@ -416,7 +416,7 @@ struct RecommendedBookDetailSheet: View {
             return
         } catch {
             if !Task.isCancelled {
-                errorMessage = "Lumey couldn't load extra details for this book right now."
+                errorMessage = "Loomey couldn't load extra details for this book right now."
                 print("Recommendation book detail error:", book.title, book.author, error)
             }
         }
@@ -457,8 +457,8 @@ struct RecommendedBookDetailSheet: View {
             .filter { !$0.isEmpty }
             .joined(separator: " - ")
         let notes = details.isEmpty
-            ? "Recommended by Lumey. Source: \(source)."
-            : "Recommended by Lumey. \(details). Source: \(source)."
+            ? "Recommended by Loomey. Source: \(source)."
+            : "Recommended by Loomey. \(details). Source: \(source)."
 
         let draftBook = Book(
             title: bookTitle,
@@ -491,7 +491,7 @@ struct RecommendedBookDetailSheet: View {
             showEditBookAfterAdd = true
         } catch {
             print("Failed to save recommended shelf book:", error)
-            errorMessage = "Lumey couldn't add this book to your library."
+            errorMessage = "Loomey couldn't add this book to your library."
         }
     }
 

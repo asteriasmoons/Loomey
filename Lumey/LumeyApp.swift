@@ -127,6 +127,8 @@ struct LumeyApp: App {
                     
                     // MARK: - GOAL BACKFILL
                     for goal in goals {
+                        guard goal.status == .active else { continue }
+
                         let allHistory = (try? context.fetch(FetchDescriptor<ReadingGoalHistory>())) ?? []
 
                         let alreadyHasCompletionHistory = allHistory.contains {
