@@ -139,7 +139,10 @@ struct AutomaticCatalogResponse: Codable {
                 book.title = AutomaticCatalogIdentity.cleanTitle(book.title)
                 book.author = book.author.trimmingCharacters(in: .whitespacesAndNewlines)
                 let identity = AutomaticCatalogIdentity.tokens(book)
+                // Enforce the backend's 2010 metadata-year cutoff on cached shelves.
+                // Unknown years are excluded; edition dates still need source verification.
                 guard !book.title.isEmpty, !book.author.isEmpty, book.language == "eng", !book.id.isEmpty,
+                      book.releaseYear.map({ (2010...(Calendar.current.component(.year, from: now) + 1)).contains($0) }) ?? false,
                       preferences?.allows(genres: book.genres, subjects: book.subjects) ?? true,
                       book.metadataExpiresAt.map({ Self.date($0) > now }) ?? true,
                       !(disabledSources ?? []).contains(where: { book.source.contains($0) }),

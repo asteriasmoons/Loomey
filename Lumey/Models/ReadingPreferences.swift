@@ -59,7 +59,7 @@ struct ReadingPreferencesConfiguration: Codable, Equatable {
         }
         let labels = (genres + subjects).map(key)
         let fiction = ["fiction", "fantasy", "romance", "mystery", "thriller", "horror", "science fiction", "novel", "novels", "young adult", "dark academia", "adventure", "paranormal", "mythology", "folklore", "manga", "graphic novel", "graphic", "comic", "dystopian", "magical realism", "litrpg"]
-        let nonfiction = ["nonfiction", "non fiction", "history", "biography", "autobiography", "memoir", "psychology", "science", "spirituality", "self help", "personal development", "productivity", "philosophy", "politics", "technology", "wellness", "writing craft", "art design", "art and design", "mindfulness", "trauma recovery", "habit building"]
+        let nonfiction = ["nonfiction", "non fiction", "history", "biography", "autobiography", "memoir", "psychology", "science", "spirituality", "witchcraft", "self help", "personal development", "productivity", "philosophy", "politics", "technology", "wellness", "writing craft", "art design", "art and design", "mindfulness", "trauma recovery", "habit building"]
         func matches(_ term: String, in values: [String]) -> Bool {
             values.contains { label in
                 if term == "science", label.contains("science fiction") { return false }
@@ -83,13 +83,13 @@ struct ReadingPreferencesConfiguration: Codable, Equatable {
     func normalized() -> Self {
         var value = self
         value.version = 1
-        value.favoriteFictionGenres = Self.clean(favoriteFictionGenres, limit: 64)
-        value.favoriteNonfictionGenres = Self.clean(favoriteNonfictionGenres, limit: 64)
-        value.currentlyInterestedIn = Self.clean(currentlyInterestedIn, limit: 20)
+        value.favoriteFictionGenres = Self.clean(favoriteFictionGenres)
+        value.favoriteNonfictionGenres = Self.clean(favoriteNonfictionGenres)
+        value.currentlyInterestedIn = Self.clean(currentlyInterestedIn)
         return value
     }
 
-    private static func clean(_ values: [String], limit: Int) -> [String] {
+    private static func clean(_ values: [String]) -> [String] {
         var selected: [String: String] = [:]
         for value in values {
             let text = String(value.replacingOccurrences(of: #"[\p{C}\s]+"#, with: " ", options: .regularExpression)
@@ -98,6 +98,6 @@ struct ReadingPreferencesConfiguration: Codable, Equatable {
             let key = text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
             if selected[key] == nil { selected[key] = text }
         }
-        return selected.keys.sorted().prefix(limit).compactMap { selected[$0] }
+        return selected.keys.sorted().compactMap { selected[$0] }
     }
 }

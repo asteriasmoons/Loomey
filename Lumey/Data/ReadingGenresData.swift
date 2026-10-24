@@ -337,6 +337,7 @@ enum ReadingGenresData {
                 "Productivity",
                 "Mindfulness",
                 "Spirituality",
+                "Witchcraft",
                 "Trauma Recovery",
                 "Wellness",
                 "Habit Building",
