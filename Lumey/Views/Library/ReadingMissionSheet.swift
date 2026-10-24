@@ -31,6 +31,9 @@ struct ReadingMissionSheet: View {
     @State private var isScoringMission = false
     @State private var missionScoreMessage: String?
     @State private var missionScoreError: String?
+    @State private var showingAbortConfirmation = false
+    @State private var missionPendingAbortID: UUID?
+    @State private var abortErrorMessage: String?
 
     private let loadingMessages = [
         "Searching your library...",
@@ -125,6 +128,26 @@ struct ReadingMissionSheet: View {
             .animation(.spring(response: 0.34, dampingFraction: 0.84), value: selectedMissionID)
         }
         .lumeyDismissKeyboardOnTap()
+        .alert("Abort Reading Mission?", isPresented: $showingAbortConfirmation) {
+            Button("Cancel", role: .cancel) {
+                missionPendingAbortID = nil
+            }
+            Button("Abort", role: .destructive) {
+                abortMission()
+            }
+        } message: {
+            Text("This permanently deletes this reading mission, its prompts, saved answers, and mission history. This cannot be undone.")
+        }
+        .alert("Could Not Abort Mission", isPresented: Binding(
+            get: { abortErrorMessage != nil },
+            set: { if !$0 { abortErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {
+                abortErrorMessage = nil
+            }
+        } message: {
+            Text(abortErrorMessage ?? "Please try again.")
+        }
     }
 }
 
@@ -757,9 +780,10 @@ private extension ReadingMissionSheet {
                 .buttonStyle(.plain)
 
                 Button {
-                    dismiss()
+                    missionPendingAbortID = mission.id
+                    showingAbortConfirmation = true
                 } label: {
-                    Text("Dismiss")
+                    Text("Abort")
                         .font(.system(size: 14, weight: .black, design: .rounded))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
@@ -772,6 +796,7 @@ private extension ReadingMissionSheet {
                         }
                 }
                 .buttonStyle(.plain)
+                .disabled(isScoringMission)
             }
         }
     }
@@ -1013,6 +1038,25 @@ private extension ReadingMissionSheet {
 // MARK: - Actions
 
 private extension ReadingMissionSheet {
+    func abortMission() {
+        guard !isScoringMission, let missionID = missionPendingAbortID else { return }
+        missionPendingAbortID = nil
+
+        do {
+            try ReadingMissionDeletionService.deleteMission(
+                id: missionID,
+                modelContext: modelContext
+            )
+            selectedMissionID = nil
+            showCompletionBurst = false
+            missionScoreMessage = nil
+            missionScoreError = nil
+            dismiss()
+        } catch {
+            abortErrorMessage = error.localizedDescription
+        }
+    }
+
     @MainActor
     func generateMission() async {
         await generateMission(selectedBook: nil)

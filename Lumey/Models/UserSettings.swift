@@ -34,6 +34,10 @@ final class UserSettings {
     // Stores the tab name the user set as default. Empty string means use root tab.
     var notesDefaultTab: String = ""
 
+    // One atomic preference value in the existing private CloudKit settings record.
+    var readingPreferencesJSON: String = ""
+    var readingPreferencesUpdatedAt: Date?
+
     // Whether the user has completed the welcome flow.
     var hasSeenWelcome: Bool = false
 

@@ -210,6 +210,7 @@ struct ReadingHomeView: View {
                         readingMomentumSection
                         goalsSection
 //                        HomeRecommendationCollectionsSection()
+                        HomeAutomaticCatalogsSection()
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 24)
@@ -509,16 +510,14 @@ private extension ReadingHomeView {
                             icon: "openbook",
                             value: "\(pagesReadToday)",
                             label: "pages today",
-                            tint: theme.palette.secondaryAccent,
-                            iconTint: theme.palette.indicators
+                            tint: theme.palette.secondaryAccent
                         )
 
                         todayPill(
                             icon: "clockfill",
                             value: "\(minutesReadToday)",
                             label: "min today",
-                            tint: theme.palette.indicators,
-                            iconTint: theme.palette.secondaryAccent
+                            tint: theme.palette.indicators
                         )
                     }
                 }
@@ -552,21 +551,9 @@ private extension ReadingHomeView {
                         .foregroundStyle(LColors.text.secondary)
 
                     Circle()
-                        .fill(
-                            day.isActive
-                            ? AnyShapeStyle(LColors.accents.primary)
-                            : AnyShapeStyle(LColors.surface.subtle)
-                        )
                         .frame(width: 10, height: 10)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    day.isActive
-                                    ? AnyShapeStyle(Color.clear)
-                                    : AnyShapeStyle(LColors.border.primary.opacity(0.5)),
-                                    lineWidth: 1
-                                )
-                        )
+                        .bubblyIconMaterial(tint: .gray)
+                        .opacity(day.isActive ? 1 : 0.45)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -579,22 +566,15 @@ private extension ReadingHomeView {
         .bubblyTileLift()
     }
 
-    func todayPill(icon: String, value: String, label: String, tint: Color, iconTint: Color) -> some View {
+    func todayPill(icon: String, value: String, label: String, tint: Color) -> some View {
         HStack(spacing: 8) {
             Image(icon)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 14, height: 14)
-                .background {
-                    BubblyIconMaterial(tint: iconTint)
-                        .mask {
-                            Image(icon)
-                                .resizable()
-                                .scaledToFit()
-                        }
-                }
-                .foregroundStyle(.clear)
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.8), radius: 1, x: 0, y: 2)
 
             Text(value)
                 .font(.system(size: 14, weight: .black, design: .rounded))

@@ -15,6 +15,9 @@ final class ReadingGoalHistory {
     
     var goalID: UUID = UUID()
     var goalTitleSnapshot: String = ""
+    var sourceSessionID: UUID?
+    var sessionProgressDelta: Double?
+    var contributionCycleStart: Date?
     
     // MARK: - History Type
     
@@ -53,7 +56,10 @@ final class ReadingGoalHistory {
         bestStreak: Int = 0,
         note: String = "",
         rewardEarned: String = "",
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        sourceSessionID: UUID? = nil,
+        sessionProgressDelta: Double? = nil,
+        contributionCycleStart: Date? = nil
     ) {
         self.id = UUID()
         self.goalID = goalID
@@ -68,6 +74,9 @@ final class ReadingGoalHistory {
         self.note = note
         self.rewardEarned = rewardEarned
         self.createdAt = createdAt
+        self.sourceSessionID = sourceSessionID
+        self.sessionProgressDelta = sessionProgressDelta
+        self.contributionCycleStart = contributionCycleStart
     }
 }
 

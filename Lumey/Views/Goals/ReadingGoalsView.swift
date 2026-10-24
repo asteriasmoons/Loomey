@@ -2083,13 +2083,7 @@ struct LogSessionSheet: View {
             let previousBestStreak = goal.bestStreak
             let previousStatus = goal.status
 
-            let increment: Double
-            switch goal.type {
-            case .minutes: increment = Double(mins)
-            case .hours:   increment = Double(mins) / 60.0
-            case .pages:   increment = Double(pages)
-            default:       increment = 0
-            }
+            let increment = goal.sessionProgressIncrement(minutes: mins, pages: pages)
 
             if increment > 0 {
                 goal.incrementProgress(by: increment)
@@ -2102,7 +2096,8 @@ struct LogSessionSheet: View {
                     previousStreak: previousStreak,
                     newStreak: goal.currentStreak,
                     bestStreak: goal.bestStreak,
-                    note: "Reading session added to goal progress."
+                    note: "Reading session added to goal progress.",
+                    sourceSession: session
                 )
             } else if goal.type != .streak {
                 insertGoalHistory(
@@ -2114,7 +2109,8 @@ struct LogSessionSheet: View {
                     previousStreak: previousStreak,
                     newStreak: goal.currentStreak,
                     bestStreak: goal.bestStreak,
-                    note: sessionHistoryNote(minutes: mins, pages: pages)
+                    note: sessionHistoryNote(minutes: mins, pages: pages),
+                    sourceSession: session
                 )
             }
 
@@ -2135,7 +2131,8 @@ struct LogSessionSheet: View {
                         previousStreak: previousStreak,
                         newStreak: goal.currentStreak,
                         bestStreak: goal.bestStreak,
-                        note: "Reading streak updated from logged session."
+                        note: "Reading streak updated from logged session.",
+                        sourceSession: session
                     )
                 }
             }
@@ -2150,7 +2147,8 @@ struct LogSessionSheet: View {
                     previousStreak: previousStreak,
                     newStreak: goal.currentStreak,
                     bestStreak: goal.bestStreak,
-                    note: "Goal completed from logged reading progress."
+                    note: "Goal completed from logged reading progress.",
+                    sourceSession: session
                 )
             }
         }
@@ -2238,7 +2236,8 @@ struct LogSessionSheet: View {
         previousStreak: Int,
         newStreak: Int,
         bestStreak: Int,
-        note: String
+        note: String,
+        sourceSession: ReadingSession
     ) {
         let history = ReadingGoalHistory(
             goalID: goal.id,
@@ -2251,7 +2250,10 @@ struct LogSessionSheet: View {
             newStreak: newStreak,
             bestStreak: bestStreak,
             note: note,
-            createdAt: Date()
+            createdAt: Date(),
+            sourceSessionID: sourceSession.id,
+            sessionProgressDelta: newValue - previousValue,
+            contributionCycleStart: goal.cycleDateInterval(containing: goal.lastProgressResetDate ?? Date())?.start
         )
         
         modelContext.insert(history)
@@ -2761,6 +2763,9 @@ struct GoalCheckInSheet: View {
             }
 
             checkInSession = session
+            history.sourceSessionID = session.id
+            history.sessionProgressDelta = progressIncrease
+            history.contributionCycleStart = goal.cycleDateInterval(containing: goal.lastProgressResetDate ?? eventDate)?.start
             modelContext.insert(session)
         }
 

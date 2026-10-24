@@ -357,4 +357,11 @@ enum ReadingGenresData {
     static let allSubgenres: [String] = all
         .flatMap { $0.subgenres }
         .sorted()
+
+    static let fictionPreferenceGenres: [String] = Array(Set(
+        ["Mystery", "Thriller", "Paranormal Romance"]
+        + all.filter { $0.name != "Nonfiction" }.flatMap { [$0.name] + $0.subgenres }
+    )).sorted()
+
+    static let nonfictionPreferenceGenres: [String] = all.first { $0.name == "Nonfiction" }?.subgenres.sorted() ?? []
 }

@@ -15,6 +15,7 @@ struct RecommendedBookDetailSheet: View {
     private var libraryBooks: [Book]
 
     let book: LumeyRecommendationCollectionBook
+    var catalogBook: AutomaticCatalogBook? = nil
 
     @State private var detail: RecommendationBookDetail?
     @State private var isLoading = false
@@ -22,6 +23,7 @@ struct RecommendedBookDetailSheet: View {
     @State private var bookToEditAfterAdd: Book?
     @State private var showEditBookAfterAdd = false
     @State private var addedBookKeys: Set<String> = []
+    @State private var isAddingCatalogBook = false
 
     private var displayedDetail: RecommendationBookDetail? {
         detail
@@ -47,6 +49,10 @@ struct RecommendedBookDetailSheet: View {
                             }
                         } else {
                             summaryCard
+                        }
+
+                        if detail != nil, let errorMessage {
+                            errorCard(errorMessage)
                         }
 
                         metadataSections
@@ -146,7 +152,7 @@ struct RecommendedBookDetailSheet: View {
             )
         }
         .buttonStyle(.plain)
-        .disabled(alreadyAdded)
+        .disabled(alreadyAdded || isAddingCatalogBook)
         .accessibilityLabel(alreadyAdded ? "Added to Library" : "Add to Library")
     }
 
@@ -319,19 +325,22 @@ struct RecommendedBookDetailSheet: View {
 
     private func coverView(_ urlString: String?) -> some View {
         Group {
-            if let urlString, let url = URL(string: urlString) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case let .success(image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    default:
+            if let catalogBook {
+                CatalogBookCover(urlString: urlString, imageID: catalogBook.imageID, fallbackURLs: catalogBook.coverUrls ?? [], title: book.title,
+                                 width: 108, height: 162, accent: LColors.accents.primary)
+            } else {
+                Group {
+                    if let urlString, let url = URL(string: urlString) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case let .success(image): image.resizable().scaledToFill()
+                            default: fallbackCover
+                            }
+                        }
+                    } else {
                         fallbackCover
                     }
                 }
-            } else {
-                fallbackCover
             }
         }
         .frame(width: 108, height: 162)
@@ -400,6 +409,17 @@ struct RecommendedBookDetailSheet: View {
     private func fetchDetail() async {
         guard detail == nil else { return }
 
+        if let catalogBook {
+            detail = catalogBook.recommendationDetail
+            do {
+                let loaded = try await AutomaticBookCatalogService.shared.detail(id: catalogBook.id)
+                if !Task.isCancelled { detail = loaded.recommendationDetail }
+            } catch {
+                // The catalog already carries valid detail metadata; keep it usable offline.
+            }
+            return
+        }
+
         isLoading = true
         errorMessage = nil
         defer {
@@ -423,6 +443,12 @@ struct RecommendedBookDetailSheet: View {
     }
 
     private var isBookInLibrary: Bool {
+        if let catalogBook {
+            let identity = AutomaticCatalogIdentity.tokens(catalogBook)
+            if libraryBooks.contains(where: { book in
+                !identity.isDisjoint(with: AutomaticCatalogIdentity.tokens(title: book.title, author: book.author, isbn: book.isbn))
+            }) { return true }
+        }
         let targetKey = bookKey(title: displayedDetail?.title ?? book.title, author: displayedDetail?.author ?? book.author)
 
         if addedBookKeys.contains(targetKey) {
@@ -437,16 +463,36 @@ struct RecommendedBookDetailSheet: View {
     private func addToLibrary() {
         guard !isBookInLibrary, detail != nil else { return }
 
-        let currentDetail = displayedDetail
+        if let catalogBook {
+            guard !isAddingCatalogBook else { return }
+            isAddingCatalogBook = true
+            Task { @MainActor in
+                defer { isAddingCatalogBook = false }
+                do {
+                    let independent = try await AutomaticBookCatalogService.shared.libraryDetail(id: catalogBook.id, book: catalogBook)
+                    try Task.checkCancellation()
+                    saveToLibrary(using: independent)
+                } catch {
+                    errorMessage = error.localizedDescription
+                }
+            }
+            return
+        }
+        saveToLibrary(using: displayedDetail)
+    }
+
+    private func saveToLibrary(using currentDetail: RecommendationBookDetail?) {
+        guard !isBookInLibrary else { return }
+        let fallback = catalogBook == nil ? book : nil
         let bookTitle = currentDetail?.title ?? book.title
         let bookAuthor = currentDetail?.author ?? book.author
-        let publicationYear = currentDetail?.publicationYear.map(String.init) ?? book.releaseYear.map(String.init) ?? ""
-        let genres = uniqueValues((currentDetail?.genres ?? book.genres ?? []) + (currentDetail?.subgenres ?? []))
-        let moods = uniqueValues(currentDetail?.moods ?? book.moods ?? [])
-        let tags = uniqueValues(currentDetail?.tags ?? book.tags ?? [])
-        let tropes = uniqueValues(currentDetail?.tropes ?? book.tropes ?? [])
-        let topics = uniqueValues(currentDetail?.themes ?? book.themes ?? [])
-        let source = currentDetail?.source ?? book.source ?? ""
+        let publicationYear = currentDetail?.publicationYear.map(String.init) ?? fallback?.releaseYear.map(String.init) ?? ""
+        let genres = uniqueValues((currentDetail?.genres ?? fallback?.genres ?? []) + (currentDetail?.subgenres ?? []))
+        let moods = uniqueValues(currentDetail?.moods ?? fallback?.moods ?? [])
+        let tags = uniqueValues(currentDetail?.tags ?? fallback?.tags ?? [])
+        let tropes = uniqueValues(currentDetail?.tropes ?? fallback?.tropes ?? [])
+        let topics = uniqueValues(currentDetail?.themes ?? fallback?.themes ?? [])
+        let source = currentDetail?.source ?? fallback?.source ?? ""
         let details = [
             book.strategyLabel,
             book.rationale,
@@ -467,29 +513,29 @@ struct RecommendedBookDetailSheet: View {
             publisher: currentDetail?.publisher ?? "",
             publicationYear: publicationYear,
             isbn: currentDetail?.isbn ?? "",
-            summary: currentDetail?.summary ?? book.summary,
-            rating: currentDetail?.rating ?? book.rating ?? 0,
+            summary: currentDetail?.summary ?? fallback?.summary ?? "",
+            rating: currentDetail?.rating ?? fallback?.rating ?? 0,
             status: .toBeRead,
             format: .other,
             ownership: .wishlist,
-            totalPages: currentDetail?.pages ?? book.pages ?? 0,
+            totalPages: currentDetail?.pages ?? fallback?.pages ?? 0,
             notes: notes,
             genres: genres,
             moods: moods,
             tags: tags,
             tropes: tropes,
             topics: topics,
-            coverURL: currentDetail?.coverUrl ?? book.coverUrl ?? ""
+            coverURL: currentDetail?.coverUrl ?? fallback?.coverUrl ?? ""
         )
 
         modelContext.insert(draftBook)
-        addedBookKeys.insert(bookKey(title: bookTitle, author: bookAuthor))
-        bookToEditAfterAdd = draftBook
-
         do {
             try modelContext.save()
+            addedBookKeys.insert(bookKey(title: bookTitle, author: bookAuthor))
+            bookToEditAfterAdd = draftBook
             showEditBookAfterAdd = true
         } catch {
+            modelContext.delete(draftBook)
             print("Failed to save recommended shelf book:", error)
             errorMessage = "Loomey couldn't add this book to your library."
         }
@@ -497,6 +543,11 @@ struct RecommendedBookDetailSheet: View {
 
     private func bookKey(title: String, author: String) -> String {
         let rawKey = "\(title)|\(author)"
+        if catalogBook != nil {
+            return rawKey.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+                .components(separatedBy: CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "|")).inverted)
+                .joined()
+        }
         return rawKey
             .lowercased()
             .replacingOccurrences(of: "[^a-z0-9|]", with: "", options: .regularExpression)

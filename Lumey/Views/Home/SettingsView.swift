@@ -64,6 +64,8 @@ struct SettingsView: View {
     @Query(sort: \ReadingStreakPreferences.updatedAt, order: .reverse)
     private var streakPreferenceRecords: [ReadingStreakPreferences]
 
+    @Query private var userSettings: [UserSettings]
+
     @State private var showGoodreadsImporter = false
     @State private var showLumeyExporter = false
     @State private var showUndoLastImportConfirm = false
@@ -78,6 +80,7 @@ struct SettingsView: View {
     @State private var showingReleaseNotes = false
     @State private var showingReportCenter = false
     @State private var showingStreakSettings = false
+    @State private var showingReadingPreferences = false
 
     private var syncedBooks: [Book] {
         books.filter { $0.deletedAt == nil }
@@ -143,6 +146,7 @@ struct SettingsView: View {
                         releaseNotesCard
                         reportCenterCard
                         AppThemeSettingsSection(borderColor: settingsAccent(at: 3))
+                        readingPreferencesCard
                         libraryPulse
                         readingStreaksCard
                         dataVault
@@ -257,6 +261,11 @@ struct SettingsView: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.hidden)
             }
+            .adaptivePresentation(isPresented: $showingReadingPreferences, useFullScreenCover: horizontalSizeClass == .regular) {
+                ReadingPreferencesSheet(configuration: ReadingPreferencesStore.configuration(in: userSettings))
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.hidden)
+            }
         }
     }
 }
@@ -367,6 +376,18 @@ private extension SettingsView {
             accent: settingsAccent(at: 6)
         ) {
             showingStreakSettings = true
+        }
+    }
+
+    var readingPreferencesCard: some View {
+        let preferences = ReadingPreferencesStore.configuration(in: userSettings)
+        return SettingsActionCard(
+            title: "Reading Preferences",
+            subtitle: preferences.map { "\($0.preferredCategory.title) - \($0.recommendationStyle.title)" } ?? "Categories, favorite genres, and current interests",
+            iconName: "books",
+            accent: settingsAccent(at: 4)
+        ) {
+            showingReadingPreferences = true
         }
     }
 

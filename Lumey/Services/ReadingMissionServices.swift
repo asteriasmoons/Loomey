@@ -387,6 +387,41 @@ enum ReadingMissionGenerator {
     }
 }
 
+enum ReadingMissionDeletionService {
+    @MainActor
+    static func deleteMission(id missionID: UUID, modelContext: ModelContext) throws {
+        let missions = try modelContext.fetch(FetchDescriptor<ReadingMission>(
+            predicate: #Predicate { $0.id == missionID }
+        ))
+        let tasks = try modelContext.fetch(FetchDescriptor<ReadingMissionTask>(
+            predicate: #Predicate { $0.missionID == missionID }
+        ))
+        let histories = try modelContext.fetch(FetchDescriptor<ReadingMissionHistory>(
+            predicate: #Predicate { $0.missionID == missionID }
+        ))
+
+        // Save existing edits first so a failed deletion rolls back only this operation.
+        try modelContext.save()
+
+        do {
+            for task in tasks {
+                modelContext.delete(task)
+            }
+            for history in histories {
+                modelContext.delete(history)
+            }
+            for mission in missions {
+                modelContext.delete(mission)
+            }
+
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            throw error
+        }
+    }
+}
+
 enum ReadingMissionCompletionService {
     static let completionPoints = 100
 

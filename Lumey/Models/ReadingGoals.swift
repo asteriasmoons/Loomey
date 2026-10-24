@@ -475,6 +475,15 @@ extension ReadingGoals {
 // MARK: - Helpers
 
 extension ReadingGoals {
+    func sessionProgressIncrement(minutes: Int, pages: Int) -> Double {
+        switch type {
+        case .minutes: return Double(minutes)
+        case .hours: return Double(minutes) / 60.0
+        case .pages: return Double(pages)
+        default: return 0
+        }
+    }
+
     func touch() {
         updatedAt = Date()
     }

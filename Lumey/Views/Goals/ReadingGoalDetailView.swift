@@ -11,6 +11,7 @@ struct ReadingGoalDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.appTheme) private var theme
+    @Environment(\.scenePhase) private var scenePhase
 
     @Bindable var goal: ReadingGoals
 
@@ -42,31 +43,11 @@ struct ReadingGoalDetailView: View {
     }
     
     private var linkedSessions: [ReadingSession] {
-        allReadingSessions
-            .filter { session in
-                if session.allLinkedGoalIDs.contains(goal.id) {
-                    return true
-                }
-
-                if session.allLinkedGoalTitles.contains(where: { $0.caseInsensitiveCompare(goal.displayTitle) == .orderedSame }) {
-                    return true
-                }
-
-                if goal.type == .pages && session.pagesRead > 0 {
-                    return true
-                }
-
-                if goal.type == .minutes && session.durationMinutes > 0 {
-                    return true
-                }
-
-                if goal.type == .hours && session.durationMinutes > 0 {
-                    return true
-                }
-
-                return false
-            }
-            .sorted { $0.date > $1.date }
+        ReadingGoalSessionHistory.sessions(
+            associatedWith: goal,
+            sessions: allReadingSessions,
+            history: allGoalHistory
+        )
     }
 
     private var visibleLinkedSessions: [ReadingSession] {
@@ -201,7 +182,7 @@ struct ReadingGoalDetailView: View {
 
                         relatedContentSection
 
-                        if !linkedSessions.isEmpty {
+                        if goal.isRecurringGoal || !linkedSessions.isEmpty {
                             sessionHistoryCard
                         }
 
@@ -245,6 +226,13 @@ struct ReadingGoalDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This marks the goal as ended because you are no longer pursuing it. It will not count as completed or receive more progress.")
+        }
+        .onAppear { refreshCurrentCycle() }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active { refreshCurrentCycle() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+            refreshCurrentCycle()
         }
     }
 
@@ -670,12 +658,18 @@ struct ReadingGoalDetailView: View {
                     .font(.system(size: 16, weight: .black, design: .rounded))
                     .foregroundStyle(LColors.cardTitle)
 
+                if linkedSessions.isEmpty {
+                    Text("No sessions linked to this goal yet.")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(LColors.textSecondary)
+                }
+
                 VStack(spacing: 0) {
                     ForEach(Array(visibleLinkedSessions.enumerated()), id: \.element.id) { index, session in
                         sessionHistoryRow(session, accentIndex: index)
 
                         if index < visibleLinkedSessions.count - 1 {
-                            dottedDivider
+                            dottedDivider(dotSize: 3)
                                 .padding(.vertical, 10)
                         }
                     }
@@ -715,6 +709,13 @@ struct ReadingGoalDetailView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func refreshCurrentCycle() {
+        if goal.shouldResetForCurrentPeriod {
+            goal.resetProgressIfNeededForCurrentPeriod()
+            try? modelContext.save()
         }
     }
 
@@ -765,16 +766,26 @@ struct ReadingGoalDetailView: View {
             }
     }
 
-    private var dottedDivider: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<51, id: \.self) { _ in
-                Circle()
-                    .fill(LColors.border.subtle)
-                    .frame(width: 3, height: 3)
+    private func dottedDivider(dotSize: CGFloat) -> some View {
+        let silver = Color(red: 0.72, green: 0.74, blue: 0.80)
+
+        return GeometryReader { proxy in
+            let dotCount = max(Int((proxy.size.width + 4) / (dotSize + 4)), 1)
+            let spacing = dotCount > 1
+                ? max((proxy.size.width - CGFloat(dotCount) * dotSize) / CGFloat(dotCount - 1), 0)
+                : 0
+
+            HStack(spacing: spacing) {
+                ForEach(0..<dotCount, id: \.self) { _ in
+                    Circle()
+                        .frame(width: dotSize, height: dotSize)
+                        .bubblyIconMaterial(tint: silver.opacity(0.55))
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .clipped()
+        .frame(height: dotSize)
+        .frame(maxWidth: .infinity)
+        .accessibilityHidden(true)
     }
 
     // MARK: - Milestones Card
@@ -836,10 +847,15 @@ struct ReadingGoalDetailView: View {
     }
 
     private func cycleDateText(for interval: DateInterval) -> String {
+        let dates = cycleDateLabels(for: interval)
+        return "\(dates.start) - \(dates.end)"
+    }
+
+    private func cycleDateLabels(for interval: DateInterval) -> (start: String, end: String) {
         let calendar = Calendar.current
         let inclusiveEnd = calendar.date(byAdding: .day, value: -1, to: interval.end) ?? interval.end
         let style = Date.FormatStyle().month(.wide).day()
-        return "\(interval.start.formatted(style)) - \(inclusiveEnd.formatted(style))"
+        return (interval.start.formatted(style), inclusiveEnd.formatted(style))
     }
 
     // MARK: - Helpers

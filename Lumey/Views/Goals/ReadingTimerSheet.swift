@@ -792,13 +792,7 @@ struct SaveSessionSheet: View {
             let previousBestStreak = goal.bestStreak
             let previousStatus = goal.status
             
-            let increment: Double
-            switch goal.type {
-            case .minutes: increment = Double(prefillMinutes)
-            case .hours:   increment = Double(prefillMinutes) / 60.0
-            case .pages:   increment = Double(pages)
-            default:       increment = 0
-            }
+            let increment = goal.sessionProgressIncrement(minutes: prefillMinutes, pages: pages)
             
             if increment > 0 {
                 goal.incrementProgress(by: increment)
@@ -811,7 +805,8 @@ struct SaveSessionSheet: View {
                     previousStreak: previousStreak,
                     newStreak: goal.currentStreak,
                     bestStreak: goal.bestStreak,
-                    note: "Timer session added to goal progress."
+                    note: "Timer session added to goal progress.",
+                    sourceSession: session
                 )
             } else if goal.type != .streak {
                 insertGoalHistory(
@@ -823,7 +818,8 @@ struct SaveSessionSheet: View {
                     previousStreak: previousStreak,
                     newStreak: goal.currentStreak,
                     bestStreak: goal.bestStreak,
-                    note: sessionHistoryNote(minutes: prefillMinutes, pages: pages)
+                    note: sessionHistoryNote(minutes: prefillMinutes, pages: pages),
+                    sourceSession: session
                 )
             }
             
@@ -844,7 +840,8 @@ struct SaveSessionSheet: View {
                         previousStreak: previousStreak,
                         newStreak: goal.currentStreak,
                         bestStreak: goal.bestStreak,
-                        note: "Reading streak updated from timer session."
+                        note: "Reading streak updated from timer session.",
+                        sourceSession: session
                     )
                 }
             }
@@ -859,7 +856,8 @@ struct SaveSessionSheet: View {
                     previousStreak: previousStreak,
                     newStreak: goal.currentStreak,
                     bestStreak: goal.bestStreak,
-                    note: "Goal completed from timer session."
+                    note: "Goal completed from timer session.",
+                    sourceSession: session
                 )
             }
         }
@@ -948,7 +946,8 @@ struct SaveSessionSheet: View {
         previousStreak: Int,
         newStreak: Int,
         bestStreak: Int,
-        note: String
+        note: String,
+        sourceSession: ReadingSession
     ) {
         let history = ReadingGoalHistory(
             goalID: goal.id,
@@ -961,7 +960,10 @@ struct SaveSessionSheet: View {
             newStreak: newStreak,
             bestStreak: bestStreak,
             note: note,
-            createdAt: Date()
+            createdAt: Date(),
+            sourceSessionID: sourceSession.id,
+            sessionProgressDelta: newValue - previousValue,
+            contributionCycleStart: goal.cycleDateInterval(containing: goal.lastProgressResetDate ?? Date())?.start
         )
         
         modelContext.insert(history)

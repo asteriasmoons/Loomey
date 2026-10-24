@@ -115,7 +115,12 @@ struct LibraryBookRow: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    LibraryRatingRow(book: book, useBubblyMaterial: true)
+                    LibraryRatingRow(
+                        book: book,
+                        useBubblyMaterial: true,
+                        tint: theme.palette.primaryAction,
+                        inactiveTint: theme.palette.secondaryAccent
+                    )
                     
                     VStack(alignment: .leading, spacing: 6) {
                         GradientProgressBar(

@@ -13,6 +13,7 @@ struct ContentView: View {
 
     var body: some View {
         MainTabView()
+            .modifier(AutomaticCatalogPreparation())
             .environmentObject(appState)
             .environmentObject(themeController)
             .environment(\.appTheme, themeController.appTheme)

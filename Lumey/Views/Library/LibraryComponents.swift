@@ -76,6 +76,7 @@ struct LibraryRatingRow: View {
     let book: Book
     var useBubblyMaterial: Bool = false
     var tint: Color? = nil
+    var inactiveTint: Color? = nil
     
     var body: some View {
         HStack(spacing: 2) {
@@ -89,20 +90,17 @@ struct LibraryRatingRow: View {
                     book.lastUpdated = Date()
                 } label: {
                     let activeTint = tint ?? theme.palette.primaryAction
+                    let starTint = number <= Int(book.rating)
+                        ? activeTint
+                        : (inactiveTint ?? LColors.border.nestedStrong)
                     Image("starfill")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-                        .foregroundStyle(
-                            number <= Int(book.rating)
-                            ? activeTint
-                            : LColors.border.nestedStrong
-                        )
+                        .foregroundStyle(starTint)
                         .bubblyIconMaterial(
-                            tint: number <= Int(book.rating)
-                            ? activeTint
-                            : LColors.border.nestedStrong,
+                            tint: starTint,
                             isEnabled: useBubblyMaterial
                         )
                         .frame(width: 22, height: 22)
