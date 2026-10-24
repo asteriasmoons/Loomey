@@ -128,7 +128,11 @@ final class AutomaticBookCatalogService: ObservableObject {
         let key = Self.fingerprint(books, preferences: readingPreferences)
         if preparationKey == key, preparation != nil { return }
         let cached = cachedCatalogs(books: books, preferences: readingPreferences)
-        response = cached
+        // Keep the visible shelves stable while a background refresh runs.
+        // A new snapshot is presented only when the server has finished building it.
+        if response == nil { response = cached }
+        // Existing shelves remain visible. Only fetch more when the catalog's
+        // refresh window is due; incoming results are append-only.
         if !forceRefresh, snapshot?.requestFingerprint == key, let cached, cached.engineVersion == "loomey-1", cached.refreshDate > Date() {
             if preparationKey != key {
                 preparationKey = key
@@ -147,15 +151,11 @@ final class AutomaticBookCatalogService: ObservableObject {
             guard let self else { return }
             defer { if self.preparationID == id { self.isPreparing = false; self.preparation = nil } }
             do {
-                let loaded = try await self.catalogs(books: books, preferences: preferences, forceRefresh: forceRefresh) { progress in
-                    if self.preparationID == id, self.snapshot != nil, !Task.isCancelled {
-                        self.response = progress
-                        Task { await self.preloadCovers(progress.catalogs.flatMap(\.books)) }
-                    }
-                }
+                let loaded = try await self.catalogs(books: books, preferences: preferences, forceRefresh: forceRefresh)
                 try Task.checkCancellation()
                 if self.preparationID == id, self.snapshot != nil {
                     self.response = loaded
+                    self.lastFailure = nil
                     await self.preloadCovers(loaded.catalogs.flatMap(\.books))
                 }
             } catch is CancellationError { }
@@ -207,7 +207,7 @@ final class AutomaticBookCatalogService: ObservableObject {
                 try Task.checkCancellation()
                 let payload = AutomaticCatalogRequest(books: Self.requestSignals(books), forceRefresh: forceRefresh && firstRequest, preferences: preferences?.normalized())
                 firstRequest = false
-                var response: AutomaticCatalogResponse = try await request(path: "", method: "POST", body: JSONEncoder().encode(payload), timeout: 10, traceID: traceID)
+                var response: AutomaticCatalogResponse = try await request(path: "", method: "POST", body: JSONEncoder().encode(payload), timeout: 25, traceID: traceID)
                 polls += 1
                 try Task.checkCancellation()
                 CatalogDiagnostics.log("load.progress", ["poll": polls, "state": response.state ?? "ready", "serverTraceID": response.traceID ?? "missing", "sections": response.catalogs.map { ["id": $0.id, "books": $0.books.count] as [String: Any] }, "partial": response.partial], traceID: traceID)
@@ -250,12 +250,31 @@ final class AutomaticBookCatalogService: ObservableObject {
 
     private func retainAndSave(_ incoming: AutomaticCatalogResponse, books: [AutomaticCatalogLibraryBook], preferences: ReadingPreferencesConfiguration?) -> AutomaticCatalogResponse {
         var value = incoming
-        if let previous = cachedCatalogs(books: books, preferences: preferences), incoming.partial || incoming.state == "building" || incoming.state == "failed" {
-            var sections = Dictionary(uniqueKeysWithValues: previous.catalogs.map { ($0.id, $0) })
-            for section in incoming.catalogs { sections[section.id] = section }
-            for (id, state) in incoming.categoryStates ?? [:] where state.state == "empty" { sections[id] = nil }
-            let order = ["similar", "genres", "themes", "new-authors", "authors-read", "related", "discovery"]
-            value.catalogs = sections.values.sorted { (order.firstIndex(of: $0.id) ?? 99) < (order.firstIndex(of: $1.id) ?? 99) }
+        if let previous = cachedCatalogs(books: books, preferences: preferences) {
+            // Preserve existing sections and every book's position. The backend
+            // can contribute new books, but cannot reshuffle or replace old ones.
+            var sections = previous.catalogs
+            var positions = Dictionary(uniqueKeysWithValues: sections.enumerated().map { ($0.element.id, $0.offset) })
+            var seen = Set(sections.flatMap(\.books).flatMap { AutomaticCatalogIdentity.tokens($0) })
+            for section in incoming.catalogs {
+                var additions: [AutomaticCatalogBook] = []
+                for book in section.books {
+                    let identity = AutomaticCatalogIdentity.tokens(book)
+                    guard seen.isDisjoint(with: identity) else { continue }
+                    seen.formUnion(identity)
+                    additions.append(book)
+                }
+                if let index = positions[section.id] {
+                    sections[index].books.append(contentsOf: additions)
+                    sections[index].expiresAt = section.expiresAt ?? sections[index].expiresAt
+                } else if !additions.isEmpty {
+                    var newSection = section
+                    newSection.books = additions
+                    positions[section.id] = sections.count
+                    sections.append(newSection)
+                }
+            }
+            value.catalogs = sections
         }
         value = value.validated(for: books, preferences: preferences)
         var saved = value

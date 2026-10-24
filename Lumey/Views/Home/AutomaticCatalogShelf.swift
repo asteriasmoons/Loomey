@@ -5,25 +5,20 @@ struct AutomaticCatalogShelf: View {
     let accent: Color
     let onSelect: (AutomaticCatalogBook) -> Void
     var coverLoader: CatalogCoverLoader = .shared
-    @State private var failedCoverIDs: Set<String> = []
-
-    private var visibleBooks: [AutomaticCatalogBook] { catalog.books.filter { !failedCoverIDs.contains($0.id) } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if !visibleBooks.isEmpty {
+            if !catalog.books.isEmpty {
             Text(catalog.title)
                 .font(.system(size: 18, weight: .black, design: .rounded))
                 .foregroundStyle(LColors.cardTitle)
                 .fixedSize(horizontal: false, vertical: true)
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top, spacing: 14) {
-                    ForEach(visibleBooks) { book in
+                    ForEach(catalog.books) { book in
                         Button { onSelect(book) } label: {
                             VStack(alignment: .leading, spacing: 6) {
-                                CatalogBookCover(urlString: book.coverUrl, imageID: book.imageID, fallbackURLs: book.coverUrls ?? [], title: book.title, width: 116, height: 174, accent: accent, loader: coverLoader) {
-                                    failedCoverIDs.insert(book.id)
-                                }
+                                CatalogBookCover(urlString: book.coverUrl, imageID: book.imageID, fallbackURLs: book.coverUrls ?? [], title: book.title, width: 116, height: 174, accent: accent, loader: coverLoader)
                                 Text(book.title)
                                     .font(.system(size: 13, weight: .black, design: .rounded))
                                     .foregroundStyle(LColors.text.primary)
@@ -55,7 +50,6 @@ struct AutomaticCatalogShelf: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityIdentifier("catalog-section-\(catalog.id)")
-        .onChange(of: catalog.generatedAt) { failedCoverIDs.removeAll() }
     }
 }
 

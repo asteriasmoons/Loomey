@@ -34,8 +34,5 @@ struct AutomaticCatalogPreparation: ViewModifier {
                 if phase == .active { AutomaticBookCatalogService.shared.prepare(books: signals, preferences: preferences) }
                 else if phase == .background { AutomaticBookCatalogService.shared.suspendPreparation() }
             }
-            .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
-                if scenePhase == .active { AutomaticBookCatalogService.shared.prepare(books: signals, preferences: preferences) }
-            }
     }
 }
