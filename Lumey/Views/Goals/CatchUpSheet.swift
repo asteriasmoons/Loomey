@@ -13,6 +13,10 @@ struct CatchUpSheet: View {
 
     let books: [Book]
     let sessions: [ReadingSession]
+    let goals: [ReadingGoals]
+
+    @Query(sort: \ReadingGoalHistory.createdAt, order: .reverse)
+    private var allGoalHistory: [ReadingGoalHistory]
 
     @State private var selectedBook: Book? = nil
     @State private var currentPage = ""
@@ -86,6 +90,12 @@ struct CatchUpSheet: View {
                         if let preview = validPreview, let selectedBook {
                             previewCard(preview: preview, book: selectedBook)
                             sessionBreakdown(preview.sessions)
+
+                            let impacts = goalImpacts(for: preview, book: selectedBook)
+                            if !impacts.isEmpty {
+                                readingGoalsImpactCard(impacts)
+                            }
+
                             submitButton(preview: preview, book: selectedBook)
                         }
                     }
@@ -490,6 +500,69 @@ private extension CatchUpSheet {
         }
     }
 
+    func goalImpacts(for preview: ReadingCatchUpPreview, book: Book) -> [ReadingGoalCatchUpImpact] {
+        ReadingGoalCatchUpService.previewImpacts(
+            book: book,
+            plans: preview.sessions,
+            goals: goals
+        )
+    }
+
+    func readingGoalsImpactCard(_ impacts: [ReadingGoalCatchUpImpact]) -> some View {
+        GlassCard(variant: .secondary, borderColor: theme.palette.indicators) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    Image("achievement")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .foregroundStyle(theme.palette.secondaryAccent)
+                        .bubblyIconMaterial(tint: theme.palette.secondaryAccent)
+
+                    Text("Reading Goals Impact")
+                        .font(.system(size: 17, weight: .black, design: .rounded))
+                        .foregroundStyle(LColors.cardTitle)
+                }
+
+                Text("Recovered reading that counts toward your eligible goals.")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                ForEach(Array(impacts.enumerated()), id: \.element.id) { index, impact in
+                    let tint = theme.palette.rotation[index % theme.palette.rotation.count]
+                    HStack(spacing: 12) {
+                        Image(impact.goalType == .streak ? "levelup" : "openbook")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 16, height: 16)
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+
+                        Text(impact.goalTitle)
+                            .font(.system(size: 13, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                            .lineLimit(2)
+
+                        Spacer(minLength: 8)
+
+                        Text(impact.contributionText)
+                            .font(.system(size: 13, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .shadow(color: theme.palette.background.opacity(0.65), radius: 1, y: 2)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                    .padding(11)
+                    .background { BubblyTileSurface(tint: tint, cornerRadius: 14) }
+                    .bubblyTileLift()
+                }
+            }
+        }
+    }
+
     func submitButton(preview: ReadingCatchUpPreview, book: Book) -> some View {
         Button {
             createSessions(preview: preview, book: book)
@@ -527,6 +600,8 @@ private extension CatchUpSheet {
                 for: book,
                 preview: preview,
                 existingSessions: sessions,
+                goals: goals,
+                existingGoalHistory: allGoalHistory,
                 modelContext: modelContext
             )
             dismiss()

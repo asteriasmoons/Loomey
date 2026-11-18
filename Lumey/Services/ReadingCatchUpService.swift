@@ -137,6 +137,10 @@ enum ReadingCatchUpService {
         for book: Book,
         preview: ReadingCatchUpPreview,
         existingSessions: [ReadingSession],
+        goals: [ReadingGoals],
+        existingGoalHistory: [ReadingGoalHistory],
+        today: Date = Date(),
+        calendar: Calendar = .current,
         modelContext: ModelContext
     ) throws -> [ReadingSession] {
         let recoveredSessions = preview.sessions.map { plan in
@@ -166,12 +170,36 @@ enum ReadingCatchUpService {
         book.currentPage = preview.currentPage
         book.lastUpdated = Date()
 
-        refreshStats(using: existingSessions + recoveredSessions, modelContext: modelContext)
+        let stats = ReadingStats.fetchOrCreate(in: modelContext)
+
+        // Integrate the recovered sessions with eligible reading goals (pages + streak),
+        // allocating each historical date to its correct period. Goal mutations and history are
+        // staged here and committed atomically with the sessions below.
+        let completedGoals = ReadingGoalCatchUpService.applyContributions(
+            recoveredSessions: recoveredSessions,
+            goals: goals,
+            stats: stats,
+            existingHistory: existingGoalHistory,
+            today: today,
+            calendar: calendar,
+            modelContext: modelContext
+        )
+
+        refreshStats(using: existingSessions + recoveredSessions, stats: stats, modelContext: modelContext)
 
         do {
             try modelContext.save()
         } catch {
+            // Keep the batch atomic: discard the staged sessions, book, stats, and goal changes
+            // so goal progress is never left updated when the recovered sessions fail to save.
+            modelContext.rollback()
             throw ReadingCatchUpError.saveFailed
+        }
+
+        // Award goal-completion XP only after the batch is persisted, so a failed or retried save
+        // never grants duplicate rewards. `awardGoalCompletion` is itself idempotent per period.
+        for goal in completedGoals {
+            ReadingXPService.awardGoalCompletion(goal: goal, modelContext: modelContext)
         }
 
         return recoveredSessions
@@ -179,8 +207,7 @@ enum ReadingCatchUpService {
 }
 
 private extension ReadingCatchUpService {
-    static func refreshStats(using sessions: [ReadingSession], modelContext: ModelContext) {
-        let stats = ReadingStats.fetchOrCreate(in: modelContext)
+    static func refreshStats(using sessions: [ReadingSession], stats: ReadingStats, modelContext: ModelContext) {
         let calendar = Calendar.current
         let now = Date()
 

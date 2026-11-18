@@ -70,6 +70,7 @@ struct LumeyApp: App {
         WindowGroup {
             ContentView()
                 .task {
+                    BookCoverUploadService.shared.resumePending()
                     let backfillKey = "ReadingSessionGoalBackfillV7"
 
                     print("🚀 Starting ReadingSessionGoalBackfill")
@@ -326,6 +327,39 @@ struct LumeyApp: App {
                         try? context.save()
                     }
                     UserDefaults.standard.set(true, forKey: breakMigrationKey)
+                }
+                .task {
+                    // Catch Up → reading-goal backfill. Credits Catch Up sessions created on or
+                    // after Nov 6, 2026 (when Catch Up ran before it integrated with goals) to
+                    // their eligible page/streak goals. Idempotent and goal-only: stats and book
+                    // progress already updated when Catch Up originally ran.
+                    let backfillKey = "CatchUpGoalBackfillV1"
+                    guard !UserDefaults.standard.bool(forKey: backfillKey) else { return }
+
+                    let cutoff: Date = {
+                        var components = DateComponents()
+                        components.year = 2026
+                        components.month = 11
+                        components.day = 6
+                        return Calendar.current.date(from: components) ?? .distantPast
+                    }()
+
+                    let context = sharedModelContainer.mainContext
+                    let completedGoals = ReadingGoalCatchUpService.backfillCatchUpContributions(
+                        createdOnOrAfter: cutoff,
+                        modelContext: context
+                    )
+
+                    do {
+                        try context.save()
+                        for goal in completedGoals {
+                            ReadingXPService.awardGoalCompletion(goal: goal, modelContext: context)
+                        }
+                        UserDefaults.standard.set(true, forKey: backfillKey)
+                    } catch {
+                        // Leave the flag unset so the backfill retries next launch; the per-session
+                        // history dedup guarantees it will not double-count on a retry.
+                    }
                 }
         }
         .modelContainer(sharedModelContainer)

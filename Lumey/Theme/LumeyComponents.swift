@@ -603,7 +603,7 @@ struct LumeyDottedGradientSpinner: View {
     @State private var rotation = 0.0
 
     private var dotSize: CGFloat {
-        max(5, size * 0.12)
+        size < 30 ? size * 0.12 : max(5, size * 0.12)
     }
 
     private var radius: CGFloat {

@@ -113,7 +113,7 @@ struct ReadingGoalsView: View {
                     .presentationDragIndicator(.hidden)
             }
             .sheet(isPresented: $showingCatchUp) {
-                CatchUpSheet(books: books, sessions: sessions)
+                CatchUpSheet(books: books, sessions: sessions, goals: goals)
                     .presentationDetents([.large])
                     .presentationDragIndicator(.hidden)
             }

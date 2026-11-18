@@ -14,6 +14,8 @@ struct AddEditBookSheet: View {
 
     @Query(sort: \ReadingLibraryCustomFilter.sortIndex)
     private var customFilters: [ReadingLibraryCustomFilter]
+    @Query(sort: \Book.lastUpdated, order: .reverse)
+    private var libraryBooks: [Book]
     
     let book: Book?
     let onSave: (Book) -> Void
@@ -22,6 +24,7 @@ struct AddEditBookSheet: View {
     @State private var author = ""
     @State private var subtitle = ""
     @State private var seriesName = ""
+    @State private var isSeriesDropdownExpanded = false
     @State private var seriesNumber = ""
     @State private var publisher = ""
     @State private var publicationYear = ""
@@ -50,7 +53,15 @@ struct AddEditBookSheet: View {
     @State private var isFetchingBookDetails = false
     @State private var bookDetailsMessage: String? = nil
     @State private var bookDetailsError: String? = nil
+    @State private var libraryCovers: [RemoteLibraryBookCover] = []
+    @State private var isSearchingLibraryCovers = false
+    @State private var isSelectingLibraryCover = false
+    @State private var coverLibraryMessage: String? = nil
     
+    private var coverLookupKey: String {
+        "\(isbn.trimmingCharacters(in: .whitespacesAndNewlines))|\(title.trimmingCharacters(in: .whitespacesAndNewlines))|\(author.trimmingCharacters(in: .whitespacesAndNewlines))"
+    }
+
     private var isEditing: Bool {
         book != nil
     }
@@ -70,6 +81,7 @@ struct AddEditBookSheet: View {
                         sectionCard(title: "Basic Info", accentIndex: 1) {
                             LumeyTextField(title: "Subtitle", text: $subtitle, borderColor: theme.palette.primaryAction)
                             LumeyTextField(title: "Series Name", text: $seriesName, borderColor: theme.palette.secondaryAccent)
+                            seriesNameDropdown
                             LumeyTextField(title: "Series Number", text: $seriesNumber, borderColor: theme.palette.indicators)
                             LumeyTextField(title: "Publisher", text: $publisher, borderColor: theme.palette.primaryAction)
                             LumeyTextField(title: "Publication Year", text: $publicationYear, borderColor: theme.palette.secondaryAccent)
@@ -81,6 +93,7 @@ struct AddEditBookSheet: View {
                                 coverImageData: $coverImageData,
                                 tint: theme.palette.secondaryAccent
                             )
+                            coverLibraryPicker
                         }
                         
                         sectionCard(title: "Reading Details", accentIndex: 2) {
@@ -140,6 +153,116 @@ struct AddEditBookSheet: View {
         .onChange(of: book?.id) { _, _ in
             loadBook()
         }
+        .task(id: coverLookupKey) {
+            // Only look up covers for new books without a chosen image.
+            guard !isEditing, coverImageData == nil else { return }
+            try? await Task.sleep(for: .milliseconds(650))
+            guard !Task.isCancelled else { return }
+            await findLibraryCovers(automatically: true)
+        }
+    }
+
+    private var existingSeriesNames: [String] {
+        let names = libraryBooks
+            .map { $0.seriesName.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        var seen = Set<String>()
+        return names.filter { seen.insert($0.lowercased()).inserted }
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    @ViewBuilder
+    private var seriesNameDropdown: some View {
+        if !existingSeriesNames.isEmpty {
+            VStack(alignment: .leading, spacing: 7) {
+                Button {
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                        isSeriesDropdownExpanded.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        Text("Choose Existing Series")
+                            .font(.system(size: 14, weight: .black, design: .rounded))
+                            .foregroundStyle(theme.palette.textPrimary)
+                            .shadow(color: theme.palette.background.opacity(0.55), radius: 1, y: 2)
+
+                        Spacer()
+
+                        Image(isSeriesDropdownExpanded ? "chevup" : "chevdown")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 11, height: 11)
+                            .bubblyIconMaterial(tint: theme.palette.textPrimary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 11)
+                    .background {
+                        BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 14)
+                    }
+                    .bubblyTileLift()
+                }
+                .buttonStyle(.plain)
+
+                if isSeriesDropdownExpanded {
+                    ScrollView(.vertical, showsIndicators: existingSeriesNames.count > 4) {
+                        VStack(alignment: .leading, spacing: 7) {
+                            ForEach(existingSeriesNames, id: \.self) { name in
+                                Button {
+                                    seriesName = name
+                                    withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                        isSeriesDropdownExpanded = false
+                                    }
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Circle()
+                                            .fill(seriesName == name ? theme.palette.textPrimary : theme.palette.raisedSurface)
+                                            .frame(width: 12, height: 12)
+                                            .overlay {
+                                                Circle()
+                                                    .fill(seriesName == name ? theme.palette.secondaryAccent : Color.clear)
+                                                    .frame(width: 4, height: 4)
+                                            }
+
+                                        Text(name)
+                                            .font(.system(size: 13, weight: .black, design: .rounded))
+                                            .foregroundStyle(theme.palette.textPrimary)
+                                            .lineLimit(1)
+
+                                        Spacer(minLength: 0)
+
+                                        if seriesName == name {
+                                            Image("checkwavy")
+                                                .renderingMode(.template)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 14, height: 14)
+                                                .foregroundStyle(theme.palette.textPrimary)
+                                        }
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 9)
+                                    .background {
+                                        if seriesName == name {
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .fill(theme.palette.raisedSurface)
+                                        }
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(9)
+                    }
+                    .frame(maxHeight: existingSeriesNames.count > 4 ? 184 : nil)
+                    .background {
+                        BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 16)
+                    }
+                    .bubblyTileLift()
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+        }
     }
 
     private var canGetBookDetails: Bool {
@@ -158,9 +281,7 @@ struct AddEditBookSheet: View {
             } label: {
                 HStack(spacing: 10) {
                     if isFetchingBookDetails {
-                        ProgressView()
-                            .tint(.white)
-                            .scaleEffect(0.82)
+                        LumeyDottedGradientSpinner(size: 18, useBubblyPalette: true)
                     } else {
                         Image("sparklesearch")
                             .renderingMode(.template)
@@ -421,6 +542,117 @@ struct AddEditBookSheet: View {
         .buttonStyle(.plain)
     }
     
+    private var coverLibraryPicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button {
+                searchCoverLibrary()
+            } label: {
+                HStack {
+                    if isSearchingLibraryCovers || isSelectingLibraryCover {
+                        ProgressView()
+                    }
+                    Text(isSearchingLibraryCovers ? "Searching Covers..." : "Choose from Cover Library")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                    Spacer()
+                }
+                .foregroundStyle(theme.palette.textPrimary)
+                .padding(12)
+                .background {
+                    BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 14)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(isSearchingLibraryCovers || isSelectingLibraryCover ||
+                      (isbn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                       (title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                        author.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)))
+
+            if let coverLibraryMessage {
+                Text(coverLibraryMessage)
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(LColors.textSecondary)
+            }
+
+            if !libraryCovers.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(libraryCovers) { cover in
+                            Button {
+                                selectLibraryCover(cover)
+                            } label: {
+                                VStack(spacing: 5) {
+                                    AsyncImage(url: cover.imageURL) { image in
+                                        image.resizable().scaledToFill()
+                                    } placeholder: {
+                                        ProgressView()
+                                    }
+                                    .frame(width: 82, height: 116)
+                                    .clipped()
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    Text(cover.edition?.isEmpty == false ? cover.edition! : "Cover option")
+                                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                                        .lineLimit(1)
+                                        .frame(width: 82)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isSelectingLibraryCover)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func searchCoverLibrary() {
+        Task { await findLibraryCovers(automatically: false) }
+    }
+
+    @MainActor
+    private func findLibraryCovers(automatically: Bool) async {
+        if automatically && coverImageData != nil { return }
+        let lookupKey = coverLookupKey
+        guard !isbn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+              (!title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+               !author.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) else { return }
+        isSearchingLibraryCovers = true
+        if !automatically { coverLibraryMessage = nil; libraryCovers = [] }
+        defer { isSearchingLibraryCovers = false }
+        do {
+            let results = try await BookCoverLibraryService.shared.search(isbn: isbn, title: title, author: author)
+            guard lookupKey == coverLookupKey, !Task.isCancelled else { return }
+            libraryCovers = results
+            if automatically {
+                if results.count == 1 && coverImageData == nil {
+                    coverImageData = try await BookCoverLibraryService.shared.imageData(for: results[0])
+                    coverLibraryMessage = "Cover found in your library."
+                } else if results.count > 1 {
+                    coverLibraryMessage = "Multiple editions found. Choose the cover you want."
+                }
+            } else {
+                coverLibraryMessage = results.isEmpty ? "No covers found in your library yet." :
+                    (results.count > 1 ? "Choose the correct edition below." : nil)
+            }
+        } catch {
+            if !automatically { coverLibraryMessage = error.localizedDescription }
+        }
+    }
+
+    private func selectLibraryCover(_ cover: RemoteLibraryBookCover) {
+        isSelectingLibraryCover = true
+        coverLibraryMessage = nil
+        Task {
+            do {
+                coverImageData = try await BookCoverLibraryService.shared.imageData(for: cover)
+                selectedCoverItem = nil
+                coverLibraryMessage = "Cover selected."
+            } catch {
+                coverLibraryMessage = error.localizedDescription
+            }
+            isSelectingLibraryCover = false
+        }
+    }
+
     private func loadBook() {
         guard let book else { return }
 
@@ -472,6 +704,9 @@ struct AddEditBookSheet: View {
                     author: author
                 )
                 applyBookDetails(details)
+                if coverImageData == nil {
+                    await findLibraryCovers(automatically: true)
+                }
                 bookDetailsMessage = "Details added from \(details.source). Categories were refreshed."
             } catch {
                 bookDetailsError = error.localizedDescription
@@ -570,6 +805,9 @@ struct AddEditBookSheet: View {
         }
         
         onSave(targetBook)
+        if coverImageData != nil {
+            BookCoverUploadService.shared.preserve(title: targetBook.title, author: targetBook.author, isbn: targetBook.isbn, image: coverImageData!)
+        }
         ReadingXPService.awardBookStatusChange(
             book: targetBook,
             previousStatus: previousStatus,

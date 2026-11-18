@@ -26,6 +26,7 @@ struct ReadingLibraryView: View {
     @Query(sort: \ReadingLibraryCustomFilter.sortIndex)
     private var customFilters: [ReadingLibraryCustomFilter]
 
+    @State private var visibleBookCount = 4
     @State private var searchText = ""
     @State private var selectedStatus: BookStatus? = nil
     @State private var selectedSeries: String? = nil
@@ -67,6 +68,10 @@ struct ReadingLibraryView: View {
                 || book.tags.contains { $0.localizedCaseInsensitiveContains(trimmedSearch) }
                 || book.tropes.contains { $0.localizedCaseInsensitiveContains(trimmedSearch) }
             }
+    }
+
+    private var pagedBooks: [Book] {
+        Array(visibleBooks.prefix(visibleBookCount))
     }
 
     private var activeBooksCount: Int {
@@ -160,6 +165,10 @@ struct ReadingLibraryView: View {
             } message: {
                 Text("Use up to two words or 22 characters.")
             }
+            .onChange(of: searchText) { _, _ in visibleBookCount = 4 }
+            .onChange(of: selectedStatus) { _, _ in visibleBookCount = 4 }
+            .onChange(of: selectedSeries) { _, _ in visibleBookCount = 4 }
+            .onChange(of: selectedCustomFilterID) { _, _ in visibleBookCount = 4 }
             .onAppear {
                 guard !hasAppeared else { return }
                 hasAppeared = true
@@ -689,7 +698,7 @@ private extension ReadingLibraryView {
                 emptyLibraryCard
             } else {
                 LazyVStack(spacing: 12) {
-                    ForEach(Array(visibleBooks.enumerated()), id: \.element.id) { index, book in
+                    ForEach(Array(pagedBooks.enumerated()), id: \.element.id) { index, book in
                         LibraryBookRow(book: book, variant: GlassCardRotation.variant(for: index), accentIndex: index + 1) {
                             activeBookSheet = BookSheetMode(book: book)
                         }
@@ -724,6 +733,46 @@ private extension ReadingLibraryView {
                             }
                         }
                     }
+                }
+
+                if visibleBooks.count > 4 {
+                    HStack(spacing: 12) {
+                        if visibleBookCount > 4 {
+                            Button {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                    visibleBookCount = max(4, visibleBookCount - 4)
+                                }
+                            } label: {
+                                Text("See Less")
+                                    .font(.system(size: 13, weight: .black, design: .rounded))
+                                    .foregroundStyle(theme.palette.textPrimary)
+                                    .padding(.horizontal, 18)
+                                    .padding(.vertical, 11)
+                                    .background { BubblyTileSurface(tint: theme.palette.primaryAction, cornerRadius: 999) }
+                                    .bubblyTileLift()
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        if visibleBookCount < visibleBooks.count {
+                            Button {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                    visibleBookCount += 4
+                                }
+                            } label: {
+                                Text("Load More")
+                                    .font(.system(size: 13, weight: .black, design: .rounded))
+                                    .foregroundStyle(theme.palette.textPrimary)
+                                    .padding(.horizontal, 18)
+                                    .padding(.vertical, 11)
+                                    .background { BubblyTileSurface(tint: theme.palette.secondaryAccent, cornerRadius: 999) }
+                                    .bubblyTileLift()
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 4)
                 }
             }
         }
